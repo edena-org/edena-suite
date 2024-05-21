@@ -1,0 +1,64 @@
+@import views.html.layout
+@import views.html.table.dynamicTableJsImport
+@import views.html.dataset.{datasetMenu, dynamicFieldTable, datasetSubNavWithJs}
+@import views.html.elements._
+@import reactivemongo.api.bson.BSONObjectID
+@import org.edena.ada.server.models.{DataSpaceMetaInfo,FilterShowFieldStyle,Category}
+@import org.edena.ada.server.models
+@import org.edena.ada.server.field.FieldUtil.nameOrLabel
+@import org.edena.ada.web.controllers.dataset.DataSetWebContext._
+@import org.edena.ada.web.controllers.dataset.DataSetWebContext
+@import org.edena.ada.server.models.DataSetSetting
+
+@(
+    displayName: String,
+    id : BSONObjectID,
+    form: Form[Category],
+    categories: Traversable[Category],
+    fields: Traversable[models.Field],
+    setting: DataSetSetting,
+    dataSpaceMetaInfos: Traversable[DataSpaceMetaInfo]
+)(
+    implicit context: DataSetWebContext
+)
+
+@elements = {
+    @inputText("category", "name", form)
+    @inputText("category", "label", form)
+    @select("category", "parentId", form, categories.map(cat => (cat._id.get.stringify, cat.name)).toSeq, true)
+
+    @dynamicTableJsImport()
+    @typeaheadJsImport()
+
+    @labelValue("fields", attributeLabel("category", "fields")){
+        @dynamicFieldTable(
+            "field",
+            fields.toSeq.sortBy(nameOrLabel(setting.filterShowFieldStyle.getOrElse(FilterShowFieldStyle.NamesAndLabels))),
+            false,
+            8
+        )
+    }
+
+    <script type="text/javascript">
+        $(function () {
+            populateFieldTypeaheadFromUrl({
+                typeaheadElement: $('#add_fieldModal #fieldTypeahead'),
+                fieldNameElement: $('#add_fieldModal #fieldName'),
+                url: '@Html(dataSetRouter.allFields.url)',
+                showOption: @setting.filterShowFieldStyle.getOrElse(FilterShowFieldStyle.NamesAndLabels).id
+            });
+        })
+    </script>
+}
+
+@layout.edit(
+    displayName,
+    "category",
+	form.errors,
+    elements,
+    categoryRouter.update(id),
+    categoryRouter.plainList,
+    Some(categoryRouter.delete(id)),
+    Some(datasetMenu(dataSpaceMetaInfos)),
+    Some(datasetSubNavWithJs(setting))
+)

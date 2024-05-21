@@ -1,0 +1,7 @@
+@import org.webjars.play.WebJarsUtil
+@import org.webjars.play.routes
+
+@()(implicit webJarsUtil: WebJarsUtil)
+
+@webJarsUtil.fullPath("bootstrap-select", "dist/js/bootstrap-select.min.js").script()
+@webJarsUtil.fullPath("bootstrap-select", "dist/css/bootstrap-select.min.css").css()

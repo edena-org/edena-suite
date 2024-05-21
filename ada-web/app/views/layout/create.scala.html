@@ -1,0 +1,42 @@
+@import views.html.layout.formErrors
+@import views.html.layout
+@import org.edena.play.controllers.WebContext._
+@import org.edena.play.controllers.WebContext
+@import views.html.helper.CSRF
+
+@(
+	displayName: String,
+	messagePrefix: String,
+	form: Form[_],
+	elements : Html,
+	saveCall : Call,
+	listCall : Call,
+	bottomResources: Option[Html] = None,
+	formArgs: Seq[(Symbol, String)] = Nil
+)(
+	implicit context: WebContext
+)
+
+@main(Messages("create.title", displayName), None, None, None, bottomResources, Some(formErrors(messagePrefix, form.errors))) {
+
+	<div class="page-header">
+		<h3>@Messages("create.title", displayName)</h3>
+	</div>
+
+	<div class="row">
+		<div class="col-md-12">
+		    @helper.form(action = saveCall, formArgs: _*) {
+			    <fieldset>
+					@CSRF.formField
+					@elements
+			    </fieldset>
+
+				<hr/>
+			    <div class="actions pull-right">
+				    <input type="submit" value="Create" class="btn btn-primary">
+				    <a href="@listCall" class="btn btn-default">Cancel</a>
+			    </div>
+		    }
+		</div>
+	</div>
+}

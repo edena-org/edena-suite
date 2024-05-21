@@ -1,0 +1,44 @@
+@import views.html.layout.formErrors
+@import org.edena.play.controllers.WebContext
+@import org.edena.play.controllers.WebContext._
+@import org.edena.ada.web.controllers.routes
+@import views.html.helper.CSRF
+
+@(
+    form: Form[(String, String)]
+)(
+    implicit context: WebContext
+)
+
+@layout.main(title = "Ada Login", extraMessages = Some(formErrors("login", form.errors))) {
+
+    <div class="page-header">
+        <h1>Login</h1>
+    </div>
+
+    <div class="row">
+        @helper.form(routes.AuthController.authenticate){
+            <div class="login well well-lg col-md-6">
+
+                <div class="form-group">
+                    <label form="user"> User ID: <br></label>
+                    <input type="text" class="form-control" id="id" name="id" value="" placeholder="User login">
+                </div>
+
+                <div class="form-group">
+                    <label form="password"> Password: <br></label>
+                    <input type="password" class="form-control" id="password" name="password" value="" placeholder="Password">
+                </div>
+
+                @CSRF.formField
+
+                <div class="col-md-12 row">
+                    <input type="submit" id="submit" value="Login" class="btn btn-primary btn-sm btn-block">
+                </div>
+            </div>
+        }
+    </div>
+    <div class="row">
+        Don't have an account? <a href="@routes.AppController.contact()">Request one.</a>
+    </div>
+}

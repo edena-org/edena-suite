@@ -1,0 +1,58 @@
+@import views.html.filter.{filter, filterWithJs, jsTreeImport}
+@import views.html.dataset.{bootstrapSelectImport, datasetJsImport}
+@import org.edena.ada.server.models.{Filter, FilterShowFieldStyle}
+@import org.edena.ada.web.controllers.dataset.DataSetWebContext._
+@import org.edena.ada.web.controllers.dataset.DataSetWebContext
+
+@(
+    filterSpec: Filter,
+    submitCall: Call,
+    filterShowFieldStyle: Option[FilterShowFieldStyle.Value]
+)(
+    implicit context: DataSetWebContext
+)
+
+@jsTreeImport()
+
+@datasetJsImport()
+
+@helper.javascriptRouter("dataSetJsRoutes2")(
+    dataSetJsRouter.getFieldTypeWithAllowedValues
+)
+
+@helper.javascriptRouter("filterJsRoutes")(
+    filterJsRouter.saveAjax
+)
+
+@saveFilterFun = {
+    function(filter) {
+        var filterJson = JSON.stringify(filter)
+        filterJsRoutes.org.edena.ada.web.controllers.dataset.FilterDispatcher.saveAjax(filterJson).ajax( {
+            success: function(data) {
+                showMessage("Filter '" + filter.name + "' successfully saved.");
+            },
+            error: function(data) {
+                showErrorResponse(data)
+            }
+        });
+    }
+}
+
+@filterWithJs(
+    filter = Some(filterSpec),
+    submitCall = submitCall,
+    fieldsOrCall = Right(dataSetRouter.allFieldNamesAndLabels),
+    categoriesOrCall = Some(Right(dataSetRouter.getCategoriesWithFieldsAsTreeNodes(filterSpec.conditionsOrId))),
+    showFieldStyle = filterShowFieldStyle,
+    filterSubmitParamName = "filterOrId",
+    filterElementId = "filterDiv",
+    listFiltersCall = Some(filterRouter.idAndNamesAccessible),
+    saveFilterAjaxFun = Some(saveFilterFun),
+    typeaheadMinLength = 2
+)
+
+<script type="text/javascript">
+    $(function () {
+        addAllowedValuesUpdateForFilter($("#filterDiv"))
+    })
+</script>

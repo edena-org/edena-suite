@@ -1,0 +1,39 @@
+@import org.edena.ada.server.models.dataimport.DataSetImport
+@import views.html.elements._
+
+@(form: Form[_ <: DataSetImport])(implicit msg: Messages)
+
+<div class="panel panel-default">
+    <div class="panel-heading">Data Set Info</div>
+    <div class="panel-body">
+        @inputText(
+            "dataSetImport",
+            "dataSpaceName",
+            form,
+            Seq('_helpModal -> "<p>The name of study/data space (or simply a folder) this data set should be imported into. If it doesn't exist a new one at the root level in the tree on the left side will be created.</p><p><b>Example: <i>COVID-19</i></b>")
+        )
+        @inputText(
+            "dataSetImport",
+            "dataSetName",
+            form,
+            Seq('_helpModal -> "<p>Human-readable name of the imported data set.</p><p><b>Example: <i>Clinical Visit</i></b>")
+        )
+        @inputText(
+            "dataSetImport",
+            "dataSetId",
+            form,
+            Seq('_helpModal -> "<p>Auto-generated id of the imported data set containing purely lowercase alphanumerical characters with '.' and '_'.</p><p><i>Note that normally it shouldn't be changed</i>.</p><b>Example: <i>covid_19.clinical_visit</i></b>")
+        )
+    </div>
+</div>
+
+<script type="text/javascript">
+    $('#dataSpaceName').on('change keyup paste', updateDataSetId)
+    $('#dataSetName').on('change keyup paste', updateDataSetId)
+
+    function updateDataSetId() {
+        var dataSpaceNamePart = $('#dataSpaceName').val().trim().replace(/[^a-zA-Z0-9]/g, "_").toLowerCase()
+        var dataSetNamePart = $('#dataSetName').val().trim().replace(/[^a-zA-Z0-9]/g, "_").toLowerCase()
+        $('#dataSetId').val(dataSpaceNamePart + "." + dataSetNamePart)
+    }
+</script>

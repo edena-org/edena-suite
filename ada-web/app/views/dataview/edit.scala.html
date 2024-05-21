@@ -1,0 +1,42 @@
+@import views.html.layout
+@import views.html.dataset.{datasetMenu, datasetSubNav, datasetSubNavJs}
+@import org.edena.ada.web.controllers.dataset.{DataSetWebContext, DataViewRouter}
+@import org.edena.ada.server.models.DataSpaceMetaInfo
+@import org.edena.ada.server.models.FilterShowFieldStyle
+@import org.edena.ada.server.models.{DataView, Field}
+@import reactivemongo.api.bson.BSONObjectID
+@import views.html.dataview.elements
+@import views.html.dataview.activateTypeahead
+@import org.edena.ada.web.controllers.dataset.DataSetWebContext._
+@import org.edena.ada.server.models.DataSetSetting
+
+@(
+    displayName: String,
+    id : BSONObjectID,
+    form: Form[DataView],
+    nameFieldMap: Map[String,  Field],
+    idFilterNameMap: Map[BSONObjectID, String],
+    dataSpaceMetaInfos: Traversable[DataSpaceMetaInfo],
+    dataSetSetting: DataSetSetting,
+    updateCall: BSONObjectID => Call
+)(
+    implicit context: DataSetWebContext
+)
+
+@bottomResources = {
+    @activateTypeahead(dataSetSetting.filterShowFieldStyle)
+    @datasetSubNavJs()
+}
+
+@layout.edit(
+    displayName,
+    "dataView",
+	form.errors,
+    elements(form, nameFieldMap, idFilterNameMap, dataSetRouter.allFields, dataSetSetting.filterShowFieldStyle),
+    updateCall(id),
+    dataViewRouter.plainList,
+    Some(dataViewRouter.delete(id)),
+    Some(datasetMenu(dataSpaceMetaInfos)),
+    Some(datasetSubNav(dataSetSetting)),
+    Some(bottomResources)
+)

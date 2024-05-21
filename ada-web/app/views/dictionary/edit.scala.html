@@ -1,0 +1,49 @@
+@import views.html.layout
+@import views.html.elements.{inputText, inputTextReadonly, select}
+@import views.html.dataset.{datasetMenu, datasetSubNavWithJs}
+@import org.edena.ada.server.models.DataSpaceMetaInfo
+@import org.edena.ada.server.models.Category
+@import org.edena.ada.server.models.Field
+@import org.edena.core.field.FieldTypeId
+@import org.edena.ada.web.controllers.dataset.DataSetWebContext._
+@import org.edena.ada.web.controllers.dataset.DataSetWebContext
+@import org.edena.ada.web.util.enumToValueString
+@import org.edena.ada.server.models.DataSetSetting
+@import org.edena.ada.server.models.URLType
+
+@(
+    displayName: String,
+    fieldName: String,
+    form: Form[Field],
+    categories: Traversable[Category],
+    setting: DataSetSetting,
+    dataSpaceMetaInfos: Traversable[DataSpaceMetaInfo]
+)(
+    implicit context: DataSetWebContext
+)
+
+@elements = {
+    @inputTextReadonly("field", "name", form)
+    @inputText("field", "label", form)
+    @select("field", "fieldType", form, enumToValueString(FieldTypeId), false)
+    @inputText("field", "isArray", form)
+    @inputText("field", "enumValues", form, Seq('_label -> "Enum Values"))
+    @inputText("field", "displayDecimalPlaces", form)
+    @inputText("field", "displayTrueValue", form)
+    @inputText("field", "displayFalseValue", form)
+    @select("field", "displayAsURLType", form, enumToValueString(URLType), optional = true)
+    @inputText("field", "aliases", form)
+    @select("field", "categoryId", form, categories.map(cat => (cat._id.get.stringify, cat.name)).toSeq, true)
+}
+
+@layout.edit(
+    displayName,
+    "field",
+	form.errors,
+    elements,
+    dictionaryRouter.update(fieldName),
+    dictionaryRouter.plainList,
+    deleteCall = None,
+    Some(datasetMenu(dataSpaceMetaInfos)),
+    Some(datasetSubNavWithJs(setting))
+)

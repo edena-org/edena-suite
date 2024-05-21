@@ -1,0 +1,8 @@
+@import org.edena.play.routes.CustomDirAssets
+@import org.webjars.play.routes
+@import org.webjars.play.WebJarsUtil
+
+@()(implicit webJarAssets: WebJarsUtil)
+
+@webJarAssets.locate("jquery-ui.min.js").script()
+<script type="text/javascript" src="@CustomDirAssets.versioned("javascripts/dynamicTable.js")"></script>

@@ -1,0 +1,96 @@
+@import org.edena.ada.web.util.typeColumns
+@import views.html.datasetimport.schedulePanel
+@import views.html.datasettrans.{resultDataSetInfoPanel, streamSpecPanel}
+@import views.html.table.{displayTable, dynamicTable}
+@import views.html.table.dynamicTableJsImport
+@import views.html.elements.labelValue
+@import views.html.elements._
+@import play.api.i18n.Messages
+@import org.edena.play.controllers.WebContext
+@import org.edena.play.controllers.WebContext._
+
+@(
+    collectionItemName: String,
+    tableLabel: String,
+    fieldLabels: Seq[String],
+    data: Seq[Seq[String]] = Nil,
+    customRowToModelJs: Option[Html] = None,
+    itemsName: Option[String] = None,
+    labelGridWidth: Int = 2
+)(implicit webContext: WebContext)
+
+@dynamicTableJsImport()
+
+@fieldElement(index: Int)(row: Seq[String]) = {
+    <input type="text" id="field@{index + 1}" value="@row(index)">
+}
+
+@table = {
+    @displayTable(
+        data,
+        typeColumns[Seq[String]](
+            fieldLabels.zipWithIndex.map { case (fieldLabel, index) =>
+                (None, fieldLabel, fieldElement(index)(_))
+            }:_*
+        ),
+        tableSelection = true
+    )
+}
+
+@rowToModelJsFun = {
+    function(row) {
+        @customRowToModelJs.getOrElse {
+            function rowToModel(row) {
+                function value(x) { return getRowValue(row, x) }
+
+                var result = [];
+
+                for (i = 1; i <= @{fieldLabels.size}; i++) {
+                    result.push(value("field" + i))
+                }
+
+                return result;
+            }
+        }
+
+        var model = rowToModel(row);
+        return JSON.stringify(model);
+    }
+}
+
+@modalItemToRowJsFun = {
+    function(values) {
+        // create row
+        var row = $("<tr></tr>")
+        var checkboxColumn = "<td><input type='checkbox' class='table-selection' onclick='preventEventPropagation(event)'></input></td>";
+        row.append(checkboxColumn)
+
+        @fieldLabels.zipWithIndex.map { case (label, index) =>
+            var fieldValue@{index + 1} = values["field@{index + 1}"].trim()
+            var field@{index + 1}Column = "<td><input type='text' id='field@{index + 1}' value='" + fieldValue@{index + 1} + "'/></td>";
+            row.append(field@{index + 1}Column)
+        }
+
+        return row;
+    }
+}
+
+@labelValueAux(key: String, label: Any)(valueElement : Any) = {
+    @labelValue(key, label, false, labelGridWidth = 4)(valueElement)
+}
+
+@modalInner = {
+    <div class="row">
+        @fieldLabels.zipWithIndex.map { case (label, index) =>
+            @labelValueAux(s"field${index + 1}", label) {
+                <input type="text" id="field@{index + 1}">
+            }
+        }
+    </div>
+}
+
+@labelValue(collectionItemName + "s", tableLabel, labelGridWidth = labelGridWidth){
+    @dynamicTable(
+        collectionItemName, table, true, rowToModelJsFun, modalItemToRowJsFun, modalInner, None, 12, itemsName = itemsName
+    )
+}

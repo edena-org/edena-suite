@@ -1,0 +1,38 @@
+@import org.edena.ada.web.controllers.dataset.{DataSetWebContext, DictionaryRouter}
+@import views.html.layout
+@import views.html.elements._
+@import org.edena.ada.server.models.{Category, Field}
+@import org.edena.ada.web.util.enumToValueString
+@import org.edena.ada.web.controllers.dataset.DataSetWebContext._
+@import org.edena.ada.server.models.URLType
+
+@(
+    displayName : String,
+	form: Form[Field],
+	categories: Traversable[Category]
+)(
+    implicit context: DataSetWebContext
+)
+
+@elements = {
+    @inputText("field", "name", form)
+    @inputText("field", "label", form)
+    @inputText("field", "fieldType", form)
+    @inputText("field", "isArray", form)
+    @inputText("field", "enumValues", form)
+    @inputText("field", "displayDecimalPlaces", form)
+    @inputText("field", "displayTrueValue", form)
+    @inputText("field", "displayFalseValue", form)
+    @select("field", "displayAsURLType", form, enumToValueString(URLType), optional = true)
+    @inputText("field", "aliases", form)
+    @select("field", "categoryId", form, categories.map(cat => (cat._id.get.stringify, cat.name)).toSeq, true)
+}
+
+@layout.create(
+    displayName,
+    "field",
+	form,
+    elements,
+    dictionaryRouter.save,
+    dictionaryRouter.plainList
+)

@@ -1,0 +1,63 @@
+@import views.html.table.{displayTable, dynamicTable}
+@import views.html.table.{dynamicTableJsImport, displayTable}
+@import org.edena.ada.web.util.typeColumns
+@import reactivemongo.api.bson.BSONObjectID
+@import views.html.filters.displayConditions
+@import org.edena.ada.server.models.Filter.filterConditionFormat
+@import org.edena.store.json.BSONObjectIDFormat
+@import play.api.libs.json.Writes
+@import play.api.libs.json.Json
+@import org.edena.core.FilterCondition
+
+@(
+    items: Traversable[Either[Seq[FilterCondition], BSONObjectID]]
+)(
+    implicit request: RequestHeader
+)
+
+@filterOrIdHiddenElement[T: Writes](value: T) = {
+    <input type="hidden" id="filterOrId" value="@Json.stringify(Json.toJson(value))"/>
+}
+
+@table = {
+    @displayTable(
+        items,
+        typeColumns[Either[Seq[FilterCondition], BSONObjectID]](
+            (None, "", { filterOrId =>
+                filterOrId match {
+                    case Left(conditions) => filterOrIdHiddenElement(conditions)
+                    case Right(id) => filterOrIdHiddenElement(id)
+                }
+            }),
+            (None, "Content", { filterOrId =>
+                filterOrId match {
+                    case Left(conditions) => displayConditions(conditions)
+                    case Right(id) => "Filter id: " + id.stringify
+                }
+            })
+        ),
+        tableSelection = true
+    )
+}
+
+@rowToModelJsFun = {
+    function(row) {
+        return row.find('#filterOrId').val()
+    }
+}
+
+@itemToRowJsFun = {
+    function(values) {
+        var checkboxColumn = "<td><input type='checkbox' class='table-selection' onclick='preventEventPropagation(event)'></input></td>";
+        var filterOrIdHiddenColumn = "<td><input type='hidden' id='filterOrId' value='[]'/></td>";
+        var contentColumn = "<td></td>";
+
+        return "<tr>" + checkboxColumn + filterOrIdHiddenColumn + contentColumn + "</tr>";
+    }
+}
+
+@addModalInner = {
+    <p>Do you want to add a new filter (column) to the view?</p>
+}
+
+@dynamicTable("filterOrId", table, true, rowToModelJsFun, itemToRowJsFun, addModalInner, None, 5)

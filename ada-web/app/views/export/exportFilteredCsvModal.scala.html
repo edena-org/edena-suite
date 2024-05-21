@@ -1,0 +1,14 @@
+@import org.edena.core.FilterCondition
+@import views.html.elements.labelValue
+@import scala.collection.immutable
+@import views.html.export.exportCsvModal
+
+@(
+    exportCall: (String, Seq[FilterCondition], Boolean) => Call,
+    conditions: Seq[FilterCondition],
+    extraElements: Html = Html("")
+)(
+    implicit request: RequestHeader
+)
+
+@exportCsvModal("exportFilteredCsvModal", "Filtered CSV Export", exportCall(",", conditions, false), extraElements)

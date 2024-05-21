@@ -1,0 +1,174 @@
+homepage.title = Ada: the {0} Discovery Platform
+
+error.date = Value is in wrong format (date expected)
+error.required = Value is required
+
+create.title = Add a new {0}
+edit.title = Edit {0}
+show.title = Show {0}
+list.title = List {0}
+overviewList.title = Overview {0}
+list.count.title = {0,choice,0#No {1}|1#One {1}|1<{0,number,integer} {1}s} found
+typeOverview.title = {0} Fields
+distribution.title = {0} Distribution
+cumulativeCount.title = {0} Cumulative Count
+scatterAnalysis.title = {0} Scatter Analysis
+pearsonCorrelation.title = {0} Pearson Correlations
+matthewsCorrelation.title = {0} Matthews Correlations
+classification.title = Classification of {0}
+regression.title = Regression of {0}
+temporalClassification.title = Temporal Classification of {0}
+temporalRegression.title = Temporal Regression of {0}
+clusterization.title = Clustering of {0}
+seriesProcessing.title = Series Processing of {0}
+seriesTransformation.title = Series Transformation of {0}
+independenceTest.title = Independence Test of {0}
+network.title = {0} Network
+mds.title = MDS of {0}
+tsne.title = t-SNE of {0}
+documentation.title = Documentation: {0}
+heatmap.title = Heatmap of {0}
+lineChart.title = Line Chart of {0}
+table.title = {0} Table
+comparison.title = Comparison of {0}
+
+dataSetSetting.keyFieldName.label = Key Field
+dataSetSetting.exportOrderByFieldName.label = Export OrderBy Field
+dataSetSetting.listViewTableColumnNames.label = Overview Table Columns
+dataSetSetting.widgetSpecs.label = Stats Calculation  Specs
+dataSetSetting.defaultScatterXFieldName.label = Scatter X Field
+dataSetSetting.defaultScatterYFieldName.label = Scatter Y Field
+dataSetSetting.defaultDistributionFieldName.label = Distribution Field
+dataSetSetting.defaultCumulativeCountFieldName.label = Cumulative Count Field
+dataSetSetting.tranSMARTVisitFieldName.label = TranSMART Visit Field
+dataSetSetting.tranSMARTReplacements.label = TranSMART Export Char Replacements
+dataSetSetting.mongoAutoCreateIndexForProjection.label = Mongo Auto-create Index for Projection
+dataSetSetting.filterShowNonNullCount.label = Filter Show Non-Null Count
+dataSetSetting.customControllerClassName.label = Custom Controller Class
+dataSetSetting.widgetEngineClassName.label = Widget Engine Name
+
+dataSetImport.setting.keyFieldName.label = Key Field
+dataSetImport.setting.exportOrderByFieldName.label = Export OrderBy Field
+dataSetImport.setting.listViewTableColumnNames.label = Overview Columns
+dataSetImport.setting.distributionChartFieldNames.label = Distribution Chart Fields
+dataSetImport.setting.defaultScatterXFieldName.label = Scatter X Field
+dataSetImport.setting.defaultScatterYFieldName.label = Scatter Y Field
+dataSetImport.setting.defaultDistributionFieldName.label = Distribution Field
+dataSetImport.setting.defaultCumulativeCountFieldName.label = Cumulative Count Field
+dataSetImport.setting.tranSMARTVisitFieldName.label = TranSMART Visit Field
+dataSetImport.setting.tranSMARTReplacements.label = TranSMART Export Char Replacements
+dataSetImport.setting.cacheDataSet.label = Cache Data Set
+dataSetImport.setting.filterShowFieldStyle.label = Filter Show Field Style
+dataSetImport.setting.filterShowNonNullCount.label = Show Non-Null Count
+dataSetImport.setting.showSideCategoricalTree.label = Show Side Tree
+dataSetImport.setting.mongoAutoCreateIndexForProjection.label = Mongo Auto-create Index for Projection
+dataSetImport.setting.storageType.label = Storage Type
+dataSetImport.setting.customControllerClassName.label = Custom Controller Class
+dataSetImport.setting.description.label = Description
+dataSetImport.setting.widgetEngineClassName.label = Widget Engine Name
+dataSetImport.setting.customStorageCollectionName.label = Custom Storage Collection Name
+
+dataSetImport.dataView.tableColumnNames.label = Table Column Names
+dataSetImport.dataView.distributionCalcFieldNames.label = Distribution Calc Field Names
+dataSetImport.dataView.elementGridWidth.label = Element Grid Width
+dataSetImport.dataView.useOptimizedRepoChartCalcMethod.label = Optimized Per Chart Repo Calc
+
+dataSetImport.dataSpaceName.label = Study Name
+dataSetImport.eol.label = Specific EOL
+dataSetImport.path.label = Server-side Path
+
+schedulePanel.scheduled.label = Schedule?
+schedulePanel.scheduledTime.weekDay.label = Day of Week
+schedulePanel.scheduledTime.hour.label = Hour
+schedulePanel.scheduledTime.minute.label = Minute
+schedulePanel.scheduledTime.second.label = Second
+schedulePanel.scheduledTime.periodicityInMinutes.label = Periodicity (Mins)
+schedulePanel.scheduledTime.periodicityOffsetInMinutes.label = Periodicity Offset (Mins)
+
+csvDataSetImport.dataSpaceName.label = Data Space Name
+csvDataSetImport.dataSetId.label = Data Set Id
+csvDataSetImport.dataSetName.label = Data Set Name
+csvDataSetImport.setting.dataSetId.label = Setting Data Set Id
+csvDataSetImport.matchQuotes.label.label = Match Quotes?
+csvDataSetImport.inferenceMaxEnumValuesCount.label = Inference Max Enum Values Count
+csvDataSetImport.inferenceMinAvgValuesPerEnum.label = Inference Min Avg Values Per Enum
+csvDataSetImport.path.label = Source data / path
+
+tranSmartDataSetImport.dataPath.label = Source data / path
+tranSmartDataSetImport.mappingPath.label = Source mapping / path
+
+jsonDataSetImport.inferenceMaxEnumValuesCount.label = Inference Max Enum Values Count
+jsonDataSetImport.inferenceMinAvgValuesPerEnum.label = Inference Min Avg Values Per Enum
+jsonDataSetImport.path.label = Source data / path
+
+synapseDataSetImport.downloadColumnFiles.label = Download Column Files?
+
+redCapDataSetImport.importDictionaryFlag.label = Import Dictionary?
+
+dataView.useOptimizedRepoChartCalcMethod.label = Optimized Per Widget Repo Calc
+
+dataSetTranslation.resultDataSetSpec.name.label = Result Data Set Name
+dataSetTranslation.resultDataSetSpec.id.label = Result Data Set Id
+dataSetTranslation.resultDataSetSpec.storageType.label = Storage Type
+dataSetTranslation.timeCreated.label = Time Created
+dataSetTranslation.timeLastExecuted.label = Time Last Executed
+
+dataSetTranslation.streamSpec.batchSize.label = Batch Size
+dataSetTranslation.streamSpec.backpressureBufferSize.label = Backpressure Buffer Size
+dataSetTranslation.streamSpec.parallelism.label = Parallelism
+changeFieldEnumsTransformation.sourceDataSetId.label = Source Data Set
+copyDataSetTransformation.sourceDataSetId.label = Source Data Set
+dropFieldsTransformation.sourceDataSetId.label = Source Data Set
+dropFieldsTransformation.fieldNamesToKeep.label = Fields To Keep
+dropFieldsTransformation.fieldNamesToDrop.label = Fields To Drop
+linkTwoDataSetsTransformation.leftSourceDataSetId.label = Left Source Data Set
+linkTwoDataSetsTransformation.rightSourceDataSetId.label = Right Source Data Set
+linkTwoDataSetsTransformation.leftFieldNamesToKeep.label = Left Fields To Keep
+linkTwoDataSetsTransformation.rightFieldNamesToKeep.label = Right Fields To Keep
+linkTwoDataSetsTransformation.addDataSetIdToRightFieldNames.label = Add Data Set Id To (Right) Fields
+matchGroupsWithConfoundersTransformation.sourceDataSetId.label = Source Data Set
+matchGroupsWithConfoundersTransformation.filterId.label = Filter Id
+matchGroupsWithConfoundersTransformation.targetGroupFieldName.label = Target Group Field
+renameFieldsTransformation.sourceDataSetId.label = Source Data Set
+
+dataSetSeriesProcessing.core.resultDataSetId.label = Result Data Set Id 
+dataSetSeriesProcessing.core.resultDataSetName.label = Result Data Set Name 
+dataSetSeriesProcessing.core.resultStorageType.label = Result Storage
+dataSetSeriesProcessing.core.processingBatchSize.label = Processing Batch Size
+dataSetSeriesProcessing.core.saveBatchSize.label = Save Batch Size 
+
+dataSetSeriesTransformation.core.resultDataSetId.label = Result Data Set Id 
+dataSetSeriesTransformation.core.resultDataSetName.label = Result Data Set Name 
+dataSetSeriesTransformation.core.resultStorageType.label = Result Storage
+dataSetSeriesTransformation.core.processingBatchSize.label = Processing Batch Size
+dataSetSeriesTransformation.core.saveBatchSize.label = Save Batch Size 
+
+filter.createdBy.label = Created By
+filter.timeCreated.label = Time Created
+
+user.permission-dataSetId.label = Data Set
+
+login.id = User Id
+login.password = Password
+
+dataSets.menu = Studies
+ml.menu = ML
+admin.menu = Admin
+links.menu = Links
+issues.menu = Issues
+docs.menu = Docs / Help
+contact.menu = Contact
+
+dataView.displayName = Data View
+category.displayName = Category
+field.displayName = Field
+filter.displayName = Filter
+classificationRun.displayName = Classification Run
+temporalClassificationRun.displayName = Temporal Classification Run
+regressionRun.displayName = Regression Run
+temporalRegressionRun.displayName = Temporal Regression Run
+dataSetImport.displayName = Data Set Import
+dataSetTransformation.displayName = "Data Set Transformation
+user.displayName = User
+dataSpace.displayName = Data Space
+runnableSpec.displayName = Runnable

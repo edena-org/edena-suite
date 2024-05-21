@@ -1,0 +1,124 @@
+@import views.html.layout.main
+@import play.api.i18n.Messages
+@import org.edena.ada.server.models.DataSpaceMetaInfo
+@import org.edena.ada.server.models.FilterShowFieldStyle.NamesAndLabels
+@import org.edena.ada.server.models.StorageType
+@import org.edena.ada.server.models.FilterShowFieldStyle
+@import views.html.elements._
+@import views.html.layout
+@import views.html.dataset.{datasetMenu, datasetSubNavWithJs, seriesTransformationFieldTable}
+@import views.html.table.dynamicTableJsImport
+@import org.edena.ada.web.controllers.dataset.DataSetWebContext._
+@import org.edena.ada.web.controllers.dataset.DataSetWebContext
+@import org.edena.ada.server.models.datatrans.DataSetSeriesTransformationSpec
+@import views.html.dataset.dynamicFieldTable
+@import views.html.layout.formErrors
+@import org.edena.ada.web.util.enumToValueString
+@import org.edena.ada.server.models.DataSetSetting
+
+@(
+    dataSetName: String,
+    form: Form[DataSetSeriesTransformationSpec],
+    setting: DataSetSetting,
+    dataSpaceMetaInfos: Traversable[DataSpaceMetaInfo]
+)(
+    implicit context: DataSetWebContext
+)
+
+@inputTextAux(fieldName: String, defaultValue: Option[Any] = None) = @{
+    defining(form(fieldName)) { field =>
+        inputFieldText(
+            "dataSetSeriesTransformation",
+            if (field.value.isEmpty && defaultValue.isDefined)
+                field.copy(value = Some(defaultValue.get.toString))
+            else
+                field,
+            Nil,
+            3
+        )
+    }
+}
+
+@selectAux(fieldName: String, values: Seq[(String, String)]) = {
+    @select("dataSetSeriesTransformation", fieldName, form, values, true, Nil, 3)
+}
+
+@extraFieldButtons = {
+    <a id="addAllFieldsButton" class="btn btn-info btn-sm" href="#" onclick="addAllFields();" data-toggle="tooltip" title="Add All Fields">
+        <span class="glyphicon glyphicon-plus" aria-hidden="true"></span> All
+    </a>
+}
+
+@bottomResources = {
+    @typeaheadJsImport()
+
+    <script type="text/javascript">
+        $(function () {
+            populateFieldTypeaheadFromUrl({
+                typeaheadElement: $('#preserveFieldNameDiv #fieldTypeahead'),
+                fieldNameElement: $('#preserveFieldNameDiv #fieldName'),
+                url: '@Html(dataSetRouter.allFields.url)',
+                showOption: @setting.filterShowFieldStyle.getOrElse(NamesAndLabels).id
+            })
+        })
+
+        function addAllFields() {
+            $.ajax({
+                url: '@Html(context.dataSetRouter.allFields.url)',
+                success: function (data) {
+                    $.each(data, function (index, field) {
+                        var values = {};
+                        values["fieldName"] = field.name;
+                        values["fieldTypeahead"] = field.label ? field.label : field.name;
+
+                        $('#preserveFieldNameDiv').dynamicTable('addTableRow', values)
+                    });
+                }
+            });
+        }
+    </script>
+}
+
+@main(Messages("seriesTransformation.title", dataSetName), Some(datasetMenu(dataSpaceMetaInfos)), Some(datasetSubNavWithJs(setting)), None, Some(bottomResources), Some(formErrors("transformSeries", form.errors))) {
+
+    <div class="page-header">
+        <h3>
+            @Messages("seriesTransformation.title", dataSetName)
+        </h3>
+    </div>
+
+    @dynamicTableJsImport()
+
+    <div class="row">
+        <div class="col-md-12">
+            @helper.form(action = dataSetRouter.runSeriesTransformation) {
+                <fieldset>
+                    @inputTextAux("core.resultDataSetId", Some(context.dataSetId + "_derived"))
+                    @inputTextAux("core.resultDataSetName", Some(dataSetName + " (Derived)"))
+                    @selectAux("core.resultStorageType", enumToValueString(StorageType))
+                    @labelValue("seriesTransformationSpecs", "Series Transformation Specs", false, labelGridWidth = 3){
+                        @seriesTransformationFieldTable(
+                            form.value.map(_.seriesTransformationSpecs).getOrElse(Nil)
+                        )
+                    }
+                    @labelValue("preserveFieldNames", "Preserve Field Names", false, labelGridWidth = 3) {
+                        @dynamicFieldTable(
+                            "preserveFieldName",
+                            Nil,
+                            false,
+                            5,
+                            Some(extraFieldButtons),
+                            Some(Right(dataSetRouter.getCategoriesWithFieldsAsTreeNodes(Left(Nil))))
+                        )
+                    }
+                    @inputTextAux("core.processingBatchSize", Some(20))
+                    @inputTextAux("core.saveBatchSize", Some(5))
+                </fieldset>
+
+                <div class="actions pull-right">
+                    <input type="submit" value="Submit" class="btn btn-primary">
+                </div>
+            }
+        </div>
+    </div>
+}

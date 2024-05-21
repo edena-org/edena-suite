@@ -1,0 +1,81 @@
+@import views.html.elements.{checkbox, inputFieldTypeahead, inputText, inputTextReadonly, labelValue, select, textarea}
+@import views.html.elements.{fieldTypeahead, inputTypeahead}
+@import views.html.table.{dynamicThreeColumnTable, dynamicNColumnTable}
+@import views.html.attributeLabel
+@import org.edena.ada.server.models.{DataSetSetting, FilterShowFieldStyle, StorageType}
+@import org.edena.core.util.toHumanReadableCamel
+@import org.edena.ada.server.models.Link
+@import org.edena.ada.server.models.Menu
+@import org.edena.ada.web.controllers.dataset.DataSetWebContext.widgetEngineNames
+@import org.edena.play.controllers.WebContext
+@import org.edena.play.controllers.WebContext._
+
+@(form: Form[DataSetSetting])(implicit webContext: WebContext)
+
+@inputTextReadonly("dataSetSetting", "dataSetId", form)
+
+@select("dataSetSetting", "storageType", form,
+    StorageType.values.toSeq.sortBy(_.id).map(value => (value.toString, value.toString)), false
+)
+@checkbox("dataSetSetting", "mongoAutoCreateIndexForProjection", form)
+
+<hr/>
+
+@inputFieldTypeahead("dataSetSetting", "keyField", form)
+@inputFieldTypeahead("dataSetSetting", "exportOrderByField", form)
+@inputFieldTypeahead("dataSetSetting", "defaultDistributionField", form)
+@inputFieldTypeahead("dataSetSetting", "defaultScatterXField", form)
+@inputFieldTypeahead("dataSetSetting", "defaultScatterYField", form)
+@inputFieldTypeahead("dataSetSetting", "defaultCumulativeCountField", form)
+@inputText("dataSetSetting", "displayItemName", form)
+
+@select("dataSetSetting", "filterShowFieldStyle", form,
+    FilterShowFieldStyle.values.toSeq.sortBy(_.id).map(value => (value.toString, toHumanReadableCamel(value.toString))), true
+)
+
+@checkbox("dataSetSetting", "filterShowNonNullCount", form)
+@checkbox("dataSetSetting", "showSideCategoricalTree", form)
+
+@inputTypeahead(
+    "dataSetSetting",
+    "ownerId",
+    "ownerTypeahead",
+    form,
+    "User"
+)
+
+@textarea("dataSetSetting", "description", form, Seq('cols -> 20, 'rows -> 5))
+
+@rowToModel = {
+    function rowToModel(row) {
+        function value(x) { return getRowValue(row, x) }
+
+                var header = value("field1")
+                if (!header)
+                    header = ""
+                const label = value("field2")
+                const url = value("field3")
+                const displayURLType = value("field4")
+
+        return {"concreteClass": "org.edena.ada.server.models.Menu", "header": header, "links": [{"label": label, "url": url, "displayURLType": displayURLType}]}
+    }
+}
+
+@dynamicNColumnTable(
+    "extraNavigationItem",
+    "Extra Navigation Items",
+    Seq("Menu Header", "Link Label", "Link URL", "Display Type"),
+    form.value.map(_.extraNavigationItems.flatMap { navigationItem =>
+        navigationItem match {
+            case Link(label, url, displayURLType) => Seq(Seq("", label, url, displayURLType.map(_.toString).getOrElse("")))
+            case Menu(header, links) => links.map(link => Seq(header, link.label, link.url, link.displayURLType.map(_.toString).getOrElse("")))
+        }
+    }).getOrElse(Nil),
+    Some(rowToModel)
+)
+
+@inputText("dataSetSetting", "customControllerClassName", form)
+
+@select("dataSetSetting", "widgetEngineClassName", form, widgetEngineNames(toConfiguration), true)
+
+@inputText("dataSetSetting", "customStorageCollectionName", form)

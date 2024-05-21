@@ -1,0 +1,26 @@
+@(
+    domainName: String,
+    sortable: Boolean = false,
+    rowToModelJsFun: Html,
+    itemToRowJsFun: Html,
+    hideModalOnEnter: Boolean = true,
+    modalName: Option[String] = None,
+    itemsName: Option[String] = None
+)
+
+<script type="text/javascript">
+    $(function () {
+        const modalName = (@{modalName.isDefined}) ? '@{modalName.getOrElse("")}' : null
+        const itemsName = (@{itemsName.isDefined}) ? '@{itemsName.getOrElse("")}' : null
+
+        $("#@{domainName}Div").dynamicTable({
+            domainName: '@{domainName}',
+            sortable: @sortable,
+            rowToModel: @rowToModelJsFun,
+            itemToRow: @itemToRowJsFun,
+            hideModalOnEnter: @hideModalOnEnter,
+            modalName: modalName,
+            itemsName: itemsName
+        });
+    })
+</script>

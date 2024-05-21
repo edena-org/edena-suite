@@ -1,0 +1,20 @@
+@import views.html.elements.{inputText, yesNoRadio, select}
+@import org.edena.ada.web.util.enumToValueString
+@import org.edena.ada.server.models.WeekDay
+
+@(form: Form[_])(implicit msg: Messages)
+
+<div class="panel panel-default">
+    <div class="panel-heading">Schedule</div>
+    <div class="panel-body">
+        @yesNoRadio("schedulePanel", "scheduled", form, Some("Do you want to schedule the import execution?"))
+        <hr/>
+        @select("schedulePanel", "scheduledTime.weekDay", form, enumToValueString(WeekDay), true)
+        @inputText("schedulePanel", "scheduledTime.hour", form)
+        @inputText("schedulePanel", "scheduledTime.minute", form)
+        @inputText("schedulePanel", "scheduledTime.second", form)
+        <hr/>
+        @inputText("schedulePanel", "scheduledTime.periodicityInMinutes", form)
+        @inputText("schedulePanel", "scheduledTime.periodicityOffsetInMinutes", form)
+    </div>
+</div>

@@ -1,0 +1,90 @@
+@import views.html.table.{dynamicTable, displayTable}
+@import views.html.filter.{jsTreeImport, categoricalTree}
+@import views.html.dataset.dynamicFieldTableModalInner
+@import org.edena.ada.web.util.typeColumns
+@import org.edena.ada.server.field.FieldUtil.nameOrLabel
+@import org.edena.ada.server.models.{Field, Category, FilterShowFieldStyle}
+@import views.html.table.dynamicTableJs
+@import views.html.table.dynamicTableDiv
+@import views.html.table.dynamicTableInnerModal
+@import org.webjars.play.WebJarsUtil
+
+@(
+    tableId: String,
+    items: Traversable[Field],
+    sortable: Boolean = false,
+    gridWidth: Int = 5,
+    extraActions: Option[Html] = None,
+    categoriesOrCall: Option[Either[Traversable[Category], Call]] = None,
+    categoricalTreeId: String = "categoryTree",
+    showFieldStyle: Option[FilterShowFieldStyle.Value] = None,
+    createModal: Boolean = true,
+    modalName: Option[String] = None,
+    itemsName: Option[String] = None
+)(
+    implicit request: Request[_], webJarAssets: WebJarsUtil
+)
+
+@fieldNameElement(field: Field) = {
+    <input type="hidden" id="fieldName" value="@field.name">
+}
+
+@table = {
+    @displayTable(
+        items,
+        typeColumns[Field](
+            (None, "", fieldNameElement),
+            (Some("label"), "", nameOrLabel(showFieldStyle.getOrElse(FilterShowFieldStyle.LabelsOnly)))
+        ),
+        tableSelection = true
+    )
+}
+
+@rowToModelJsFun = {
+    function(row) {
+        return row.find('#fieldName').val().trim();
+    }
+}
+
+@itemToRowJsFun = {
+    function(values) {
+        var row = null
+        if (values["fieldName"]) {
+            var checkboxColumn = "<td><input type='checkbox' class='table-selection' onclick='preventEventPropagation(event)'></input></td>";
+            var fieldNameColumn = "<td><input type='hidden' id='fieldName' value='" + values["fieldName"] + "'/></td>";
+            var fieldLabelColumn = "<td>" + values["fieldTypeahead"] + "</td>";
+
+            // create row
+            row = $("<tr></tr>")
+            row.append(checkboxColumn)
+            row.append(fieldNameColumn)
+            row.append(fieldLabelColumn)
+        }
+
+        return row;
+    }
+}
+
+@jsTreeImport()
+
+@modalInner = @{
+    dynamicFieldTableModalInner(categoriesOrCall, categoricalTreeId)
+}
+
+@dynamicTableDiv(
+    tableId,
+    table,
+    if (createModal) Some(dynamicTableInnerModal(tableId, modalInner, false)) else None,
+    extraActions,
+    gridWidth
+)
+
+@dynamicTableJs(
+    tableId,
+    sortable,
+    rowToModelJsFun,
+    itemToRowJsFun,
+    false,
+    modalName,
+    itemsName
+)

@@ -1,0 +1,107 @@
+@import org.edena.ada.web.controllers.dataset.DataSetWebContext._
+@import org.edena.ada.web.controllers.dataset.DataSetWebContext
+@import org.edena.ada.server.models.FilterShowFieldStyle
+@import org.edena.core.field.FieldTypeId
+
+@(
+    showFieldStyle: Option[FilterShowFieldStyle.Value]
+)(
+    implicit context: DataSetWebContext
+)
+
+@typeaheadJsImport()
+
+<script type="text/javascript">
+    $(function () {
+        var showOption = @{showFieldStyle.getOrElse(FilterShowFieldStyle.NamesAndLabels).id}
+
+        $.ajax({
+            url: '@Html(dataSetRouter.allFieldNamesAndLabels.url)',
+            success: function (data) {
+                populateFieldTypeaheads({
+                    typeaheadElements: [
+                        $('#add_tableColumnNameModal #fieldTypeahead'),
+                        $('#add_widgetSpecModal #fieldNameTypeahead'),
+                        $('#edit_widgetSpecModal #fieldNameTypeahead'),
+                        $('#initTableSortFieldTypeahead')
+                    ],
+                    fieldNameElements: [
+                        $('#add_tableColumnNameModal #fieldName'),
+                        $('#add_widgetSpecModal #fieldName'),
+                        $('#edit_widgetSpecModal #fieldName'),
+                        $('#initTableSortFieldName')
+                    ],
+                    fieldNameAndLabels: data,
+                    showOption,
+                    minLength: 1,
+                    initSelectByNameElement: true
+                });
+            }
+        });
+
+        $.ajax({
+            url: '@Html(dataSetRouter.fieldNamesAndLabels(Seq(FieldTypeId.Enum, FieldTypeId.String, FieldTypeId.Boolean, FieldTypeId.Json)).url)',
+            success: function (data) {
+                populateFieldTypeaheads({
+                    typeaheadElements: [
+                        $('#add_widgetSpecModal #groupFieldNameTypeahead'),
+                        $('#edit_widgetSpecModal #groupFieldNameTypeahead')
+                    ],
+                    fieldNameElements: [
+                        $('#add_widgetSpecModal #groupFieldName'),
+                        $('#edit_widgetSpecModal #groupFieldName')
+                    ],
+                    fieldNameAndLabels: data,
+                    showOption,
+                    minLength: 1
+                });
+            }
+        });
+
+        $.ajax({
+            url: '@Html(dataSetRouter.fieldNamesAndLabels(Seq(FieldTypeId.Double, FieldTypeId.Integer, FieldTypeId.Date)).url)',
+            success: function (data) {
+                populateFieldTypeaheads({
+                    typeaheadElements: [
+                        $('#add_widgetSpecModal #xFieldNameTypeahead'),
+                        $('#add_widgetSpecModal #yFieldNameTypeahead'),
+                        $('#add_widgetSpecModal #valueFieldNameTypeahead'),
+                        $('#add_add_widgetSpecModal-yFieldNameModal #fieldTypeahead'),
+                        $('#edit_widgetSpecModal #xFieldNameTypeahead'),
+                        $('#edit_widgetSpecModal #yFieldNameTypeahead'),
+                        $('#edit_widgetSpecModal #valueFieldNameTypeahead'),
+                        $('#add_edit_widgetSpecModal-yFieldNameModal #fieldTypeahead')
+                    ],
+                    fieldNameElements: [
+                        $('#add_widgetSpecModal #xFieldName'),
+                        $('#add_widgetSpecModal #yFieldName'),
+                        $('#add_widgetSpecModal #valueFieldName'),
+                        $('#add_add_widgetSpecModal-yFieldNameModal #fieldName'),
+                        $('#edit_widgetSpecModal #xFieldName'),
+                        $('#edit_widgetSpecModal #yFieldName'),
+                        $('#edit_widgetSpecModal #valueFieldName'),
+                        $('#add_edit_widgetSpecModal-yFieldNameModal #fieldName'),
+                    ],
+                    fieldNameAndLabels: data,
+                    showOption,
+                    minLength: 1
+                });
+            }
+        });
+
+        $.ajax({
+            url: '@Html(filterRouter.idAndNamesAccessible.url)',
+            success: function (data) {
+                var typeaheadData = data.map(function (item, index) {
+                    return {name: item._id.$oid, label: item.name};
+                });
+                populateFieldTypeahead({
+                    typeaheadElement: $('#subFilterTypeahead'),
+                    fieldNameElement: $('#subFilterId'),
+                    fieldNameAndLabels: typeaheadData,
+                    showOption: @FilterShowFieldStyle.LabelsOnly.id
+                });
+            }
+        });
+    });
+</script>

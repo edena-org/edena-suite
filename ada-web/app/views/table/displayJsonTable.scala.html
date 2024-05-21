@@ -1,0 +1,86 @@
+@import play.api.libs.json.{JsObject, JsNull, JsValue}
+@import org.edena.ada.web.util.fieldLabel
+@import org.edena.json.{util => JsonUtil}
+@import org.edena.store.json.JsObjectIdentity
+@import reactivemongo.api.bson.BSONObjectID
+@import org.edena.store.json.BSONObjectIDFormat
+@import org.edena.ada.web.util.FieldTypeFullRenderer.FieldTypeFullRenderer
+
+@(
+    items : Traversable[JsObject],
+    headerFun : (Option[String], String) => Html,
+    fieldLabelMap : Option[Map[String, String]] = None,
+    fieldsToShow : Option[Seq[String]] = None,
+    rowClickCall : Option[JsObject => Call] = None,
+    fieldNameRenderMap: Option[Map[String, FieldTypeFullRenderer]] = None,
+    tableId: Option[String] = None,
+    tableSelection: Boolean = false
+)
+
+@idValue(id: BSONObjectID) = {
+    <input type="hidden" id="@JsObjectIdentity.name" value="@id.stringify">
+}
+
+<div class="horizontal-scroll">
+<table @if(tableId.isDefined) {id="@tableId.get"} class="table table-striped">
+	<thead>
+		<tr>
+            @if(tableSelection) {
+                <th class="col header">
+                    <input type="checkbox" class="table-selection-all" onclick='preventEventPropagation(event)' title="Check/Uncheck All"/>
+                </th>
+            }
+            @if(fieldsToShow.isDefined) {
+                @fieldsToShow.get.map { field =>
+                    @headerFun(Some(field), fieldLabel(field, fieldLabelMap))
+                }
+            } else {
+                @items.headOption.map { item =>
+                    @item.fields.map { field =>
+                        @headerFun(Some(field._1), fieldLabel(field._1, fieldLabelMap))
+                    }
+                }
+            }
+		</tr>
+	</thead>
+	<tbody>
+    	@items.map { item =>
+	    	<tr class='@if(rowClickCall.isDefined) {clickable-row}' data-href='@if(rowClickCall.isDefined){@rowClickCall.get(item)}'>
+                @if(tableSelection) {
+                    <td>
+                        <input type="checkbox" class="table-selection" onclick='preventEventPropagation(event)'/>
+                        @{(item \ JsObjectIdentity.name).asOpt[BSONObjectID].map(idValue)}
+                    </td>
+                }
+                @if(fieldsToShow.isDefined) {
+                    @fieldsToShow.get.map { fieldName =>
+                        <td>
+                            @if(fieldNameRenderMap.isDefined && fieldNameRenderMap.get.contains(fieldName)) {
+                                @fieldNameRenderMap.get.get(fieldName).get.apply(
+                                    (item \ fieldName).toOption,
+                                    fieldName,
+                                    (item \ JsObjectIdentity.name).asOpt[BSONObjectID]
+                                )
+                            } else {
+                                @JsonUtil.toString((item \ fieldName))
+                            }
+                        </td>
+                    }
+                } else {
+                    @item.fields.map { field =>
+                        <td>
+                            @if(field._2 != JsNull) {@field._2.asOpt[String].getOrElse(field._2)}
+                        </td>
+                    }
+                }
+		    </tr>
+	    }
+	</tbody>
+</table>
+</div>
+
+@if(tableSelection) {
+    <script type="text/javascript">
+        activateTableAllSelection();
+    </script>
+}

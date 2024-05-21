@@ -1,0 +1,71 @@
+@import org.edena.ada.server.models.datatrans.FilterDataSetTransformation
+@import views.html.datasettrans.dataSetTypeahead
+@import views.html.elements.inputTypeahead
+@import play.api.i18n.Messages
+@import org.edena.play.controllers.WebContext
+@import org.edena.play.controllers.WebContext._
+@import reactivemongo.api.bson.BSONObjectID
+@import org.edena.ada.web.controllers.dataset.datatrans.OptionalIdForm
+
+@(
+    id: Option[BSONObjectID],
+    form: Form[FilterDataSetTransformation]
+)(
+    implicit webContext: WebContext
+)
+
+@dataSetTypeahead("filterDataSetTransformation", "sourceDataSetId", form, id, Some("Filter"))
+
+@inputTypeahead(
+    "filterDataSetTransformation",
+    "filterId",
+    "filterTypeahead",
+    form,
+    "Filter"
+)
+
+@helper.javascriptRouter("dataSetTransformationJsRoutes2")(
+    org.edena.ada.web.controllers.dataset.datatrans.routes.javascript.DataSetTransformationController.filterIdAndNames
+)
+
+<script type="text/javascript">
+
+    // ugly hack - would be better to have some kind of typeahead:changed event
+    var previousDataSetId = null;
+
+    $(function () {
+        $('#sourceDataSetIdTypeahead').on('typeahead:selected', function (evt, item) {
+            const dataSetId = $("#sourceDataSetId").val()
+            populateFilterTypeahead(dataSetId)
+        })
+
+        const dataSetId = $("#sourceDataSetId").val()
+
+        populateFilterTypeahead(dataSetId)
+    })
+
+    function populateFilterTypeahead(dataSetId) {
+        if (dataSetId) {
+            // $('#filterTypeahead').typeahead('isEnabled')
+            if (previousDataSetId && previousDataSetId != dataSetId) {
+                $('#filterId').val("");
+                $('#filterTypeahead').val("");
+                $('#filterTypeahead').typeahead("destroy");
+            }
+
+            dataSetTransformationJsRoutes2.org.edena.ada.web.controllers.dataset.datatrans.DataSetTransformationController.filterIdAndNames(dataSetId).ajax({
+                success: function (data) {
+                    populateIdNameTypeahead({
+                        typeaheadElement: $('#filterTypeahead'),
+                        idElement: $('#filterId'),
+                        idNames: data,
+                        initSelectByNameElement: true
+                    })
+                },
+                error: showErrorResponse
+            })
+
+            previousDataSetId = dataSetId;
+        }
+    }
+</script>

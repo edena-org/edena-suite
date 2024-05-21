@@ -1,0 +1,29 @@
+@import views.html.layout
+@import views.html.user.elements
+@import org.edena.ada.server.models.DataSpaceMetaInfo
+@import org.edena.ada.server.models.User
+@import org.edena.play.controllers.WebContext._
+@import org.edena.play.controllers.WebContext
+@import org.edena.ada.web.controllers.DataSetControllerActionNames
+@import org.edena.ada.web.controllers.routes
+
+@(
+    id: reactivemongo.api.bson.BSONObjectID,
+    form: Form[User],
+    metaInfos: Traversable[DataSpaceMetaInfo],
+    controllerActionNames: DataSetControllerActionNames
+)(
+    implicit context: WebContext
+)
+
+@layout.edit(
+    "User",
+    "user",
+	form.errors,
+    elements(form, metaInfos, controllerActionNames),
+	routes.UserController.update(id),
+	routes.UserController.listAll(),
+    Some(routes.UserController.delete(id)),
+    None,
+    None
+)

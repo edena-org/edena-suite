@@ -1,0 +1,32 @@
+@import views.html.layout.jsonShow
+@import views.html.dataset.{datasetMenu, datasetSubNavWithJs}
+@import org.edena.ada.web.controllers.dataset.DataSetWebContext._
+@import org.edena.ada.web.controllers.dataset.DataSetWebContext
+@import org.edena.spark_ml.models.result.RegressionResult
+@import org.edena.ada.server.models.ml.regression.RegressionResult.regressionResultFormat
+@import org.edena.ada.server.models.DataSpaceMetaInfo
+@import play.api.libs.json.Json
+@import play.api.libs.json.JsObject
+@import org.edena.ada.web.controllers.dataset.MLRunRouter
+@import org.edena.ada.server.models.DataSetSetting
+
+@(
+    router: MLRunRouter)(
+    title: String,
+    item: RegressionResult,
+    setting: DataSetSetting,
+    dataSpaceMetaInfos: Traversable[DataSpaceMetaInfo]
+)(
+    implicit context: DataSetWebContext
+)
+
+@jsonShow(
+    title,
+    Json.toJson(item).as[JsObject],
+    router.plainList,
+    Some(router.delete(item._id.get)),
+    false,
+    Map(),
+    Some(datasetMenu(dataSpaceMetaInfos)),
+    Some(datasetSubNavWithJs(setting))
+)

@@ -1,0 +1,91 @@
+@import views.html.layout
+@import views.html.elements._
+@import org.edena.ada.server.models.{DataView, Field, FilterShowFieldStyle}
+@import views.html.table.dynamicTableJsImport
+@import views.html.dataview.{filterOrIdTable, widgetSpecTable}
+@import views.html.dataset.dynamicFieldTable
+@import org.edena.ada.web.controllers.dataset.DataSetWebContext
+@import reactivemongo.api.bson.BSONObjectID
+@import org.edena.ada.web.controllers.dataset.DataSetWebContext._
+@import org.edena.ada.server.models.WidgetGenerationMethod
+
+@import org.edena.ada.server.models.SortType
+@(
+    form: Form[DataView],
+    nameFieldMap: Map[String,  Field],
+    idFilterNameMap: Map[BSONObjectID, String],
+    allFieldsCall: Call,
+    showFieldStyle: Option[FilterShowFieldStyle.Value]
+)(
+    implicit context: DataSetWebContext
+)
+
+@dynamicTableJsImport()
+
+@inputText("dataView", "name", form)
+
+@form.value.map(_.createdBy.map ( user => value("dataView", "Created By", user.userId))).flatten.getOrElse("")
+
+@checkbox("dataView", "default", form)
+
+@checkbox("dataView", "isPrivate", form)
+
+@extraFieldButtons = {
+    <a id="addAllFieldsButton" class="btn btn-info btn-sm" href="#" onclick="addAllFields();" data-toggle="tooltip" title="Add All Fields">
+        <span class="glyphicon glyphicon-plus" aria-hidden="true"></span> All
+    </a>
+}
+
+@labelValue("tableColumnNames", attributeLabel("dataView", "tableColumnNames")){
+    @dynamicFieldTable(
+        "tableColumnName",
+        form.value.map(_.tableColumnNames.map(nameFieldMap.get).flatten).getOrElse(Nil),
+        true,
+        5,
+        Some(extraFieldButtons),
+        Some(Right(dataSetRouter.getCategoriesWithFieldsAsTreeNodes(Left(Nil)))),
+        showFieldStyle = showFieldStyle
+    )
+}
+
+@inputFieldTypeahead("dataView", "initTableSortField", form)
+
+@labelValue("initTableSortType", "Sort Type") {
+    @selectEnum("initTableSortType", SortType, false, None, form.value.map(_.initTableSortType.toString))
+}
+
+@labelValue("widgetSpecs", attributeLabel("dataView", "widgetSpecs")){
+    @widgetSpecTable(
+        form.value.map(_.widgetSpecs).getOrElse(Nil),
+        nameFieldMap,
+        idFilterNameMap,
+        showFieldStyle
+    )
+}
+
+@labelValue("filterOrIds", attributeLabel("dataView", "filterOrIds")) {
+    @filterOrIdTable(form.value.map(_.filterOrIds).getOrElse(Nil))
+}
+
+@inputText("dataView", "elementGridWidth", form)
+
+@labelValue("generationMethod", "Generation Method") {
+    @selectEnum("generationMethod", WidgetGenerationMethod, false, None, form.value.map(_.generationMethod.toString))
+}
+
+<script>
+    function addAllFields() {
+        $.ajax({
+            url: '@Html(allFieldsCall.url)',
+            success: function (data) {
+                $.each(data, function(index, field) {
+                    var values = {};
+                    values["fieldName"] = field.name;
+                    values["fieldTypeahead"] = field.label ? field.label : field.name;
+
+                    $('#tableColumnNameDiv').dynamicTable('addTableRow', values)
+                });
+            }
+        });
+    }
+</script>

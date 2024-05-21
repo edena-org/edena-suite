@@ -1,0 +1,56 @@
+@import views.html.layout
+@import views.html.table.paginatedTable
+@import views.html.filter.{filter, filterWithJs}
+@import org.edena.ada.web.controllers.dataset.routes.{DataSetSettingController => dataSetSettingRoutes}
+@import org.edena.ada.web.util.typeColumns
+@import org.edena.ada.server.models.{DataSetSetting, Field, Filter}
+@import org.edena.ada.server.models.FilterShowFieldStyle
+@import org.edena.play.controllers.WebContext._
+@import org.edena.play.controllers.WebContext
+@import org.edena.play.Page
+@import org.edena.core.FilterCondition
+
+@(
+    page: Page[DataSetSetting],
+    conditions: Seq[FilterCondition]
+)(
+    implicit context: WebContext
+)
+
+@actions = {
+    <div class="row">
+        <div class="col-md-8">
+            @filterWithJs(
+                Filter(conditions),
+                dataSetSettingRoutes.find(),
+                Left(Seq(
+                    Field("dataSetId", Some("Data Set Id"))
+                )),
+                None,
+                Some(FilterShowFieldStyle.LabelsOnly)
+            )
+        </div>
+    </div>
+}
+
+@table = @{
+    paginatedTable(
+        page,
+        dataSetSettingRoutes.find(_, _, conditions),
+        typeColumns[DataSetSetting](
+            (Some("dataSetId"), "Data Set Id", _.dataSetId),
+            (Some("keyField"), "Key Field", _.keyFieldName),
+            (Some("storageType"), "Storage Type", _.storageType)
+        ),
+        Some({ item : Any => dataSetSettingRoutes.get(item.asInstanceOf[DataSetSetting]._id.get)})
+    )
+}
+
+@layout.list(
+    "Data Set Setting",
+    None,
+    page.total,
+    Some(actions),
+    Some(table),
+    None
+)

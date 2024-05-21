@@ -1,0 +1,22 @@
+@import views.html.elements.helpModal
+
+@(
+  key: String,
+  label: Any,
+  hasError: Boolean = false,
+  helpText: Option[String] = None,
+  helpModalContent: Option[Html] = None,
+  labelGridWidth: Int = 2)(
+  valueElement : Any
+)
+
+<div class="form-group @if(hasError) {has-error}">
+  <div class="col-sm-@labelGridWidth">
+    <label for="@key" class="control-label">@label</label>
+    @helpModalContent.map(helpModal(_, Some(label.toString)))
+  </div>
+  <div class="col-sm-@{12 - labelGridWidth}">
+    @valueElement
+    <span class="help-block">@helpText.getOrElse("")</span>
+  </div>
+</div>

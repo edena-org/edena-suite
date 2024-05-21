@@ -1,0 +1,102 @@
+@import views.html.layout
+@import views.html.dataset.view.{viewExportDropdown, coreView}
+@import reactivemongo.api.bson.BSONObjectID
+@import org.edena.ada.server.models.DataSpaceMetaInfo
+@import org.edena.ada.web.controllers.dataset.DataSetWebContext._
+@import org.edena.ada.web.controllers.dataset.{DataSetWebContext, TableViewData}
+@import org.edena.ada.server.models.DataSetSetting
+
+@(
+    dataSetName: String,
+    itemName: String,
+    dataViewId: BSONObjectID,
+    dataViewName: String,
+    tableViewParts: Seq[TableViewData],
+    widgetsCallbackId: String,
+    widgetGridElementWidth: Int,
+    dataSetSetting: DataSetSetting,
+    canEditView: Boolean = false,
+    dataSpaceMetaInfos: Traversable[DataSpaceMetaInfo]
+)(
+    implicit context: DataSetWebContext
+)
+
+@actions = {
+    <ul class="list-inline">
+        <li>
+            @viewExportDropdown(dataViewId, dataSetName, dataSetSetting.filterShowFieldStyle)
+        </li>
+        <li>
+            <div class="dropdown">
+                <button class="btn btn-info btn-sm dropdown-toggle" type="button" id="dropdownMenu2" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    <span class="glyphicon glyphicon-wrench" aria-hidden="true"></span>
+                    <span class="caret"></span>
+                </button>
+                <ul class="dropdown-menu">
+                    @if(canEditView) {
+                        <li>
+                            <a href="@{dataViewRouter.getAndShowView(dataViewId)}">
+                                Edit View
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#" onclick="saveFilterToView('@{dataViewId.stringify}')">
+                                Save Filter To View
+                            </a>
+                        </li>
+                    }
+                    <li>
+                        <a href="#" onclick="addNewColumn()">
+                            Add New Filter
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" onclick="removeColumnRight()">
+                            Remove Filter
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" onclick="setFullWidth()">
+                            Set Full Width
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </li>
+    </ul>
+}
+
+@extraBottomResources = {
+    <script type="text/javascript">
+
+        $(function () {
+            // add a spinner
+            addSpinner($("#widgetsTr"), "margin-bottom: 20px;");
+
+            // update widgets from callback
+            updateAllWidgetsFromCallback(widgetEngine, '@{widgetsCallbackId}', defaultWidgetWidth);
+
+            var filters = $("#filtersTr").find(".filter-div")
+
+            // link the first filter to export modals
+            var firstFilter = filters.first()
+            addFilterModelBeforeModalSubmit("exportFilteredCsvModal", firstFilter, "filter");
+            addFilterModelBeforeModalSubmit("exportFilteredTableCsvModal", firstFilter, "filter");
+            addFilterModelBeforeModalSubmit("exportFilteredJsonModal", firstFilter, "filter");
+            addFilterModelBeforeModalSubmit("exportFilteredTableJsonModal", firstFilter, "filter");
+        })
+    </script>
+}
+
+@coreView(
+    title = dataSetName + " ("+ dataViewName + ")",
+    itemName,
+    dataViewId,
+    tableViewParts,
+    widgetGridElementWidth,
+    dataSetSetting,
+    actions,
+    Some(extraBottomResources),
+    tableRowSelection = false,
+    dataSpaceMetaInfos
+)

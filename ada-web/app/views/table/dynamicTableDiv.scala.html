@@ -1,0 +1,25 @@
+@import org.edena.core.util.toHumanReadableCamel
+
+@(
+    domainName: String,
+    table: Html,
+    modal: Option[Html],
+    extraActions: Option[Html] = None,
+    gridWidth: Int = 4
+)
+
+<div id="@{domainName}Div" class="row col-sm-@gridWidth">
+    <a id="addRowButton" class="btn btn-info btn-sm" href="#" onclick="$('#@{domainName}Div').dynamicTable('openAddModal');return false;" data-toggle="tooltip" title="Add New @{toHumanReadableCamel(domainName)}">
+        <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
+    </a>
+    <a id="remoteRowButton" class="btn btn-info btn-sm" href="#" onclick="$('#@{domainName}Div').dynamicTable('removeCheckedRows');return false;" data-toggle="tooltip" title="Delete @{toHumanReadableCamel(domainName)}">
+        <span class="glyphicon glyphicon-trash" aria-hidden="true"></span>
+    </a>
+    @if(extraActions.isDefined) {
+        @extraActions.get
+    }
+    <div>
+        @table
+    </div>
+    @if(modal.isDefined) { @modal.get }
+</div>

@@ -1,0 +1,24 @@
+@import org.edena.ada.server.models.datatrans.DataSetTransformation
+@import views.html.elements._
+@import org.edena.ada.web.util.enumToValueString
+@import org.edena.ada.server.models.StorageType
+
+@(form: Form[_ <: DataSetTransformation])(implicit msg: Messages)
+
+<div class="panel panel-default">
+    <div class="panel-heading">Result Data Set Info</div>
+    <div class="panel-body">
+        @inputText("dataSetTranslation", "resultDataSetSpec.name", form)
+        @inputText("dataSetTranslation", "resultDataSetSpec.id", form)
+        @select("dataSetTranslation", "resultDataSetSpec.storageType", form, enumToValueString(StorageType), false)
+    </div>
+</div>
+
+<script type="text/javascript">
+    $(function () {
+        if(@form("resultDataSetSpec.storageType").value.isEmpty) {
+            $("#resultDataSetSpec_storageType").val('@StorageType.ElasticSearch')
+        }
+    })
+</script>
+

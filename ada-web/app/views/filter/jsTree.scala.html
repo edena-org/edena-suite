@@ -1,0 +1,105 @@
+@import play.api.libs.json.JsValue
+
+@import play.api.libs.json.Json
+@import play.api.libs.json.JsObject
+
+@(
+    treeElementId: String,
+    dataOrUrl: Either[JsValue, String],
+    typesSetting: JsObject,
+    extraClass: Option[String] = None,
+    nodeSelectedFun: Option[Html] = None,
+    nodeDoubleClickedFun: Option[Html] = None,
+    sortFun: Option[Html] = None
+)
+
+<div class="row jsTree-filter">
+    <div class="col-md-7">
+        <input id="treeSearchInput" class="jsTree-search-input form-control" placeholder="Field Name"></input>
+    </div>
+    <div class="col-md-5 pull-right">
+        <a class="btn btn-info btn-sm" id="treeCollapseAllButton" href="#" data-toggle="tooltip" title="Collapse All">
+            <span class="glyphicon glyphicon-resize-small" aria-hidden="true"></span>
+        </a>
+        <a class="btn btn-info btn-sm" id="treeExpandAllButton" href="#" data-toggle="tooltip" title="Expand All">
+            <span class="glyphicon glyphicon-resize-full" aria-hidden="true"></span>
+        </a>
+    </div>
+</div>
+<div class="row jsTree-tree">
+    <div id="@treeElementId" class="col-md-12 @extraClass.getOrElse("")">
+    </div>
+    <hr/>
+</div>
+
+<script type="text/javascript">
+    $(function () {
+        var jsonData =
+            @if(dataOrUrl.isLeft) {
+                JSON.parse('@Html(Json.stringify(dataOrUrl.left.get))')
+            } else {
+                null
+            }
+
+        var dataUrl =
+            @if(dataOrUrl.isRight) {
+                '@Html(dataOrUrl.right.get)'
+            } else {
+                null
+            }
+
+        var data =
+            (jsonData) ?
+                jsonData
+            :
+                {'url' : dataUrl, 'data' : function (node) {return { 'id' : node.id };}}
+
+        var nodeSelectedFun =
+            @if(nodeSelectedFun.isDefined) {
+                @nodeSelectedFun.get
+            } else {
+                null
+            }
+
+        var nodeDoubleClickedFun =
+            @if(nodeDoubleClickedFun.isDefined) {
+                @nodeDoubleClickedFun.get
+            } else {
+                null
+            }
+
+        var sortFun =
+            @if(sortFun.isDefined) {
+                @sortFun.get
+            } else {
+                null
+            }
+
+        var treeParent = $("#@treeElementId").parent().parent()
+
+        treeParent.find("#treeCollapseAllButton").click(function() {
+            $("#@{treeElementId}").jstree('close_all');
+        })
+
+        treeParent.find("#treeExpandAllButton").click(function() {
+            $("#@{treeElementId}").jstree('open_all');
+        })
+
+        treeParent.find("#treeSearchInput").keypress(function (e) {
+            if (e.which == 13) {
+                var searchString = $(this).val();
+                $('#@treeElementId').jstree('search', searchString);
+                e.stopPropagation();
+                e.preventDefault();
+            }
+        });
+
+        $("#@treeElementId").jsTreeWidget({
+            data: data,
+            typesSetting: @Html(Json.stringify(typesSetting)),
+            nodeSelectedFun: nodeSelectedFun,
+            nodeDoubleClickedFun: nodeDoubleClickedFun,
+            sortFun: sortFun
+        });
+    });
+</script>

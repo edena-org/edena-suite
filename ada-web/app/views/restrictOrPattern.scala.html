@@ -1,0 +1,19 @@
+@import be.objectify.deadbolt.scala.views.html.di.{restrictOr, pattern}
+@import be.objectify.deadbolt.scala.models.PatternType
+@import be.objectify.deadbolt.scala.AuthenticatedRequest
+@import org.edena.play.controllers.DeadboltRestricts
+
+@(
+    roles: Array[String],
+    regexPattern: String)(
+    block: Html)(
+    implicit request: AuthenticatedRequest[Any], deadboltRestricts: DeadboltRestricts
+)
+
+@deadboltRestricts.restrictOr(roles = List(roles)) {
+    @block
+} {
+    @deadboltRestricts.pattern(value = regexPattern, patternType = PatternType.REGEX) {
+        @block
+    }
+}

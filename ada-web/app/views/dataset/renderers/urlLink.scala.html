@@ -1,0 +1,33 @@
+@import play.api.libs.json.JsValue
+@import org.edena.ada.server.models.URLType
+@import org.edena.ada.web.util.JsonUtil
+
+@(
+    value: Option[JsValue],
+    displayAsURLLink: URLType.Value
+)
+
+@GETLink(json: JsValue) = {
+    <a href="@JsonUtil.toString(json).getOrElse("")">
+        <span class="glyphicon glyphicon-arrow-right"></span>
+    </a>
+}
+
+@onClickLink(json: JsValue, method: String) = {
+    @onClickLinkAux(JsonUtil.toString(json).getOrElse(""), method)
+}
+
+@onClickLinkAux(url: String, method: String) = {
+    <a href="#" onclick="followUrlLink(event, '@method', '@url', getQueryParams('@url'));">
+        <span class="glyphicon glyphicon-arrow-right"></span>
+    </a>
+}
+
+@value.map { json =>
+    @{displayAsURLLink match {
+        case URLType.GET => GETLink(json)
+        case URLType.POST => onClickLink(json, "post")
+        case URLType.DELETE => onClickLink(json, "delete")
+        case URLType.PUT => onClickLink(json, "put")
+    }}
+}

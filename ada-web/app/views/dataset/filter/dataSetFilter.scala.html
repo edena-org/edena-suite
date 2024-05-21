@@ -1,0 +1,30 @@
+@import org.edena.ada.server.models.Filter
+@import org.edena.ada.web.controllers.dataset.TableViewData
+@import views.html.filter.{filter => filterUI}
+@import org.edena.ada.web.controllers.dataset.DataSetRouter
+@import org.edena.ada.server.models.FilterShowFieldStyle
+@import scala.util.Random
+@import org.edena.ada.web.controllers.dataset.DataSetWebContext
+@import org.edena.ada.web.controllers.dataset.DataSetWebContext._
+
+@(
+    filter: Option[Filter],
+    filterShowFieldStyle: Option[FilterShowFieldStyle.Value],
+    filterElementId: Option[String] = None,
+    filterLabel: String = "Filter"
+)(
+    implicit dataSetWebContext: DataSetWebContext
+)
+
+@defining(filterElementId.getOrElse("filter" + Random.nextLong())) { filterId: String =>
+    @filterUI(
+        filter,
+        filterShowFieldStyle,
+        true,
+        true,
+        filterElementId = filterId,
+        categoriesOrCall = Some(Right(dataSetRouter.getCategoriesWithFieldsAsTreeNodes(filter.map(_.conditionsOrId).getOrElse(Left(Nil))))),
+        categoricalTreeId = "categoryTree_" + filterId,
+        filterLabel = filterLabel
+    )
+}

@@ -1,0 +1,26 @@
+@import org.edena.ada.server.models.User
+@import org.edena.play.controllers.WebContext
+@import org.edena.play.controllers.WebContext._
+@import views.html.userprofile.userItems
+@import views.html.layout.main
+
+@(user: User)(implicit webContext: WebContext)
+
+@main(webContext.configuration.getString("project.name").getOrElse("") + " Home") {
+    <!-- Begin page content -->
+    <div class="container" style="padding-bottom: 190px;" xmlns="http://www.w3.org/1999/html">
+        @userprofile.profileHeader(1)
+        <br>
+        <div class="row">
+            <div class="col-sm-3">
+                @userItems("General", Seq(user.userId, user.email))
+            </div>
+            <div class="col-sm-3">
+                @userItems("Roles", user.roles)
+            </div>
+            <div class="col-sm-3">
+                @userItems("Permissions", user.permissions)
+            </div>
+        </div>
+    </div>
+}

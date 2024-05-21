@@ -1,0 +1,182 @@
+@import views.html.layout
+@import views.html.table.paginatedTable
+@import views.html.filter.{filter, filterWithJs}
+@import org.edena.ada.web.util.{formatScheduleTime, typeColumns}
+@import org.edena.ada.server.models.Field
+@import org.edena.ada.server.models.Filter
+@import org.edena.ada.server.models.FilterShowFieldStyle
+@import org.edena.ada.server.models.RunnableSpec
+@import org.edena.play.controllers.WebContext._
+@import org.edena.play.controllers.WebContext
+@import org.edena.play.Page
+@import org.edena.core.FilterCondition
+@import org.edena.ada.web.controllers.routes
+@import views.html.elements.typeahead
+@import org.edena.core.util.toHumanReadableCamel
+@import org.edena.ada.server.models.BaseRunnableSpec
+@import reactivemongo.api.bson.BSONObjectID
+
+@(
+    page: Page[BaseRunnableSpec],
+    conditions: Seq[FilterCondition],
+    initActionLaunch: Boolean
+)(
+    implicit context: WebContext
+)
+
+@modalBody = {
+    @typeahead("runnableClassTypeahead", "runnableClassName", "Runnable Class", isLarge = true)
+}
+
+@actions = {
+    <div class="row">
+        <div class="col-md-8">
+            @filterWithJs(
+                Filter(conditions),
+                routes.RunnableController.find(),
+                Left(Seq(
+                    Field("runnableClassName", Some("Runnable Class Name")),
+                    Field("name", Some("Name"))
+                )),
+                None,
+                Some(FilterShowFieldStyle.LabelsOnly)
+            )
+        </div>
+        <div class="pull-right">
+            <div class="dropdown">
+                <button class="btn btn-info btn-sm dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
+                    <span class="caret"></span>
+                </button>
+                <ul class="dropdown-menu">
+                    <li>
+                        <a href="#" onclick="createNew();">
+                            Store/Schedule
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" onclick="launch();">
+                            Launch Directly
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" data-toggle="modal" data-target="#runnableIdSelectionModal">
+                            Copy
+                        </a>
+                    </li>
+                </ul>
+                @modal("runnableSelectionModal", "Store/Schedule Runnable", modalBody, None, None, None)
+                @typeaheadSelectionModal("runnableIdSelectionModal", "runnable", "Runnable Copy", routes.RunnableController.idAndNames, Some(routes.RunnableController.copy(BSONObjectID.generate)))
+            </div>
+        </div>
+    </div>
+}
+
+@scheduleCheckbox(runnableSpec: RunnableSpec) = {
+    <ul class="list-inline">
+        <li>
+            <input type="checkbox" class="no-rowClicked" @if(runnableSpec.scheduled) { checked="checked" } disabled="disabled"/>
+        </li>
+        @if(runnableSpec.scheduled) {
+            <li class="topVerticalAlign">
+                @Html(formatScheduleTime(runnableSpec.scheduledTime.get))
+            </li>
+        }
+    </ul>
+}
+
+@executeLink(runnableSpec: RunnableSpec) = {
+    <a class="btn btn-default btn-xs btn-clean no-rowClicked" href="#" onclick="submit('post', '@routes.RunnableController.execute(runnableSpec._id.get)'); return false;">
+        <span class="glyphicon glyphicon-play green" aria-hidden="true"></span>
+    </a>
+}
+
+@table = @{
+    paginatedTable(
+        page,
+        routes.RunnableController.find(_, _, conditions),
+        typeColumns[RunnableSpec](
+            (Some("runnableClassName"), "Runnable Class Name", _.runnableClassName),
+            (Some("name"), "Name", _.name),
+            (Some("timeCreated"), "Time Created", _.timeCreated.format("yyyy-MM-dd HH:mm:ss")),
+            (Some("timeLastExecuted"), "Time Last Executed", _.timeLastExecuted.map(_.format("yyyy-MM-dd HH:mm:ss")).getOrElse("")),
+            (Some("scheduled"), "Scheduled?", scheduleCheckbox),
+            (None, "Execute Now", executeLink)
+        ),
+        Some({ item : Any => routes.RunnableController.get(item.asInstanceOf[RunnableSpec]._id.get)})
+    )
+}
+
+
+@bottomResources = {
+    @typeaheadJsImport()
+
+    @helper.javascriptRouter("runnableRoutes")(
+        routes.javascript.RunnableController.runScript
+    )
+
+    <script type="text/javascript">
+        $(function () {
+            populateFieldTypeaheadFromUrl({
+                typeaheadElement: $('#runnableClassTypeahead'),
+                fieldNameElement: $('#runnableClassName'),
+                url: '@Html(routes.RunnableController.getRunnableNames().url)',
+                showOption: @FilterShowFieldStyle.LabelsOnly.id,
+                postFunction: function(){ setTimeout(function(){ $('#runnableClassTypeahead').focus();}, 250)}
+            })
+        })
+
+        $('#runnableSelectionModal #runnableClassTypeahead').on("keydown", function(e) {
+            if(e.keyCode == 13) {
+                $("#runnableSelectionModal #submitButton").click()
+            }
+        });
+
+        $(document).ready(function(){
+            @if(initActionLaunch) {
+                launch();
+            }
+        });
+
+        function createNew() {
+            const handler = function(e) {
+                const className = $("#runnableSelectionModal #runnableClassName").val().trim()
+
+                if (className) {
+                    const params = {'runnableClassName': className}
+                    submit('get', '@routes.RunnableController.create().url', params)
+                }
+            };
+
+            $("#runnableSelectionModal .modal-title").html("Store/Schedule Runnable");
+            $("#runnableSelectionModal #submitButton").one("click", handler);
+            $("#runnableSelectionModal").modal('show');
+
+            setTimeout(function(){$('#runnableClassTypeahead').focus();}, 500)
+        }
+
+        function launch() {
+            const handler = function(e) {
+                const className = $("#runnableSelectionModal #runnableClassName").val().trim()
+                if (className) {
+                    submit('post', runnableRoutes.org.edena.ada.web.controllers.RunnableController.runScript(className).url)
+                }
+            };
+
+            $("#runnableSelectionModal .modal-title").html("Launch Runnable");
+            $("#runnableSelectionModal #submitButton").one("click", handler);
+            $("#runnableSelectionModal").modal('show');
+
+            setTimeout(function(){$('#runnableClassTypeahead').focus();}, 500)
+        }
+    </script>
+}
+
+@layout.list(
+    "Runnable Spec",
+    None,
+    page.total,
+    Some(actions),
+    Some(table),
+    bottomResources = Some(bottomResources)
+)

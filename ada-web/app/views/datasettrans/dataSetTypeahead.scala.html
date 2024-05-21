@@ -1,0 +1,63 @@
+@import org.edena.play.controllers.WebContext
+@import org.edena.play.controllers.WebContext._
+@import views.html.elements.inputTypeahead
+@import org.edena.ada.server.models.FilterShowFieldStyle
+@import reactivemongo.api.bson.BSONObjectID
+
+@(
+    domainName: String,
+    fieldName: String,
+    form: Form[_],
+    transformationId: Option[BSONObjectID] = None,
+    dataSetNameSuffix: Option[String] = None
+)(
+    implicit context: WebContext
+)
+
+@typeaheadJsImport()
+
+@inputTypeahead(
+    domainName,
+    fieldName,
+    fieldName + "Typeahead",
+    form,
+    "Data Set"
+)
+
+@helper.javascriptRouter("dataSetTransformationJsRoutes")(
+    org.edena.ada.web.controllers.dataset.datatrans.routes.javascript.DataSetTransformationController.resultDataSetIdAndName
+)
+
+<script type="text/javascript">
+    $(function () {
+        var addSelectedListener = function() {
+            setTimeout(function(){
+                @dataSetNameSuffix.map { suffix =>
+                    $('#@{fieldName}Typeahead').on('typeahead:selected', function (evt, item) {
+                        var sourceDataSetId = item.key
+                        var transformationId = @if(transformationId.isDefined) { '@transformationId.get.stringify' } else { null }
+
+                        if (sourceDataSetId) {
+                            dataSetTransformationJsRoutes.org.edena.ada.web.controllers.dataset.datatrans.DataSetTransformationController.resultDataSetIdAndName(sourceDataSetId, '@suffix', transformationId).ajax({
+                                success: function (data) {
+                                    $('#resultDataSetSpec_id').val(data.id)
+                                    $('#resultDataSetSpec_name').val(data.name)
+                                },
+                                error: showErrorResponse
+                            })
+                        }
+                    })
+                }
+            }, 250)
+        }
+
+        populateFieldTypeaheadFromUrl({
+            typeaheadElement: $('#@{fieldName}Typeahead'),
+            fieldNameElement: $('#@{fieldName}'),
+            url: '@Html(org.edena.ada.web.controllers.routes.AdminController.dataSetIds().url)',
+            showOption: @FilterShowFieldStyle.LabelsOnly.id,
+            postFunction: addSelectedListener,
+            initSelectByNameElement: true
+        })
+    })
+</script>

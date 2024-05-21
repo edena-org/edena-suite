@@ -1,0 +1,6 @@
+@import org.webjars.play.routes
+@import org.webjars.play.WebJarsUtil
+
+@()(implicit webJarAssets: WebJarsUtil)
+
+@webJarAssets.locate("plotly.js", "/dist/plotly.js").script()

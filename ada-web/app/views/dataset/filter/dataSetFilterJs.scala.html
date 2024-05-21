@@ -1,0 +1,36 @@
+@import views.html.filter.{filterJsImport, jsTreeImport}
+@import views.html.dataset.{bootstrapSelectImport, datasetJsImport}
+@import org.edena.ada.web.controllers.dataset.DataSetWebContext._
+@import org.edena.ada.web.controllers.dataset.DataSetWebContext
+@import org.edena.ada.server.models.Filter
+
+@()(implicit context: DataSetWebContext)
+
+@datasetJsImport()
+
+@jsTreeImport()
+
+@filterJsImport()
+
+@bootstrapSelectImport()
+
+@helper.javascriptRouter("dataSetJsRoutes2")(
+    dataSetJsRouter.getFieldTypeWithAllowedValues
+)
+
+@helper.javascriptRouter("filterJsRoutes")(
+    filterJsRouter.saveAjax
+)
+
+<script type="text/javascript">
+    function activateDataSetFilterAux(filterElement, jsonConditions, filterId, submitAjaxFun) {
+        activateDataSetFilter(
+            filterElement,
+            jsonConditions,
+            filterId,
+            submitAjaxFun,
+            '@dataSetRouter.allFieldNamesAndLabels',
+            '@filterRouter.idAndNamesAccessible'
+        )
+    }
+</script>

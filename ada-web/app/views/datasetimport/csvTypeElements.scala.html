@@ -1,0 +1,36 @@
+@import org.edena.ada.server.models.dataimport.CsvDataSetImport
+@import views.html.datasetimport.fileOrPathInput
+@import views.html.elements._
+@import org.edena.play.controllers.WebContext
+@import org.edena.play.controllers.WebContext._
+
+@(form: Form[CsvDataSetImport])(implicit webContext: WebContext)
+
+@fileOrPathInput("csvDataSetImport", "sourceChoice", "Source", "dataFile", "path", form, "source CSV")
+@inputText("csvDataSetImport", "delimiter", form, Seq('_helpModal -> "<p>Delimiter to use for parsing a given CSV file.</p><p>By default, if left blank, a simple comma (<b>,</b>) is applied. Note that if needed a <i>tab</i> can be entered as <b>\\t</b>.</p>"))
+@inputText("csvDataSetImport", "eol", form, Seq('_helpModal -> "<p>End-of-line character(s) to use for parsing. By default, if left blank, Linux/Unix EOL <b>\\n</b> is applied.</p><p>Note that the Windows/DOS-like EOL can be entered as <i>\\r\\n</i>.</p>"))
+@inputText("csvDataSetImport", "charsetName", form)
+@checkbox("csvDataSetImport", "matchQuotes", form, Seq('_helpModal -> "Whether a pair of quotes, i.e. <b>\"....\"</b>, should be matched and text in-between extracted and treated as one value."))
+@checkbox("csvDataSetImport", "inferFieldTypes", form, Seq('_helpModal -> "<p>Whether fields types (String, Double, Boolean, etc.) should be inferred based on given data. By default / normally it should be selected, otherwise <b>ALL</b> the fields will be treated and stored as Strings.</p>"))
+@inputText("csvDataSetImport", "inferenceMaxEnumValuesCount", form)
+@inputText("csvDataSetImport", "inferenceMinAvgValuesPerEnum", form)
+@inputText("csvDataSetImport", "arrayDelimiter", form)
+@checkbox("csvDataSetImport", "booleanIncludeNumbers", form)
+@inputText("csvDataSetImport", "saveBatchSize", form)
+@inputText("csvDataSetImport", "explicitNullAliases", form, Seq('_helpModal -> "<p>Comma-separated list of values that should be treated as <i>nulls</i>.</p><p>If not specified the default ones: \"\", \"na\", \"n/a\", \"null\" will be used.</p>"))
+
+<script type="text/javascript">
+    $('form').submit(function(ev) {
+        ev.preventDefault();
+
+        var importLocalFile = $('input[name="sourceChoice"]:checked').val() == "1"
+        if (importLocalFile)
+            // if local file provided remove the path field by erasing its name
+            $('#path').attr("name", '');
+        else
+            // otherwise remove the import file field
+            $('#dataFile').attr("name", '');
+
+        this.submit();
+    });
+</script>

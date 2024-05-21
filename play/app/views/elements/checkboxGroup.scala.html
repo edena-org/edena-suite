@@ -1,0 +1,21 @@
+@import helper.FieldConstructor
+@import elements.bootstrapInput
+
+@(
+    domainName: String,
+    fieldName: String,
+    form: Form[_],
+    values: Seq[(String, String)],
+    args: Seq[(Symbol,Any)] = Nil,
+    labelGridWidth: Int = 2
+)(
+    implicit msg: play.api.i18n.Messages
+)
+
+@implicitFieldConstructor = @{ FieldConstructor(bootstrapInput.f(labelGridWidth)) }
+
+@helper.inputCheckboxGroup(
+    form(fieldName),
+    options = values,
+    Seq('_label -> attributeLabel(domainName, fieldName)) ++ args: _*
+)

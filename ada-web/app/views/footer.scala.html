@@ -1,0 +1,36 @@
+@import play.api.Configuration
+@import org.edena.play.routes.CustomDirAssets
+
+@()(implicit msg: Messages, configuration: Configuration)
+
+<footer>
+    <div align="center">
+        <hr/>
+        @configuration.getObjectList("footer.logos").map { configObjects =>
+            <ul class="list-inline">
+            @configObjects.map(_.toConfig).map { logoConfig =>
+                <li>
+                    <a target="_blank" href="@{logoConfig.getString("url")}">
+                        <img @if(logoConfig.hasPath("height")) {height="@logoConfig.getInt("height") px" } src="@CustomDirAssets.versioned(logoConfig.getString("logo"))"/>
+                    </a>
+                </li>
+            }
+            </ul>
+            <hr/>
+        }
+
+        <p class="text-muted" align="center">
+            App Version: @configuration.getString("app.version").get@configuration.getString("project.name").map(", Project: " + _)
+        </p>
+        <p class="text-muted" align="center">
+            @defining((configuration.getString("copyright.url"), configuration.getString("copyright.text"))) { urlAndText: (Option[String], Option[String]) =>
+                @if(urlAndText._1.isDefined && urlAndText._2.isDefined) {
+                    &copy; <a target="_blank" href="@urlAndText._1.get">@urlAndText._2.get</a>
+                } else {
+                    &copy; <a target="_blank" href="https://ada-discovery.github.io">Ada Discovery Analytics</a>
+                }
+            }
+            2016-@(new java.util.Date().format("yyyy")). All rights reserved.
+        </p>
+    </div>
+</footer>

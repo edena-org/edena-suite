@@ -1,0 +1,48 @@
+@import views.html.elements._
+
+@(
+    domainName: String,
+    sourceChoiceElName: String,
+    sourceChoiceLabel: String,
+    fileElName: String,
+    pathElName: String,
+    form: Form[_],
+    fileDescriptionForHelp: String
+)(implicit msg: Messages)
+
+@labelValue(
+    sourceChoiceElName,
+    sourceChoiceLabel,
+    helpModalContent = Some(Html(s"The ${fileDescriptionForHelp} file to import. This can be either<ul><li><i>locally</i> uploaded from a user's computer through a browser</li><li>or <i>server-side</i> (i.e., already existing at the Ada server) for which a path needs to be specified.</li></ul>"))
+) {
+    <label class="radio-inline"><input type="radio" name="@sourceChoiceElName" value="1" checked="checked">Local file</label>
+    <label class="radio-inline"><input type="radio" name="@sourceChoiceElName" value="2">Server-side path</label>
+
+    <input id="@fileElName" name="@fileElName" type="file">
+
+    <script type="text/javascript">
+        $(function() {
+            if ($('#@pathElName').val()) {
+                $('input[name="@sourceChoiceElName"][value="1"]').attr('checked', '')
+                $('input[name="@sourceChoiceElName"][value="2"]').attr('checked', 'checked')
+                $('#@fileElName').hide()
+                $('#@{pathElName}Div').show()
+            }
+        });
+
+        $('input[name="@sourceChoiceElName"]').change(function() {
+            const importLocalFile = $('input[name="@sourceChoiceElName"]:checked').val() == "1"
+            if (importLocalFile) {
+                $('#@fileElName').show()
+                $('#@{pathElName}Div').hide()
+            } else {
+                $('#@fileElName').hide()
+                $('#@{pathElName}Div').show()
+            }
+        })
+    </script>
+}
+
+<div id="@{pathElName}Div" style="display: none">
+    @inputText(domainName, pathElName, form, Seq('_label -> ""))
+</div>

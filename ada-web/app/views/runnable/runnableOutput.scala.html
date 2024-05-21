@@ -1,0 +1,52 @@
+@import views.html.layout.main
+@import views.html.elements._
+@import org.edena.play.controllers.WebContext
+@import org.edena.play.controllers.WebContext._
+@import org.edena.core.util.toHumanReadableCamel
+@import org.edena.ada.web.controllers.routes
+@import org.edena.play.security.SecurityRole
+
+@(
+    scriptClazz: Class[_],
+    output: String,
+    message: String,
+    cancelLink: Option[String] = None
+)(
+    implicit context: WebContext
+)
+
+@bottomResources = {
+    <script type="text/javascript">
+        $(function () {
+            showMessage('@message')
+        });
+    </script>
+}
+
+@main(toHumanReadableCamel(scriptClazz.getSimpleName), bottomResources = Some(bottomResources)) {
+
+    <div class="page-header">
+        <h3>
+            @toHumanReadableCamel(scriptClazz.getSimpleName)
+        </h3>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12">
+            @helper.form(action = routes.RunnableController.runScript(scriptClazz.getName)) {
+                @Html(output)
+
+                <hr/>
+
+                <div class="actions pull-right">
+                    <input type="submit" value="Relaunch" autofocus class="btn btn-primary">
+                    @deadboltRestricts.restrictOr(roles = List(Array(SecurityRole.admin))) {
+                        <a href="@cancelLink.getOrElse(routes.RunnableController.find().url)" class="btn btn-default">Back</a>
+                    } {
+                        <a href="@cancelLink.getOrElse(routes.AppController.index().url)" class="btn btn-default">Cancel</a>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+}

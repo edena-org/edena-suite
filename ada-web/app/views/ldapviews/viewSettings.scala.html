@@ -1,0 +1,19 @@
+@import org.edena.ada.server.services.ldap.LdapSettings
+@import com.typesafe.config.ConfigValue
+@import views.html.table.displayTable
+@import org.edena.ada.web.util.typeColumns
+@import org.edena.play.controllers.WebContext._
+@import org.edena.play.controllers.WebContext
+
+@(settings: LdapSettings)(implicit context: WebContext)
+
+@layout.show(
+    "LDAP Settings",
+    displayTable(
+        settings.listAll,
+        typeColumns[(String, Any)](
+            (None, "Configuration Key", _._1),
+            (None, "Value", { case (key, value) => if (key == "ldap.bindPassword") "<i>Not Shown</i>" else value})
+        )
+    )
+)

@@ -1,0 +1,41 @@
+@import views.html.table.paginatedJsonTable
+@import reactivemongo.api.bson.BSONObjectID
+@import play.api.libs.json.{JsValue, JsObject}
+@import org.edena.ada.web.controllers.dataset.DataSetRouter
+@import org.edena.play.Page
+@import org.edena.ada.server.models.Field
+@import org.edena.ada.web.util.FieldTypeFullRenderer
+@import play.api.Configuration
+
+@(
+    page: Page[JsObject],
+    tableFields: Traversable[Field],
+    refreshCall: (Int, String) => Call,
+    rowClickCall: Option[JsObject => Call] = None,
+    withRowClickableJs: Boolean = false,
+    isAjaxRefresh: Boolean = false,
+    tableSelection: Boolean = false
+)(
+    implicit request: Request[_], configuration: Configuration
+)
+
+@paginatedJsonTable(
+    page,
+    refreshCall,
+    Some(
+        tableFields.map( field =>
+            field.label.map( fieldLabel => (field.name, fieldLabel))
+        ).flatten.toMap
+    ),
+    Some(tableFields.map(_.name).toSeq),
+    rowClickCall,
+    Some(tableFields.map(field => (field.name, FieldTypeFullRenderer(field))).toMap),
+    isAjaxRefresh,
+    tableSelection
+)
+
+@if(withRowClickableJs) {
+    <script type="text/javascript">
+        activateRowClickable();
+    </script>
+}

@@ -1,0 +1,72 @@
+@import org.edena.ada.server.models.Field
+@import org.edena.ada.server.models.Filter
+@import org.edena.ada.server.models.FilterShowFieldStyle
+@import org.edena.ada.server.models.DataSpaceMetaInfo
+@import views.html.dataset.{widgetsScreen, dynamicFieldTable, dataSetExportDropdown}
+@import views.html.table.dynamicTableJsImport
+@import views.html.elements.labelValue
+@import org.edena.ada.web.controllers.dataset.DataSetWebContext
+@import org.edena.ada.web.controllers.dataset.DataSetWebContext._
+@import org.edena.ada.server.models.DataSetSetting
+
+@(
+    tableFieldNames: Seq[String],
+    submitCall: Call,
+    actionLabel: String,
+    title: String,
+    filterSpec: Filter,
+    setting: DataSetSetting,
+    dataSpaceMetaInfos: Traversable[DataSpaceMetaInfo]
+)(
+    implicit context: DataSetWebContext
+)
+
+@extraActions = {
+    <div class="pull-right">
+        <button class="btn btn-info btn-sm" type="button" onclick="selectAndSubmit();">
+            @actionLabel
+         </button>
+    </div>
+}
+
+@bottomResources = {
+
+    @helper.javascriptRouter("dataSetJsRoutes")(
+        dataSetJsRouter.generateTableWithFilter
+    )
+
+    <script type="text/javascript">
+        $(function () {
+            activateAllFilters(function(filterOrId) {generateTableAux()});
+            generateTableAux();
+        });
+
+        function selectAndSubmit() {
+            var params = {}
+
+            const ids = getSelectedRowIds($('#widgetsDiv .table-div'))
+            $.each(ids, function (index, id) {
+                params["selectedIds[" + index + "]"] = id
+            })
+
+            submit("post", '@submitCall', params)
+        }
+
+        function generateTableAux() {
+            var fieldNames = [@Html(tableFieldNames.map("'" + _ + "'").mkString(","))]
+            generateTable($("#widgetsDiv"), $(".filter-div"), fieldNames)
+        }
+    </script>
+}
+
+@inputElements = {}
+
+@widgetsScreen(
+    title,
+    Seq(filterSpec),
+    setting,
+    dataSpaceMetaInfos,
+    inputElements,
+    Some(extraActions),
+    bottomResources
+)

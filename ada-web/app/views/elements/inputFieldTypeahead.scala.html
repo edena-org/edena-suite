@@ -1,0 +1,21 @@
+@import elements.{labelValue, typeahead}
+@import org.edena.ada.server.models.Field
+@import views.html.elements.inputTypeahead
+
+@(
+    domainName: String,
+    fieldName: String,
+    form: Form[_],
+    labelGridWidth: Int = 2
+)(
+    implicit msg: play.api.i18n.Messages
+)
+
+@inputTypeahead(
+    domainName,
+    fieldName + "Name",
+    fieldName + "Typeahead",
+    form,
+    "Field",
+    labelGridWidth
+)

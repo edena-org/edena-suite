@@ -1,0 +1,11 @@
+@import org.edena.ada.server.models.dataimport.SynapseDataSetImport
+@import views.html.elements.{inputText, checkbox}
+@import org.edena.play.controllers.WebContext
+@import org.edena.play.controllers.WebContext._
+
+@(form: Form[SynapseDataSetImport])(implicit webContext: WebContext)
+
+@inputText("synapseDataSetImport", "tableId", form, Seq('_helpModal -> "<p>Synapse table to load data from.</p><p><b>Example: <i>syn6128378</i></b>"))
+@inputText("synapseDataSetImport", "batchSize", form)
+@checkbox("synapseDataSetImport", "downloadColumnFiles", form)
+@inputText("synapseDataSetImport", "bulkDownloadGroupNumber", form)

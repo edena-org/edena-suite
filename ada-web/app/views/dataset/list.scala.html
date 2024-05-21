@@ -1,0 +1,51 @@
+@import views.html.table.paginatedJsonTable
+@import views.html.filter.{filter, filterWithJs}
+@import play.api.libs.json.JsObject
+@import org.edena.store.json.BSONObjectIDFormat
+@import reactivemongo.api.bson.BSONObjectID
+@import org.edena.ada.server.models.Filter
+@import org.edena.ada.web.controllers.dataset.DataSetWebContext._
+@import org.edena.ada.web.controllers.dataset.DataSetWebContext
+@import org.edena.play.Page
+@import org.edena.core.FilterCondition
+
+@(
+    domainName : String,
+    page: Page[JsObject],
+    conditions: Seq[FilterCondition],
+    fieldLabelMap : Map[String, String],
+    fieldsToShow : Seq[String]
+)(
+    implicit context: DataSetWebContext
+)
+
+@actions = {
+    <div class="row">
+        <div class="col-md-10">
+            @filterWithJs(
+                Filter(conditions),
+                dataSetRouter.plainList,
+                Right(dataSetRouter.allFieldNamesAndLabels),
+                typeaheadMinLength = 2
+            )
+        </div>
+    </div>
+}
+
+@table = @{
+    paginatedJsonTable(
+        page,
+        dataSetRouter.list(_, _, conditions),
+        Some(fieldLabelMap),
+        Some(fieldsToShow),
+        Some({ (item : JsObject) => dataSetRouter.get((item \ "_id").as[BSONObjectID])})
+    )
+}
+
+@layout.list(
+    domainName,
+    None,
+    page.total,
+    Some(actions),
+    Some(table)
+)

@@ -1,0 +1,20 @@
+@import org.edena.ada.server.models.datatrans.DropFieldsTransformation
+@import views.html.datasetimport.schedulePanel
+@import views.html.datasettrans.{resultDataSetInfoPanel, streamSpecPanel, dataSetTypeahead}
+@import views.html.elements.inputText
+@import play.api.i18n.Messages
+@import org.edena.play.controllers.WebContext
+@import org.edena.play.controllers.WebContext._
+@import reactivemongo.api.bson.BSONObjectID
+@import org.edena.ada.web.controllers.dataset.datatrans.OptionalIdForm
+
+@(
+    id: Option[BSONObjectID],
+    form: Form[DropFieldsTransformation]
+)(
+    implicit webContext: WebContext
+)
+
+@dataSetTypeahead("dropFieldsTransformation", "sourceDataSetId", form, id, Some("Dropped Fields"))
+@inputText("dropFieldsTransformation", "fieldNamesToKeep", form)
+@inputText("dropFieldsTransformation", "fieldNamesToDrop", form)

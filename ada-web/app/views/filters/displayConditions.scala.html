@@ -1,0 +1,11 @@
+@import org.edena.core.FilterCondition
+@import org.edena.ada.web.util.{conditionTypeToReadableOperator, valueOrUndefined}
+
+@(conditions: Traversable[FilterCondition])
+
+@displayCondition(condition: FilterCondition) = @{
+    val operator = conditionTypeToReadableOperator(condition.conditionType)
+    condition.fieldLabelOrElseName + " " + operator + " " + valueOrUndefined(condition)
+}
+
+@conditions.map( condition => displayCondition(condition)).mkString(" AND ")

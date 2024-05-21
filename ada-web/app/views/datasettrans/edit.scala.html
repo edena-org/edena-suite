@@ -1,0 +1,32 @@
+@import views.html.datasetimport.schedulePanel
+@import views.html.datasettrans.{resultDataSetInfoPanel, streamSpecPanel, topInfoPanel}
+@import views.html.elements._
+@import play.api.i18n.Messages
+@import org.edena.ada.server.models.datatrans.DataSetTransformation
+
+@(
+    form: Form[_ <: DataSetTransformation],
+    className: String)(
+    typeSpecificElements: Html)(
+    implicit msg: Messages
+)
+
+<input type="hidden" id="concreteClass" name="concreteClass" value="@{className}">
+
+@topInfoPanel(form)
+
+<hr/>
+
+<div class="panel panel-default">
+    <div class="panel-heading">Transformation Specifics</div>
+    <div class="panel-body">
+        @typeSpecificElements
+        <a class="pull-right" href="#advancedSetting" data-toggle="collapse">Show Advanced</a>
+    </div>
+</div>
+
+<div id="advancedSetting" class="collapse">
+    @resultDataSetInfoPanel(form)
+    @streamSpecPanel(form)
+    @schedulePanel(form)
+</div>

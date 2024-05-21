@@ -1,0 +1,59 @@
+@import views.html.layout.main
+@import views.html.elements._
+@import views.html.layout.formErrors
+@import org.edena.play.controllers.WebContext
+@import org.edena.play.controllers.WebContext._
+@import org.edena.core.util.toHumanReadableCamel
+@import org.edena.ada.web.controllers.routes
+@import org.edena.play.security.SecurityRole
+@import views.html.helper.CSRF
+
+@(
+    title: String,
+    call: Call,
+    inputFields: Html,
+    cancelLink: Option[String] = None,
+    errors: Seq[FormError] = Nil
+)(
+    implicit context: WebContext
+)
+
+@bottomResources = {
+    <script type="text/javascript">
+        $(function () {
+            const firstElement = $('fieldset :input').first()
+            if (firstElement)
+                firstElement.focus();
+        });
+    </script>
+}
+
+@main(toHumanReadableCamel(title), bottomResources = Some(bottomResources), extraMessages = Some(formErrors("runnable", errors))) {
+    <div class="page-header">
+        <h3>
+        @toHumanReadableCamel(title)
+        </h3>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12">
+        @helper.form(action = call) {
+            <fieldset>
+                @CSRF.formField
+                @inputFields
+            </fieldset>
+
+            <hr/>
+
+            <div class="actions pull-right">
+                <input type="submit" value="Submit" class="btn btn-primary">
+                @deadboltRestricts.restrictOr(roles = List(Array(SecurityRole.admin))) {
+                    <a href="@cancelLink.getOrElse(routes.RunnableController.find().url)" class="btn btn-default">Cancel</a>
+                } {
+                    <a href="@cancelLink.getOrElse(routes.AppController.index().url)" class="btn btn-default">Cancel</a>
+                }
+            </div>
+        }
+        </div>
+    </div>
+}

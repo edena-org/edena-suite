@@ -1,0 +1,29 @@
+@import views.html.layout
+@import views.html.elements.editableTextElements
+@import reactivemongo.api.bson.BSONObjectID
+@import org.edena.ada.server.models.RunnableSpec
+@import org.edena.play.controllers.{WebContext, IdForm}
+@import org.edena.play.controllers.WebContext._
+@import views.html.runnable.elements
+@import org.edena.ada.web.controllers.routes
+@import org.edena.ada.server.models.BaseRunnableSpec
+
+@(
+    data: IdForm[BSONObjectID, BaseRunnableSpec],
+    runnableClassName: String,
+    inputFields: Option[Html]
+)(
+    implicit context: WebContext
+)
+
+@layout.edit(
+    "Runnable Spec",
+    "runnableSpec",
+	errors = data.form.errors,
+    elements = elements(data.form, runnableClassName, inputFields),
+	updateCall = routes.RunnableController.update(data.id),
+	cancelCall = routes.RunnableController.listAll(),
+    deleteCall = Some(routes.RunnableController.delete(data.id)),
+    None,
+    None
+)

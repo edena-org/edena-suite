@@ -1,0 +1,49 @@
+@import views.html.layout
+@import views.html.elements.editableTextElements
+@import org.edena.ada.server.models.RunnableSpec
+@import org.edena.play.controllers.WebContext._
+@import org.edena.play.controllers.WebContext
+@import org.edena.ada.web.controllers.routes
+@import views.html.datasetimport.schedulePanel
+@import views.html.runnable.topInfoPanel
+@import views.html.elements.inputText
+@import org.edena.ada.server.models.BaseRunnableSpec
+
+@(
+	form: Form[BaseRunnableSpec],
+	runnableClassName: String,
+	inputFields: Option[Html]
+)(
+    implicit context: WebContext
+)
+
+<input type="hidden" id="runnableClassName" name="runnableClassName" value="@runnableClassName">
+
+@topInfoPanel(form)
+
+<hr/>
+
+<div class="panel panel-default">
+	<div class="panel-body">
+		@inputText("runnableSpec", "name", form)
+		@if(inputFields.isEmpty) {
+			<a class="pull-right" href="#scheduleSetting" data-toggle="collapse">Show Schedule</a>
+		}
+	</div>
+</div>
+
+@inputFields.map { inputs =>
+	<div class="panel panel-default">
+		<div class="panel-heading">Input</div>
+		<div class="panel-body">
+			<div id="input-div">
+				@inputs
+			</div>
+			<a class="pull-right" href="#scheduleSetting" data-toggle="collapse">Show Schedule</a>
+		</div>
+	</div>
+}.getOrElse("")
+
+<div id="scheduleSetting" class="collapse">
+	@schedulePanel(form)
+</div>

@@ -1,0 +1,7 @@
+@import views.html.elements.inputText
+@import org.edena.ada.web.controllers.UserUpdateEntry
+
+@(form: Form[UserUpdateEntry])(implicit msg: play.api.i18n.Messages)
+
+@inputText("user", "name", form)
+@inputText("user", "email", form)

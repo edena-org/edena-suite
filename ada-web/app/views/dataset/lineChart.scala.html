@@ -1,0 +1,218 @@
+@import views.html.dataset.{widgetsScreen, dynamicFieldTable}
+@import org.edena.ada.server.models.Filter
+@import views.html.table.dynamicTableJsImport
+@import org.edena.ada.server.models.DataSpaceMetaInfo
+@import org.edena.ada.web.controllers.dataset.DataSetWebContext._
+@import org.edena.ada.web.controllers.dataset.DataSetWebContext
+@import org.edena.ada.server.models.DataSetSetting
+@import views.html.elements.fieldTypeaheadDiv
+@import org.edena.core.field.FieldTypeId
+
+@(
+    dataSetName: String,
+    filterSpec: Filter,
+    setting: DataSetSetting,
+    dataSpaceMetaInfos: Traversable[DataSpaceMetaInfo]
+)(
+    implicit context: DataSetWebContext
+)
+
+@extraActions = {
+    <div class="pull-right">
+        <button class="btn btn-success btn-sm" href="#" onclick="calcLineChart();" data-toggle="tooltip" title="Generate Line Chart">
+            <span class="glyphicon glyphicon-play" aria-hidden="true"></span> Launch
+        </button>
+
+        <button class="btn btn-info btn-sm" type="button" data-toggle="modal" data-target="#dataViewSelectionModal" title="Add Line Chart To View">
+            <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>To View
+        </button>
+    </div>
+}
+
+@bottomResources = {
+
+    @helper.javascriptRouter("dataSetJsRoutes")(
+        dataSetJsRouter.calcLineChart,
+        dataSetJsRouter.getWidgets
+    )
+
+    @helper.javascriptRouter("dataViewJsRoutes")(
+        dataViewJsRouter.addLineChart
+    )
+
+    <script type="text/javascript">
+        $(function () {
+            $("#widgetsDiv").html("<div id='spinnerDiv' class='row'></div><div id='heatmapDiv' class='chart-holder'></div>")
+
+            populateMultiNumericalTypeahead(["xField", "field"], true);
+            populateCategoricalTypeahead("groupField")
+
+            $("#dataViewSelectionModal #submitButton").on("click", addLineChartToView);
+
+            $('#yFieldNameDiv #addRowButton').focus();
+
+            activateAllFilters(function(filterOrId) {calcLineChart()});
+
+            // drag-and-drop funs
+
+            enableFieldDragover(
+                $('#inputDiv #xFieldName'),
+                $('#inputDiv #xFieldTypeahead'),
+                calcLineChart,
+                ["field-Date", "field-Integer", "field-Double"]
+            )
+
+            enableFieldDragover(
+                $('#inputDiv #groupFieldName'),
+                $('#inputDiv #groupFieldTypeahead'),
+                calcLineChart,
+                ["field-Boolean", "field-Enum", "field-String"]
+            )
+
+            enableFieldTableDragover(
+                $('#inputDiv #yFieldNameDiv'),
+                calcLineChart,
+                ["field-Date", "field-Integer", "field-Double"]
+            );
+
+            $('#inputDiv #xFieldTypeahead, #inputDiv #groupFieldTypeahead').keypress(function (e) {
+                if (e.which == 13) {
+                    calcLineChart();
+                    return false;
+                }
+            });
+
+            $('#sideCategoricalTree').on('nodeSelected', function (event, data) {
+                if(["field-Date", "field-Integer", "field-Double"].includes(data.type)) {
+                    var newRow = {
+                        "fieldName": data.id,
+                        "fieldTypeahead": data.text
+                    };
+
+                    $('#yFieldNameDiv').dynamicTable('addTableRow', newRow)
+
+                    calcLineChart()
+                }
+            });
+        });
+
+        function calcLineChart() {
+            var xFieldName = $("#inputDiv #xFieldName").val();
+            var xFieldLabel = $("#inputDiv #xFieldTypeahead").val();
+
+            var groupFieldName = $("#inputDiv #groupFieldName").val();
+            var groupFieldLabel = $("#inputDiv #groupFieldTypeahead").val();
+            if (!groupFieldName || !groupFieldLabel)
+                groupFieldName = null
+
+            var inputYFieldNames = getYFieldNames()
+
+            var filterOrId = $(".filter-div").multiFilter('getIdOrModel')
+            var filterOrIdJson = JSON.stringify(filterOrId);
+
+            if (!xFieldName) {
+                showError("Line chart generation cannot be launched. No x field specified.");
+            } else if (inputYFieldNames.length == 0) {
+                showError("Line chart generation cannot be launched. No y fields specified.");
+            } else {
+                var ajaxHandler = handleResponse("Line chart generation finished.")
+                ajaxHandler["data"] = {
+                    "yFieldNames": inputYFieldNames
+                };
+
+                dataSetJsRoutes.org.edena.ada.web.controllers.dataset.DataSetDispatcher.calcLineChart(xFieldName, groupFieldName, filterOrIdJson).ajax(ajaxHandler)
+
+                hideErrors();
+                showMessage("Line chart generation for " + inputYFieldNames.length + " fields launched.")
+            }
+        }
+
+        function addLineChartToView() {
+            var dataViewId = $("#dataViewSelectionModal #dataViewId").val().trim()
+            var dataViewName = $("#dataViewSelectionModal #dataViewTypeahead").val().trim()
+
+            var xFieldName = $("#inputDiv #xFieldName").val();
+            var xFieldLabel = $("#inputDiv #xFieldTypeahead").val();
+
+            var groupFieldName = $("#inputDiv #groupFieldName").val();
+            var groupFieldLabel = $("#inputDiv #groupFieldTypeahead").val();
+            if (!groupFieldName || !groupFieldLabel)
+                groupFieldName = null
+
+            var yFieldNames = getYFieldNames()
+
+            if (!xFieldName) {
+                showError("No x field specified.");
+            } else if (yFieldNames.length == 0) {
+                showError("No y fields specified.");
+            } else {
+                dataViewJsRoutes.org.edena.ada.web.controllers.dataset.DataViewDispatcher.addLineChart(dataViewId, xFieldName, groupFieldName).ajax({
+                    data: {
+                        "yFieldNames": yFieldNames
+                    },
+                    success: function() {
+                        showMessage("Line chart for the field(s) '" + yFieldNames.join(", ") + "' has been successfully added to the view '" + dataViewName + "'.");
+                    },
+                    error: showErrorResponse
+                });
+            }
+        }
+
+        function getYFieldNames() {
+            $('#yFieldNameDiv').dynamicTable('updateModelFromTable');
+            return $('#yFieldNameDiv').dynamicTable('getModel');
+        }
+
+        function addAllFields() {
+            $.ajax({
+                url: '@Html(dataSetRouter.fieldNamesAndLabels(Seq(FieldTypeId.Double, FieldTypeId.Integer, FieldTypeId.Date)).url)',
+                success: function (data) {
+                    $.each(data, function(index, field) {
+                        var values = {};
+                        values["fieldName"] = field[0];
+                        values["fieldTypeahead"] = field[1] ? field[1] : field[0];
+
+                        $('#yFieldNameDiv').dynamicTable('addTableRow', values)
+                    });
+                }
+            });
+        }
+    </script>
+}
+
+@fieldButtons = {
+    <a id="addAllFieldsButton" class="btn btn-info btn-sm" href="#" onclick="addAllFields();" data-toggle="tooltip" title="Add All">
+        <span class="glyphicon glyphicon-plus" aria-hidden="true"></span> All
+    </a>
+}
+
+@inputElements = {
+
+    @dynamicTableJsImport()
+
+    @fieldTypeaheadDiv(None, Some("col-md-12"), "xField", "X Field")
+    @fieldTypeaheadDiv(None, Some("col-md-12"), "groupField", "Group Field")
+
+    <div class="col-md-12" style="margin-left: 20px; margin-top: 20px">
+        @dynamicFieldTable(
+            "yFieldName",
+            Nil,
+            true,
+            12,
+            Some(fieldButtons),
+            Some(Right(dataSetRouter.getCategoriesWithFieldsAsTreeNodes(filterSpec.conditionsOrId))),
+            "categoryTree2"
+        )
+    </div>
+}
+
+@widgetsScreen(
+    Messages("lineChart.title", dataSetName),
+    Seq(filterSpec),
+    setting,
+    dataSpaceMetaInfos,
+    inputElements,
+    Some(extraActions),
+    bottomResources,
+    widgetsDivOnRight = true
+)

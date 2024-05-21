@@ -1,0 +1,31 @@
+@import org.edena.ada.web.models.Widget
+@import org.edena.ada.web.util.toJsonHtml
+@import play.api.Configuration
+@import org.edena.ada.web.controllers.dataset.DataSetWebContext._
+@import org.edena.ada.server.models.DataSetSetting
+
+@import org.webjars.play.WebJarsUtil
+
+@(
+    widgets : Traversable[Widget],
+    dataSetSetting: Option[DataSetSetting] = None)(
+    implicit configuration: Configuration, webJarAssets: WebJarsUtil
+)
+
+@jsWidgetEngineImports(configuration, webJarAssets, dataSetSetting)
+
+<script type="text/javascript">
+    const widgetEngine = @jsWidgetEngine(configuration, dataSetSetting)
+
+    $(function () {
+        const filterElement = $(".filter-div");
+
+        @widgets.map { widget =>
+            {
+                const w = JSON.parse('@{toJsonHtml(widget)}')
+                widgetEngine.plot(w, filterElement)
+            }
+        }
+    });
+</script>
+

@@ -1,0 +1,24 @@
+@import views.html.helper.FieldElements
+
+@import views.html.elements.helpModal
+@(labelGridWidth: Int)(elements: FieldElements)
+
+@* TODO: call labelValue here *@
+<div class="form-group @if(elements.hasErrors) {has-error}">
+  <div class="col-sm-@labelGridWidth">
+    <label for="@elements.id" class="control-label">@elements.label</label>
+    @{
+      elements.args.get('_helpModal).map { helpModalElement =>
+        helpModalElement match {
+          case helpModalString: String => helpModal(Html(helpModalString), Some(elements.label.toString))
+          case helpModalHtml: Html => helpModal(helpModalHtml, Some(elements.label.toString))
+          case _ => Html("")
+        }
+      }
+    }
+  </div>
+  <div class="col-sm-@{12 - labelGridWidth}">
+    @elements.input
+    <span class="help-block">@elements.infos.mkString(", ")</span>
+  </div>
+</div>

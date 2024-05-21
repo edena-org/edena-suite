@@ -1,0 +1,14 @@
+@import org.edena.ada.server.models.dataimport.RedCapDataSetImport
+@import views.html.elements.{inputText, checkbox}
+@import org.edena.play.controllers.WebContext
+@import org.edena.play.controllers.WebContext._
+
+@(form: Form[RedCapDataSetImport])(implicit webContext: WebContext)
+
+@inputText("redCapDataSetImport", "url", form, Seq('_helpModal -> "URL of REDCap server to load data from."))
+@inputText("redCapDataSetImport", "token", form, Seq('_helpModal -> "Token to use to connect to a REDCap server."))
+@checkbox("redCapDataSetImport", "importDictionaryFlag", form)
+@inputText("redCapDataSetImport", "eventNames", form, Seq('_helpModal -> "<p>Comma-separated list of events to load iteratively, such as <i>visit_1_arm_1, visit_2_arm_1</i>.</p><p>By default, if left blank, <b>ALL</b> the events will be loaded at once.</p>"))
+@inputText("redCapDataSetImport", "categoriesToInheritFromFirstVisit", form)
+@inputText("redCapDataSetImport", "saveBatchSize", form)
+@inputText("redCapDataSetImport", "explicitNullAliases", form, Seq('_helpModal -> "<p>Comma-separated list of values that should be treated as <i>nulls</i>.</p><p>If not specified the default ones: \"\", \"na\", \"n/a\", \"null\" will be used.</p>"))

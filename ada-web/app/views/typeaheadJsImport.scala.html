@@ -1,0 +1,8 @@
+@import org.edena.play.routes.CustomDirAssets
+@import org.webjars.play.routes
+@import org.webjars.play.WebJarsUtil
+
+@()(implicit webJarAssets: WebJarsUtil)
+
+<link rel="stylesheet" type="text/css" media="screen" href="@CustomDirAssets.versioned("stylesheets/typeahead.css")">
+@webJarAssets.locate("typeahead.bundle.min.js").script()

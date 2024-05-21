@@ -1,0 +1,359 @@
+# Routes
+# This file defines all application routes (Higher priority routes first)
+# ~~~~
+
+# Default path
+GET         /                                                                       org.edena.ada.web.controllers.AppController.index
+GET         /dataSets                                                               org.edena.ada.web.controllers.AppController.dataSets
+GET         /contact                                                                org.edena.ada.web.controllers.AppController.contact
+GET         /issues                                                                 org.edena.ada.web.controllers.AppController.issues
+
+# User profiles
+GET         /profile                                                                org.edena.ada.web.controllers.UserProfileController.profile
+GET         /profile/settings                                                       org.edena.ada.web.controllers.UserProfileController.settings
+POST        /profile/settings                                                       org.edena.ada.web.controllers.UserProfileController.updateSettings
+
+# Authentication
+GET         /login                                                                  org.edena.ada.web.controllers.AuthController.login
+GET         /loginForm                                                              org.edena.ada.web.controllers.AuthController.loginWithForm
+POST        /loginForm                                                              org.edena.ada.web.controllers.AuthController.authenticate
+GET         /loginOIDC                                                              org.edena.ada.web.controllers.OidcAuthController.oidcLogin
+GET         /oidc/callback                                                          @org.pac4j.play.CallbackController.callback()
+
+GET         /logout                                                                 org.edena.ada.web.controllers.AuthController.logout
+GET         /loggedout                                                              org.edena.ada.web.controllers.AuthController.loggedOut
+GET         /logoutOIDC                                                             @org.pac4j.play.LogoutController.logout()
+
+# for no-authentication access
+GET         /loginBasic                                                             org.edena.ada.web.controllers.AuthController.loginBasic
+GET         /loginAdmin                                                             org.edena.ada.web.controllers.AuthController.loginAdmin
+
+# login/logout for REST interface
+GET         /logoutRest                                                             org.edena.ada.web.controllers.AuthController.logoutREST
+
+# LDAP for debugging
+GET         /ldap/settings                                                          org.edena.ada.web.controllers.LdapUserController.settings
+GET         /ldap/users/all                                                         org.edena.ada.web.controllers.LdapUserController.listAll
+GET         /ldap/:id/get                                                           org.edena.ada.web.controllers.LdapUserController.get(id: String)
+
+# Admin
+POST        /admin/importLdapUsers                                                  org.edena.ada.web.controllers.AdminController.importLdapUsers
+POST        /admin/purgeMissingLdapUsers                                            org.edena.ada.web.controllers.AdminController.purgeMissingLdapUsers
+POST        /admin/lockMissingLdapUsers                                             org.edena.ada.web.controllers.AdminController.lockMissingLdapUsers
+GET         /admin/dataSetIds                                                       org.edena.ada.web.controllers.AdminController.dataSetIds
+
+# Runnable
+POST        /runnables/run                                                          org.edena.ada.web.controllers.RunnableController.runScript(className: String, finishCancelLink: Option[String] ?= None)
+GET         /runnables/inputForm                                                    org.edena.ada.web.controllers.RunnableController.getScriptInputForm(className: String, finishCancelLink: Option[String] ?= None)
+POST        /runnables/runForInput                                                  org.edena.ada.web.controllers.RunnableController.runInputScript(className: String, finishCancelLink: Option[String] ?= None)
+GET         /runnables                                                              org.edena.ada.web.controllers.RunnableController.find(p: Int ?= 0, s: String ?= "-timeCreated", filter: Seq[org.edena.core.FilterCondition] ?= Nil)
+GET         /runnables/all                                                          org.edena.ada.web.controllers.RunnableController.listAll(s: String ?= "name")
+GET         /runnables/new                                                          org.edena.ada.web.controllers.RunnableController.create
+POST        /runnables/save                                                         org.edena.ada.web.controllers.RunnableController.save
+GET         /runnables/get/:id                                                      org.edena.ada.web.controllers.RunnableController.get(id: BSONObjectID)
+GET         /runnables/edit/:id                                                     org.edena.ada.web.controllers.RunnableController.edit(id: BSONObjectID)
+POST        /runnables/update/:id                                                   org.edena.ada.web.controllers.RunnableController.update(id: BSONObjectID)
+POST        /runnables/delete/:id                                                   org.edena.ada.web.controllers.RunnableController.delete(id: BSONObjectID)
+GET         /runnables/copy                                                         org.edena.ada.web.controllers.RunnableController.copy(runnableId: BSONObjectID)
+POST        /runnables/execute/:id                                                  org.edena.ada.web.controllers.RunnableController.execute(id: BSONObjectID)
+GET         /runnables/names                                                        org.edena.ada.web.controllers.RunnableController.getRunnableNames
+GET         /runnables/idAndNames                                                   org.edena.ada.web.controllers.RunnableController.idAndNames
+
+# Data Set Import
+GET         /admin/dataSetImport                                                    org.edena.ada.web.controllers.dataset.dataimport.DataSetImportController.find(p: Int ?= 0, s: String ?= "-timeCreated", filter: Seq[org.edena.core.FilterCondition] ?= Nil)
+GET         /admin/dataSetImport/all                                                org.edena.ada.web.controllers.dataset.dataimport.DataSetImportController.listAll(s: String ?= "dataSpaceName")
+GET         /admin/dataSetImport/new                                                org.edena.ada.web.controllers.dataset.dataimport.DataSetImportController.create(concreteClassName: String)
+POST        /admin/dataSetImport/execute/:id                                        org.edena.ada.web.controllers.dataset.dataimport.DataSetImportController.execute(id: BSONObjectID)
+POST        /admin/dataSetImport/save                                               org.edena.ada.web.controllers.dataset.dataimport.DataSetImportController.save
+GET         /admin/dataSetImport/:id/get                                            org.edena.ada.web.controllers.dataset.dataimport.DataSetImportController.get(id: BSONObjectID)
+POST        /admin/dataSetImport/:id                                                org.edena.ada.web.controllers.dataset.dataimport.DataSetImportController.update(id: BSONObjectID)
+POST        /admin/dataSetImport/:id/delete                                         org.edena.ada.web.controllers.dataset.dataimport.DataSetImportController.delete(id: BSONObjectID)
+GET         /admin/dataSetImport/copy                                               org.edena.ada.web.controllers.dataset.dataimport.DataSetImportController.copy(dataSetImportId: BSONObjectID)
+GET         /admin/dataSetImport/idAndNames                                         org.edena.ada.web.controllers.dataset.dataimport.DataSetImportController.idAndNames
+
+# Data Set Transformation
+GET         /admin/dataSetTransformation                                            org.edena.ada.web.controllers.dataset.datatrans.DataSetTransformationController.find(p: Int ?= 0, s: String ?= "-timeCreated", filter: Seq[org.edena.core.FilterCondition] ?= Nil)
+GET         /admin/dataSetTransformation/all                                        org.edena.ada.web.controllers.dataset.datatrans.DataSetTransformationController.listAll(s: String ?= "dataSpaceName")
+GET         /admin/dataSetTransformation/new                                        org.edena.ada.web.controllers.dataset.datatrans.DataSetTransformationController.create(concreteClassName: String)
+POST        /admin/dataSetTransformation/execute/:id                                org.edena.ada.web.controllers.dataset.datatrans.DataSetTransformationController.execute(id: BSONObjectID)
+POST        /admin/dataSetTransformation/save                                       org.edena.ada.web.controllers.dataset.datatrans.DataSetTransformationController.save
+GET         /admin/dataSetTransformation/:id/get                                    org.edena.ada.web.controllers.dataset.datatrans.DataSetTransformationController.get(id: BSONObjectID)
+POST        /admin/dataSetTransformation/:id                                        org.edena.ada.web.controllers.dataset.datatrans.DataSetTransformationController.update(id: BSONObjectID)
+POST        /admin/dataSetTransformation/:id/delete                                 org.edena.ada.web.controllers.dataset.datatrans.DataSetTransformationController.delete(id: BSONObjectID)
+GET         /admin/dataSetTransformation/copy                                       org.edena.ada.web.controllers.dataset.datatrans.DataSetTransformationController.copy(dataSetTransformationId: BSONObjectID)
+GET         /admin/dataSetTransformation/idAndNames                                 org.edena.ada.web.controllers.dataset.datatrans.DataSetTransformationController.idAndNames
+GET         /admin/dataSetTransformation/resultDataSetIdAndName                     org.edena.ada.web.controllers.dataset.datatrans.DataSetTransformationController.resultDataSetIdAndName(sourceDataSetId: String, resultNameSuffix: String, transformationId: Option[BSONObjectID])
+GET         /admin/dataSetTransformation/filterIdAndNames                           org.edena.ada.web.controllers.dataset.datatrans.DataSetTransformationController.filterIdAndNames(dataSetId: String)
+
+
+# User Management
+GET         /users                                                                  org.edena.ada.web.controllers.UserController.find(p: Int ?= 0, s: String ?= "userId", filter: Seq[org.edena.core.FilterCondition] ?= Nil)
+GET         /users/all                                                              org.edena.ada.web.controllers.UserController.listAll(s: String ?= "userId")
+GET         /users/new                                                              org.edena.ada.web.controllers.UserController.create
+POST        /users/save                                                             org.edena.ada.web.controllers.UserController.save
+GET         /users/get/:id                                                          org.edena.ada.web.controllers.UserController.get(id: BSONObjectID)
+GET         /users/edit/:id                                                         org.edena.ada.web.controllers.UserController.edit(id: BSONObjectID)
+POST        /users/:id/update                                                       org.edena.ada.web.controllers.UserController.update(id: BSONObjectID)
+POST        /users/:id/delete                                                       org.edena.ada.web.controllers.UserController.delete(id: BSONObjectID)
+GET         /users/listUsersForPermissionPrefix                                     org.edena.ada.web.controllers.UserController.listUsersForPermissionPrefix(permissionPrefix: Option[String] ?= None)
+POST        /users/copyPermissions                                                  org.edena.ada.web.controllers.UserController.copyPermissions(sourceUserId: BSONObjectID, targetUserId: BSONObjectID)
+GET         /users/idAndNames                                                       org.edena.ada.web.controllers.UserController.idAndNames
+POST        /users/setPassword                                                      org.edena.ada.web.controllers.UserController.setPassword(userId: BSONObjectID, password: String)
+
+# Translations
+GET         /translations                                                           org.edena.ada.web.controllers.TranslationController.find(p: Int ?= 0, s: String ?= "original", filter: Seq[org.edena.core.FilterCondition] ?= Nil)
+GET         /translations/all                                                       org.edena.ada.web.controllers.TranslationController.listAll(s: String ?= "original")
+GET         /translations/new                                                       org.edena.ada.web.controllers.TranslationController.create
+POST        /translations/save                                                      org.edena.ada.web.controllers.TranslationController.save
+GET         /translations/:id/get                                                   org.edena.ada.web.controllers.TranslationController.get(id: BSONObjectID)
+GET         /translations/:id                                                       org.edena.ada.web.controllers.TranslationController.edit(id: BSONObjectID)
+POST        /translations/:id                                                       org.edena.ada.web.controllers.TranslationController.update(id: BSONObjectID)
+POST        /translations/:id/delete                                                org.edena.ada.web.controllers.TranslationController.delete(id: BSONObjectID)
+
+# DataSetDispatcher
+GET         /dataSets/records                                                        org.edena.ada.web.controllers.dataset.DataSetDispatcher.find(p: Int ?= 0, s: String ?= "", filter: Seq[org.edena.core.FilterCondition] ?= Nil)
+GET         /dataSets/records/get/:id                                                org.edena.ada.web.controllers.dataset.DataSetDispatcher.get(id: BSONObjectID)
+GET         /dataSets/fields                                                         org.edena.ada.web.controllers.dataset.DataSetDispatcher.getFields(fieldTypeIds: Seq[org.edena.core.field.FieldTypeId.Value] ?= Nil)
+GET         /dataSets/fieldNamesAndLabels                                            org.edena.ada.web.controllers.dataset.DataSetDispatcher.getFieldNamesAndLabels(fieldTypeIds: Seq[org.edena.core.field.FieldTypeId.Value] ?= Nil)
+GET         /dataSets/fieldValue/:id/:fieldName                                      org.edena.ada.web.controllers.dataset.DataSetDispatcher.getFieldValue(id: BSONObjectID, fieldName: String)
+GET         /dataSets/fieldTypeAndAllowedValues/:fieldName                           org.edena.ada.web.controllers.dataset.DataSetDispatcher.getFieldTypeWithAllowedValues(fieldName: String)
+GET         /dataSets/field/:fieldName                                               org.edena.ada.web.controllers.dataset.DataSetDispatcher.getField(fieldName: String)
+GET         /dataSets/records/exportViewAsCsv                                        org.edena.ada.web.controllers.dataset.DataSetDispatcher.exportViewRecordsAsCsv(dataViewId: BSONObjectID, delimiter: String, replaceEolWithSpace: Boolean, eol: Option[String], filter: Seq[org.edena.core.FilterCondition], tableColumnsOnly: Boolean, useDisplayValues: Boolean, escapeStringValues: Boolean)
+GET         /dataSets/records/exportTableAsCsv                                       org.edena.ada.web.controllers.dataset.DataSetDispatcher.exportTableRecordsAsCsv(tableColumnNames: Seq[String], delimiter: String, replaceEolWithSpace: Boolean, eol: Option[String], filter: Seq[org.edena.core.FilterCondition], tableColumnsOnly: Boolean, useDisplayValues: Boolean, escapeStringValues: Boolean, selectedOnly: Boolean, selectedIds: Seq[BSONObjectID])
+GET         /dataSets/records/exportViewAsJson                                       org.edena.ada.web.controllers.dataset.DataSetDispatcher.exportViewRecordsAsJson(dataViewId: BSONObjectID, filter: Seq[org.edena.core.FilterCondition], tableColumnsOnly: Boolean, useDisplayValues: Boolean)
+GET         /dataSets/records/exportTableAsJson                                      org.edena.ada.web.controllers.dataset.DataSetDispatcher.exportTableRecordsAsJson(tableColumnNames: Seq[String], filter: Seq[org.edena.core.FilterCondition], tableColumnsOnly: Boolean, useDisplayValues: Boolean, selectedOnly: Boolean, selectedIds: Seq[BSONObjectID])
+GET         /dataSets/records/exportTranSMARTData                                    org.edena.ada.web.controllers.dataset.DataSetDispatcher.exportTranSMARTDataFile(delimiter: String ?= "\t", visitFieldName: Option[String] ?= None, replaceEolWithSpace: Boolean ?= false)
+GET         /dataSets/records/exportTranSMARTMapping                                 org.edena.ada.web.controllers.dataset.DataSetDispatcher.exportTranSMARTMappingFile(delimiter: String ?= "\t", visitFieldName: Option[String] ?= None, replaceEolWithSpace: Boolean ?= false)
+GET         /dataSets/getView                                                        org.edena.ada.web.controllers.dataset.DataSetDispatcher.getView(dataViewId: BSONObjectID, tablePages: Seq[org.edena.play.PageOrder] ?= Nil, filterOrIds: Seq[Either[Seq[org.edena.core.FilterCondition], BSONObjectID]] ?= Nil, filterChanged: Boolean ?= false)
+POST        /dataSets/getWidgets                                                     org.edena.ada.web.controllers.dataset.DataSetDispatcher.getWidgets
+GET         /dataSets/getDefaultView                                                 org.edena.ada.web.controllers.dataset.DataSetDispatcher.getDefaultView(filterOrIds: Seq[Either[Seq[org.edena.core.FilterCondition], BSONObjectID]] ?= Nil)
+GET         /dataSets/distribution                                                   org.edena.ada.web.controllers.dataset.DataSetDispatcher.getDistribution(filterOrId: Either[Seq[org.edena.core.FilterCondition], BSONObjectID] ?= Left(Nil))
+POST        /dataSets/calcDistribution                                               org.edena.ada.web.controllers.dataset.DataSetDispatcher.calcDistribution(fieldName: String, groupFieldName: Option[String] ?= None, filterOrId: Either[Seq[org.edena.core.FilterCondition], BSONObjectID] ?= Left(Nil))
+GET         /dataSets/cumulativeCount                                                org.edena.ada.web.controllers.dataset.DataSetDispatcher.getCumulativeCount(filterOrId: Either[Seq[org.edena.core.FilterCondition], BSONObjectID] ?= Left(Nil))
+POST        /dataSets/calcCumulativeCount                                            org.edena.ada.web.controllers.dataset.DataSetDispatcher.calcCumulativeCount(fieldName: String, groupFieldName: Option[String] ?= None, filterOrId: Either[Seq[org.edena.core.FilterCondition], BSONObjectID] ?= Left(Nil))
+GET         /dataSets/scatter                                                        org.edena.ada.web.controllers.dataset.DataSetDispatcher.getScatter(filterOrId: Either[Seq[org.edena.core.FilterCondition], BSONObjectID] ?= Left(Nil))
+POST        /dataSets/calcScatter                                                    org.edena.ada.web.controllers.dataset.DataSetDispatcher.calcScatter(xFieldName: String, yFieldName: String, groupFieldName: Option[String] ?= None, filterOrId: Either[Seq[org.edena.core.FilterCondition], BSONObjectID] ?= Left(Nil))
+GET         /dataSets/pearsonCorrelations                                            org.edena.ada.web.controllers.dataset.DataSetDispatcher.getPearsonCorrelations(filterOrId: Either[Seq[org.edena.core.FilterCondition], BSONObjectID] ?= Left(Nil))
+POST        /dataSets/calcPearsonCorrelations                                        org.edena.ada.web.controllers.dataset.DataSetDispatcher.calcPearsonCorrelations(filterOrId: Either[Seq[org.edena.core.FilterCondition], BSONObjectID] ?= Left(Nil))
+GET         /dataSets/matthewsCorrelations                                           org.edena.ada.web.controllers.dataset.DataSetDispatcher.getMatthewsCorrelations(filterOrId: Either[Seq[org.edena.core.FilterCondition], BSONObjectID] ?= Left(Nil))
+POST        /dataSets/calcMatthewsCorrelations                                       org.edena.ada.web.controllers.dataset.DataSetDispatcher.calcMatthewsCorrelations(filterOrId: Either[Seq[org.edena.core.FilterCondition], BSONObjectID] ?= Left(Nil))
+GET         /dataSets/heatmap                                                        org.edena.ada.web.controllers.dataset.DataSetDispatcher.getHeatmap(filterOrId: Either[Seq[org.edena.core.FilterCondition], BSONObjectID] ?= Left(Nil))
+POST        /dataSets/calcHeatmap                                                    org.edena.ada.web.controllers.dataset.DataSetDispatcher.calcHeatmap(xFieldName: String, yFieldName: String, valueFieldName: Option[String] ?= None, aggType: Option[org.edena.ada.server.models.AggType.Value] ?= None, filterOrId: Either[Seq[org.edena.core.FilterCondition], BSONObjectID] ?= Left(Nil))
+GET         /dataSets/lineChart                                                      org.edena.ada.web.controllers.dataset.DataSetDispatcher.getLineChart(filterOrId: Either[Seq[org.edena.core.FilterCondition], BSONObjectID] ?= Left(Nil))
+POST        /dataSets/calcLineChart                                                  org.edena.ada.web.controllers.dataset.DataSetDispatcher.calcLineChart(xFieldName: String, groupFieldName: Option[String] ?= None, filterOrId: Either[Seq[org.edena.core.FilterCondition], BSONObjectID] ?= Left(Nil))
+GET         /dataSets/comparison                                                     org.edena.ada.web.controllers.dataset.DataSetDispatcher.getComparison(filterOrIds: Seq[Either[Seq[org.edena.core.FilterCondition], BSONObjectID]] ?= Nil)
+POST        /dataSets/calcComparison                                                 org.edena.ada.web.controllers.dataset.DataSetDispatcher.calcComparison(fieldName: String, filterOrIds: Seq[Either[Seq[org.edena.core.FilterCondition], BSONObjectID]] ?= Nil)
+GET         /dataSets/getIndependenceTest                                            org.edena.ada.web.controllers.dataset.DataSetDispatcher.getIndependenceTest(filterOrId: Either[Seq[org.edena.core.FilterCondition], BSONObjectID] ?= Left(Nil))
+POST        /dataSets/testIndependence                                               org.edena.ada.web.controllers.dataset.DataSetDispatcher.testIndependence(filterOrId: Either[Seq[org.edena.core.FilterCondition], BSONObjectID] ?= Left(Nil))
+GET         /dataSets/table                                                          org.edena.ada.web.controllers.dataset.DataSetDispatcher.getTable(filterOrId: Either[Seq[org.edena.core.FilterCondition], BSONObjectID] ?= Left(Nil))
+POST        /dataSets/generateTable                                                  org.edena.ada.web.controllers.dataset.DataSetDispatcher.generateTable(page: Int, orderBy: String, fieldNames: Seq[String], filterOrId: Either[Seq[org.edena.core.FilterCondition], BSONObjectID], tableSelection: Boolean)
+POST        /dataSets/generateTableWithFilter                                        org.edena.ada.web.controllers.dataset.DataSetDispatcher.generateTableWithFilter(page: Int, orderBy: String, fieldNames: Seq[String], filterOrId: Either[Seq[org.edena.core.FilterCondition], BSONObjectID])
+GET         /dataSets/clusterization                                                 org.edena.ada.web.controllers.dataset.DataSetDispatcher.getClusterization
+GET         /dataSets/getSeriesProcessingSpec                                        org.edena.ada.web.controllers.dataset.DataSetDispatcher.getSeriesProcessingSpec
+POST        /dataSets/runSeriesProcessing                                            org.edena.ada.web.controllers.dataset.DataSetDispatcher.runSeriesProcessing
+GET         /dataSets/getSeriesTransformationSpec                                    org.edena.ada.web.controllers.dataset.DataSetDispatcher.getSeriesTransformationSpec
+POST        /dataSets/runSeriesTransformation                                        org.edena.ada.web.controllers.dataset.DataSetDispatcher.runSeriesTransformation
+POST        /dataSets/cluster                                                        org.edena.ada.web.controllers.dataset.DataSetDispatcher.cluster(mlModelId: BSONObjectID, inputFieldNames: Seq[String], filterId: Option[BSONObjectID], featuresNormalizationType: Option[org.edena.spark_ml.models.VectorScalerType.Value], pcaDims: Option[Int])
+GET         /dataSets/viewElementsAndWidgetsCallback                                 org.edena.ada.web.controllers.dataset.DataSetDispatcher.getViewElementsAndWidgetsCallback(dataViewId: BSONObjectID, tableOrder: String, filterOrId: Either[Seq[org.edena.core.FilterCondition], BSONObjectID], oldCountDiff: Option[Int], tableSelection: Boolean)
+GET         /dataSets/newFilterViewElementsAndWidgetsCallback                        org.edena.ada.web.controllers.dataset.DataSetDispatcher.getNewFilterViewElementsAndWidgetsCallback(dataViewId: BSONObjectID, tableOrder: String, totalCount: Int)
+GET         /dataSets/newFilter                                                      org.edena.ada.web.controllers.dataset.DataSetDispatcher.getNewFilter
+GET         /dataSets/categoriesWithFieldsAsTreeNodes                                org.edena.ada.web.controllers.dataset.DataSetDispatcher.getCategoriesWithFieldsAsTreeNodes(filterOrId: Either[Seq[org.edena.core.FilterCondition], BSONObjectID])
+GET         /dataSets/records/findCustom                                             org.edena.ada.web.controllers.dataset.DataSetDispatcher.findCustom(filterOrId: Either[Seq[org.edena.core.FilterCondition], BSONObjectID] ?= Left(Nil), orderBy: String ?= "", projection: Seq[String] ?= Nil, limit: Option[Int] ?= None, skip: Option[Int] ?= None)
+
+# DictionaryDispatcher
+GET         /dataSets/dictionary                                                     org.edena.ada.web.controllers.dataset.DictionaryDispatcher.find(p: Int ?= 0, s: String ?= "name", filter : Seq[org.edena.core.FilterCondition] ?= Nil)
+GET         /dataSets/dictionary/listAll                                             org.edena.ada.web.controllers.dataset.DictionaryDispatcher.listAll(s: String ?= "name")
+GET         /dataSets/dictionary/get/:name                                           org.edena.ada.web.controllers.dataset.DictionaryDispatcher.get(name: String)
+POST        /dataSets/dictionary/save                                                org.edena.ada.web.controllers.dataset.DictionaryDispatcher.save
+GET         /dataSets/dictionary/edit/:name                                          org.edena.ada.web.controllers.dataset.DictionaryDispatcher.edit(name: String)
+POST        /dataSets/dictionary/:name                                               org.edena.ada.web.controllers.dataset.DictionaryDispatcher.update(name: String)
+POST        /dataSets/dictionary/updateLabel/:id/:label                              org.edena.ada.web.controllers.dataset.DictionaryDispatcher.updateLabel(id: String, label: String)
+GET         /dataSets/dictionary/exportAsCsv                                         org.edena.ada.web.controllers.dataset.DictionaryDispatcher.exportRecordsAsCsv(delimiter: String, replaceEolWithSpace: Boolean, eol: Option[String], filter: Seq[org.edena.core.FilterCondition], tableColumnsOnly: Boolean)
+GET         /dataSets/dictionary/exportAsJson                                        org.edena.ada.web.controllers.dataset.DictionaryDispatcher.exportRecordsAsJson(filter: Seq[org.edena.core.FilterCondition], tableColumnsOnly: Boolean)
+GET         /dataSets/dictionary/setDefaultLabels                                    org.edena.ada.web.controllers.dataset.DictionaryDispatcher.setDefaultLabels
+GET         /dataSets/dictionary/convertLabelsToCamelCase                            org.edena.ada.web.controllers.dataset.DictionaryDispatcher.convertLabelsToCamelCase
+
+# CategoryDispatcher
+GET         /dataSets/categories                                                     org.edena.ada.web.controllers.dataset.CategoryDispatcher.find(p: Int ?= 0, s: String ?= "name", filter : Seq[org.edena.core.FilterCondition] ?= Nil)
+GET         /dataSets/categories/get/:id                                             org.edena.ada.web.controllers.dataset.CategoryDispatcher.get(id: BSONObjectID)
+GET         /dataSets/categories/new                                                 org.edena.ada.web.controllers.dataset.CategoryDispatcher.create
+POST        /dataSets/categories/save                                                org.edena.ada.web.controllers.dataset.CategoryDispatcher.save
+POST        /dataSets/categories/save/:name                                          org.edena.ada.web.controllers.dataset.CategoryDispatcher.saveForName(name: String)
+POST        /dataSets/categories/:id                                                 org.edena.ada.web.controllers.dataset.CategoryDispatcher.update(id: BSONObjectID)
+POST        /dataSets/categories/:id/delete                                          org.edena.ada.web.controllers.dataset.CategoryDispatcher.delete(id: BSONObjectID)
+GET         /dataSets/categories/idAndNames                                          org.edena.ada.web.controllers.dataset.CategoryDispatcher.idAndNames
+GET         /dataSets/categories/getCategoryD3Root                                   org.edena.ada.web.controllers.dataset.CategoryDispatcher.getCategoryD3Root
+GET         /dataSets/categories/relocateToParent/:id/$parentId<[^/]*>               org.edena.ada.web.controllers.dataset.CategoryDispatcher.relocateToParent(id: BSONObjectID, parentId: Option[BSONObjectID])
+GET         /dataSets/categories/addFields                                           org.edena.ada.web.controllers.dataset.CategoryDispatcher.addFields(categoryId: BSONObjectID, fieldNames: Seq[String])
+POST        /dataSets/categories/updateLabel/:id/:label                              org.edena.ada.web.controllers.dataset.CategoryDispatcher.updateLabel(id: BSONObjectID, label: String)
+
+# FilterDispatcher
+GET         /dataSets/filters                                                        org.edena.ada.web.controllers.dataset.FilterDispatcher.find(p: Int ?= 0, s: String ?= "name", filter : Seq[org.edena.core.FilterCondition] ?= Nil)
+GET         /dataSets/filters/get/:id                                                org.edena.ada.web.controllers.dataset.FilterDispatcher.get(id: BSONObjectID)
+GET         /dataSets/filters/new                                                    org.edena.ada.web.controllers.dataset.FilterDispatcher.create
+POST        /dataSets/filters/save                                                   org.edena.ada.web.controllers.dataset.FilterDispatcher.save
+POST        /dataSets/filters/saveAjax                                               org.edena.ada.web.controllers.dataset.FilterDispatcher.saveAjax(filter: org.edena.ada.server.models.Filter)
+POST        /dataSets/filters/:id                                                    org.edena.ada.web.controllers.dataset.FilterDispatcher.update(id: BSONObjectID)
+POST        /dataSets/filters/:id/delete                                             org.edena.ada.web.controllers.dataset.FilterDispatcher.delete(id: BSONObjectID)
+GET         /dataSets/filters/idAndNames                                             org.edena.ada.web.controllers.dataset.FilterDispatcher.idAndNames
+GET         /dataSets/filters/idAndNamesAccessible                                   org.edena.ada.web.controllers.dataset.FilterDispatcher.idAndNamesAccessible
+
+# DataViewDispatcher
+GET         /dataSets/dataviews                                                      org.edena.ada.web.controllers.dataset.DataViewDispatcher.find(p: Int ?= 0, s: String ?= "name", filter : Seq[org.edena.core.FilterCondition] ?= Nil)
+GET         /dataSets/dataviews/get/:id                                              org.edena.ada.web.controllers.dataset.DataViewDispatcher.get(id: BSONObjectID)
+GET         /dataSets/dataviews/getAndShowView/:id                                   org.edena.ada.web.controllers.dataset.DataViewDispatcher.getAndShowView(id: BSONObjectID)
+GET         /dataSets/dataviews/new                                                  org.edena.ada.web.controllers.dataset.DataViewDispatcher.create
+POST        /dataSets/dataviews/save                                                 org.edena.ada.web.controllers.dataset.DataViewDispatcher.save
+POST        /dataSets/dataviews/:id                                                  org.edena.ada.web.controllers.dataset.DataViewDispatcher.update(id: BSONObjectID)
+POST        /dataSets/dataviews/updateAndShowView/:id                                org.edena.ada.web.controllers.dataset.DataViewDispatcher.updateAndShowView(id: BSONObjectID)
+POST        /dataSets/dataviews/:id/delete                                           org.edena.ada.web.controllers.dataset.DataViewDispatcher.delete(id: BSONObjectID)
+GET         /dataSets/dataviews/copy                                                 org.edena.ada.web.controllers.dataset.DataViewDispatcher.copy(dataViewId: BSONObjectID)
+GET         /dataSets/dataviews/idAndNames                                           org.edena.ada.web.controllers.dataset.DataViewDispatcher.idAndNames
+GET         /dataSets/dataviews/idAndNamesAccessible                                 org.edena.ada.web.controllers.dataset.DataViewDispatcher.idAndNamesAccessible
+POST        /dataSets/dataviews/addDistributions/:dataViewId                         org.edena.ada.web.controllers.dataset.DataViewDispatcher.addDistributions(dataViewId: BSONObjectID, fieldNames: Seq[String])
+POST        /dataSets/dataviews/addDistribution/:dataViewId                          org.edena.ada.web.controllers.dataset.DataViewDispatcher.addDistribution(dataViewId: BSONObjectID, fieldName: String, groupFieldName: Option[String])
+POST        /dataSets/dataviews/addCumulativeCounts/:dataViewId                      org.edena.ada.web.controllers.dataset.DataViewDispatcher.addCumulativeCounts(dataViewId: BSONObjectID, fieldNames: Seq[String])
+POST        /dataSets/dataviews/addCumulativeCount/:dataViewId                       org.edena.ada.web.controllers.dataset.DataViewDispatcher.addCumulativeCount(dataViewId: BSONObjectID, fieldName: String, groupFieldName: Option[String])
+POST        /dataSets/dataviews/addBoxPlots/:dataViewId                              org.edena.ada.web.controllers.dataset.DataViewDispatcher.addBoxPlots(dataViewId: BSONObjectID, fieldNames: Seq[String])
+POST        /dataSets/dataviews/addBoxPlot/:dataViewId                               org.edena.ada.web.controllers.dataset.DataViewDispatcher.addBoxPlot(dataViewId: BSONObjectID, fieldName: String, groupFieldName: Option[String])
+POST        /dataSets/dataviews/addBasicStats/:dataViewId                            org.edena.ada.web.controllers.dataset.DataViewDispatcher.addBasicStats(dataViewId: BSONObjectID, fieldNames: Seq[String])
+POST        /dataSets/dataviews/addScatter/:dataViewId                               org.edena.ada.web.controllers.dataset.DataViewDispatcher.addScatter(dataViewId: BSONObjectID, xFieldName: String, yFieldName: String, groupOrValueFieldName: Option[String])
+POST        /dataSets/dataviews/addLineChart/:dataViewId                             org.edena.ada.web.controllers.dataset.DataViewDispatcher.addLineChart(dataViewId: BSONObjectID, xFieldName: String, groupFieldName: Option[String])
+POST        /dataSets/dataviews/addCorrelation/:dataViewId                           org.edena.ada.web.controllers.dataset.DataViewDispatcher.addCorrelation(dataViewId: BSONObjectID, correlationType: org.edena.ada.server.models.CorrelationType.Value)
+POST        /dataSets/dataviews/addHeatmap/:dataViewId                               org.edena.ada.web.controllers.dataset.DataViewDispatcher.addHeatmap(dataViewId: BSONObjectID, xFieldName: String, yFieldName: String, valueFieldName: String, aggType: org.edena.ada.server.models.AggType.Value)
+POST        /dataSets/dataviews/addGridDistribution/:dataViewId                      org.edena.ada.web.controllers.dataset.DataViewDispatcher.addGridDistribution(dataViewId: BSONObjectID, xFieldName: String, yFieldName: String)
+POST        /dataSets/dataviews/addIndependenceTest/:dataViewId                      org.edena.ada.web.controllers.dataset.DataViewDispatcher.addIndependenceTest(dataViewId: BSONObjectID, targetFieldName: String)
+POST        /dataSets/dataviews/addTableFields/:dataViewId                           org.edena.ada.web.controllers.dataset.DataViewDispatcher.addTableFields(dataViewId: BSONObjectID, fieldNames: Seq[String])
+POST        /dataSets/dataviews/saveFilter/:dataViewId                               org.edena.ada.web.controllers.dataset.DataViewDispatcher.saveFilter(dataViewId: BSONObjectID, filterOrIds: Seq[Either[Seq[org.edena.core.FilterCondition], BSONObjectID]])
+
+# DataSetSetting
+GET         /dataSets/setting                                                        org.edena.ada.web.controllers.dataset.DataSetSettingController.find(p: Int ?= 0, s: String ?= "dataSetId", filter : Seq[org.edena.core.FilterCondition] ?= Nil)
+GET         /dataSets/setting/all                                                    org.edena.ada.web.controllers.dataset.DataSetSettingController.listAll(s: String ?= "dataSetId")
+POST        /dataSets/setting/save                                                   org.edena.ada.web.controllers.dataset.DataSetSettingController.save
+GET         /dataSets/setting/:id/get                                                org.edena.ada.web.controllers.dataset.DataSetSettingController.get(id: BSONObjectID)
+GET         /dataSets/setting/:id                                                    org.edena.ada.web.controllers.dataset.DataSetSettingController.edit(id: BSONObjectID)
+GET         /dataSets/setting/edit/                                                  org.edena.ada.web.controllers.dataset.DataSetSettingController.editForDataSet(dataSet: String)
+POST        /dataSets/setting/:id                                                    org.edena.ada.web.controllers.dataset.DataSetSettingController.update(id: BSONObjectID)
+POST        /dataSets/setting/update/:id                                             org.edena.ada.web.controllers.dataset.DataSetSettingController.updateForDataSet(id: BSONObjectID)
+POST        /dataSets/setting/:id/delete                                             org.edena.ada.web.controllers.dataset.DataSetSettingController.delete(id: BSONObjectID)
+
+# Data SpaceMeta info
+GET         /dataSpaces                                                              org.edena.ada.web.controllers.dataset.DataSpaceMetaInfoController.find(p: Int ?= 0, s: String ?= "name", filter : Seq[org.edena.core.FilterCondition] ?= Nil)
+GET         /dataSpaces/all                                                          org.edena.ada.web.controllers.dataset.DataSpaceMetaInfoController.listAll(s: String ?= "name")
+GET         /dataSpaces/new                                                          org.edena.ada.web.controllers.dataset.DataSpaceMetaInfoController.create
+POST        /dataSpaces/save                                                         org.edena.ada.web.controllers.dataset.DataSpaceMetaInfoController.save
+GET         /dataSpaces/get/:id                                                      org.edena.ada.web.controllers.dataset.DataSpaceMetaInfoController.get(id: BSONObjectID)
+GET         /dataSpaces/edit/:id                                                     org.edena.ada.web.controllers.dataset.DataSpaceMetaInfoController.edit(id: BSONObjectID)
+POST        /dataSpaces/update/:id                                                   org.edena.ada.web.controllers.dataset.DataSpaceMetaInfoController.update(id: BSONObjectID)
+POST        /dataSpaces/delete/:id                                                   org.edena.ada.web.controllers.dataset.DataSpaceMetaInfoController.delete(id: BSONObjectID)
+POST        /dataSpaces/deleteDataSet/:id                                            org.edena.ada.web.controllers.dataset.DataSpaceMetaInfoController.deleteDataSet(id: BSONObjectID)
+POST        /dataSpaces/move                                                         org.edena.ada.web.controllers.dataset.DataSpaceMetaInfoController.move(spaceId: BSONObjectID, parentId: Option[BSONObjectID])
+GET         /dataSpaces/idAndNames                                                   org.edena.ada.web.controllers.dataset.DataSpaceMetaInfoController.idAndNames
+GET         /dataSpaces/showDataSetIds                                               org.edena.ada.web.controllers.dataset.DataSpaceMetaInfoController.showDataSetIds(spaceId: BSONObjectID)
+
+# Standard Clasification Run
+GET         /dataSets/classificationRuns                                             org.edena.ada.web.controllers.dataset.StandardClassificationRunDispatcher.find(p: Int ?= 0, s: String ?= "-timeCreated", filter : Seq[org.edena.core.FilterCondition] ?= Nil)
+GET         /dataSets/classificationRuns/get/:id                                     org.edena.ada.web.controllers.dataset.StandardClassificationRunDispatcher.get(id: BSONObjectID)
+GET         /dataSets/classificationRuns/new                                         org.edena.ada.web.controllers.dataset.StandardClassificationRunDispatcher.create
+POST        /dataSets/classificationRuns/:id/delete                                  org.edena.ada.web.controllers.dataset.StandardClassificationRunDispatcher.delete(id: BSONObjectID)
+POST        /dataSets/classificationRuns/launch                                      org.edena.ada.web.controllers.dataset.StandardClassificationRunDispatcher.launch(runSpec: org.edena.spark_ml.models.setting.ClassificationRunSpec, saveResults: Boolean, saveBinCurves: Boolean)
+GET         /dataSets/classificationRuns/exportToDataSet                             org.edena.ada.web.controllers.dataset.StandardClassificationRunDispatcher.exportToDataSet(targetDataSetId: Option[String] ?= None, targetDataSetName: Option[String] ?= None)
+GET         /dataSets/classificationRuns/exportAsCsv                                 org.edena.ada.web.controllers.dataset.StandardClassificationRunDispatcher.exportRecordsAsCsv(delimiter: String, replaceEolWithSpace: Boolean, eol: Option[String], filter: Seq[org.edena.core.FilterCondition], tableColumnsOnly: Boolean)
+GET         /dataSets/classificationRuns/exportAsJson                                org.edena.ada.web.controllers.dataset.StandardClassificationRunDispatcher.exportRecordsAsJson(filter: Seq[org.edena.core.FilterCondition], tableColumnsOnly: Boolean)
+POST        /dataSets/selectFeaturesAsAnovaChiSquare                                 org.edena.ada.web.controllers.dataset.StandardClassificationRunDispatcher.selectFeaturesAsAnovaChiSquare(inputFieldNames: Seq[String], outputFieldName: String, filterId: Option[BSONObjectID], featuresToSelectNum: Int)
+
+# Temporal Clasification Run
+GET         /dataSets/temporalClassificationRuns                                     org.edena.ada.web.controllers.dataset.TemporalClassificationRunDispatcher.find(p: Int ?= 0, s: String ?= "-timeCreated", filter : Seq[org.edena.core.FilterCondition] ?= Nil)
+GET         /dataSets/temporalClassificationRuns/get/:id                             org.edena.ada.web.controllers.dataset.TemporalClassificationRunDispatcher.get(id: BSONObjectID)
+GET         /dataSets/temporalClassificationRuns/new                                 org.edena.ada.web.controllers.dataset.TemporalClassificationRunDispatcher.create
+POST        /dataSets/temporalClassificationRuns/:id/delete                          org.edena.ada.web.controllers.dataset.TemporalClassificationRunDispatcher.delete(id: BSONObjectID)
+POST        /dataSets/temporalClassificationRuns/launch                              org.edena.ada.web.controllers.dataset.TemporalClassificationRunDispatcher.launch(runSpec: org.edena.spark_ml.models.setting.TemporalClassificationRunSpec, saveResults: Boolean, saveBinCurves: Boolean)
+GET         /dataSets/temporalClassificationRuns/exportToDataSet                     org.edena.ada.web.controllers.dataset.TemporalClassificationRunDispatcher.exportToDataSet(targetDataSetId: Option[String] ?= None, targetDataSetName: Option[String] ?= None)
+GET         /dataSets/temporalClassificationRuns/exportAsCsv                         org.edena.ada.web.controllers.dataset.TemporalClassificationRunDispatcher.exportRecordsAsCsv(delimiter: String, replaceEolWithSpace: Boolean, eol: Option[String], filter: Seq[org.edena.core.FilterCondition], tableColumnsOnly: Boolean)
+GET         /dataSets/temporalClassificationRuns/exportAsJson                        org.edena.ada.web.controllers.dataset.TemporalClassificationRunDispatcher.exportRecordsAsJson(filter: Seq[org.edena.core.FilterCondition], tableColumnsOnly: Boolean)
+
+# Standard Regression Run
+GET         /dataSets/regressionRuns                                                 org.edena.ada.web.controllers.dataset.StandardRegressionRunDispatcher.find(p: Int ?= 0, s: String ?= "-timeCreated", filter : Seq[org.edena.core.FilterCondition] ?= Nil)
+GET         /dataSets/regressionRuns/get/:id                                         org.edena.ada.web.controllers.dataset.StandardRegressionRunDispatcher.get(id: BSONObjectID)
+GET         /dataSets/regressionRuns/new                                             org.edena.ada.web.controllers.dataset.StandardRegressionRunDispatcher.create
+POST        /dataSets/regressionRuns/:id/delete                                      org.edena.ada.web.controllers.dataset.StandardRegressionRunDispatcher.delete(id: BSONObjectID)
+POST        /dataSets/regressionRuns/launch                                          org.edena.ada.web.controllers.dataset.StandardRegressionRunDispatcher.launch(runSpec: org.edena.spark_ml.models.setting.RegressionRunSpec, saveResults: Boolean)
+GET         /dataSets/regressionRuns/exportToDataSet                                 org.edena.ada.web.controllers.dataset.StandardRegressionRunDispatcher.exportToDataSet(targetDataSetId: Option[String] ?= None, targetDataSetName: Option[String] ?= None)
+GET         /dataSets/regressionRuns/exportAsCsv                                     org.edena.ada.web.controllers.dataset.StandardRegressionRunDispatcher.exportRecordsAsCsv(delimiter: String, replaceEolWithSpace: Boolean, eol: Option[String], filter: Seq[org.edena.core.FilterCondition], tableColumnsOnly: Boolean)
+GET         /dataSets/regressionRuns/exportAsJson                                    org.edena.ada.web.controllers.dataset.StandardRegressionRunDispatcher.exportRecordsAsJson(filter: Seq[org.edena.core.FilterCondition], tableColumnsOnly: Boolean)
+
+# Temporal Regression Run
+GET         /dataSets/temporalRegressionRuns                                         org.edena.ada.web.controllers.dataset.TemporalRegressionRunDispatcher.find(p: Int ?= 0, s: String ?= "-timeCreated", filter : Seq[org.edena.core.FilterCondition] ?= Nil)
+GET         /dataSets/temporalRegressionRuns/get/:id                                 org.edena.ada.web.controllers.dataset.TemporalRegressionRunDispatcher.get(id: BSONObjectID)
+GET         /dataSets/temporalRegressionRuns/new                                     org.edena.ada.web.controllers.dataset.TemporalRegressionRunDispatcher.create
+POST        /dataSets/temporalRegressionRuns/:id/delete                              org.edena.ada.web.controllers.dataset.TemporalRegressionRunDispatcher.delete(id: BSONObjectID)
+POST        /dataSets/temporalRegressionRuns/launch                                  org.edena.ada.web.controllers.dataset.TemporalRegressionRunDispatcher.launch(runSpec: org.edena.spark_ml.models.setting.TemporalRegressionRunSpec, saveResults: Boolean)
+GET         /dataSets/temporalRegressionRuns/exportToDataSet                         org.edena.ada.web.controllers.dataset.TemporalRegressionRunDispatcher.exportToDataSet(targetDataSetId: Option[String] ?= None, targetDataSetName: Option[String] ?= None)
+GET         /dataSets/temporalRegressionRuns/exportAsCsv                             org.edena.ada.web.controllers.dataset.TemporalRegressionRunDispatcher.exportRecordsAsCsv(delimiter: String, replaceEolWithSpace: Boolean, eol: Option[String], filter: Seq[org.edena.core.FilterCondition], tableColumnsOnly: Boolean)
+GET         /dataSets/temporalRegressionRuns/exportAsJson                            org.edena.ada.web.controllers.dataset.TemporalRegressionRunDispatcher.exportRecordsAsJson(filter: Seq[org.edena.core.FilterCondition], tableColumnsOnly: Boolean)
+
+# ML Classification
+GET         /ml/classifiers                                                          org.edena.ada.web.controllers.ml.ClassifierController.find(p: Int ?= 0, s: String ?= "concreteClass", filter: Seq[org.edena.core.FilterCondition] ?= Nil)
+GET         /ml/classifiers/all                                                      org.edena.ada.web.controllers.ml.ClassifierController.listAll(s: String ?= "concreteClass")
+GET         /ml/classifiers/new                                                      org.edena.ada.web.controllers.ml.ClassifierController.create(concreteClassName: String)
+POST        /ml/classifiers/save                                                     org.edena.ada.web.controllers.ml.ClassifierController.save
+GET         /ml/classifiers/get/:id                                                  org.edena.ada.web.controllers.ml.ClassifierController.get(id: BSONObjectID)
+POST        /ml/classifiers/:id                                                      org.edena.ada.web.controllers.ml.ClassifierController.update(id: BSONObjectID)
+POST        /ml/classifiers/:id/delete                                               org.edena.ada.web.controllers.ml.ClassifierController.delete(id: BSONObjectID)
+GET         /ml/classifiers/idAndNames                                               org.edena.ada.web.controllers.ml.ClassifierController.idAndNames
+
+# ML Regression
+GET         /ml/regressors                                                          org.edena.ada.web.controllers.ml.RegressorController.find(p: Int ?= 0, s: String ?= "concreteClass", filter: Seq[org.edena.core.FilterCondition] ?= Nil)
+GET         /ml/regressors/all                                                      org.edena.ada.web.controllers.ml.RegressorController.listAll(s: String ?= "concreteClass")
+GET         /ml/regressors/new                                                      org.edena.ada.web.controllers.ml.RegressorController.create(concreteClassName: String)
+POST        /ml/regressors/save                                                     org.edena.ada.web.controllers.ml.RegressorController.save
+GET         /ml/regressors/get/:id                                                  org.edena.ada.web.controllers.ml.RegressorController.get(id: BSONObjectID)
+POST        /ml/regressors/:id                                                      org.edena.ada.web.controllers.ml.RegressorController.update(id: BSONObjectID)
+POST        /ml/regressors/:id/delete                                               org.edena.ada.web.controllers.ml.RegressorController.delete(id: BSONObjectID)
+GET         /ml/regressors/idAndNames                                               org.edena.ada.web.controllers.ml.RegressorController.idAndNames
+
+# ML Clusterization
+GET         /ml/clustering                                                          org.edena.ada.web.controllers.ml.ClusteringController.find(p: Int ?= 0, s: String ?= "concreteClass", filter: Seq[org.edena.core.FilterCondition] ?= Nil)
+GET         /ml/clustering/all                                                      org.edena.ada.web.controllers.ml.ClusteringController.listAll(s: String ?= "concreteClass")
+GET         /ml/clustering/new                                                      org.edena.ada.web.controllers.ml.ClusteringController.create(concreteClassName: String)
+POST        /ml/clustering/save                                                     org.edena.ada.web.controllers.ml.ClusteringController.save
+GET         /ml/clustering/get/:id                                                  org.edena.ada.web.controllers.ml.ClusteringController.get(id: BSONObjectID)
+POST        /ml/clustering/:id                                                      org.edena.ada.web.controllers.ml.ClusteringController.update(id: BSONObjectID)
+POST        /ml/clustering/:id/delete                                               org.edena.ada.web.controllers.ml.ClusteringController.delete(id: BSONObjectID)
+GET         /ml/clustering/idAndNames                                               org.edena.ada.web.controllers.ml.ClusteringController.idAndNames
+
+# Message
+GET         /messages/eventStream                                                   org.edena.ada.web.controllers.MessageController.eventStream
+POST        /messages/saveUserMessage                                               org.edena.ada.web.controllers.MessageController.saveUserMessage(message: String)
+GET         /message/listMostRecent                                                 org.edena.ada.web.controllers.MessageController.listMostRecent(limit: Int)
+
+# Documentation
+GET         /documentation/intro                                                    org.edena.ada.web.controllers.DocumentationController.intro()
+GET         /documentation/basic                                                    org.edena.ada.web.controllers.DocumentationController.basic()
+GET         /documentation/stats                                                    org.edena.ada.web.controllers.DocumentationController.stats()
+GET         /documentation/filters                                                  org.edena.ada.web.controllers.DocumentationController.filters()
+GET         /documentation/views                                                    org.edena.ada.web.controllers.DocumentationController.views()
+GET         /documentation/ml                                                       org.edena.ada.web.controllers.DocumentationController.ml()
+GET         /documentation/classification                                           org.edena.ada.web.controllers.DocumentationController.mlClassification()
+GET         /documentation/regression                                               org.edena.ada.web.controllers.DocumentationController.mlRegression()
+GET         /documentation/clusterization                                           org.edena.ada.web.controllers.DocumentationController.mlClusterization()
+GET         /documentation/userManagement                                           org.edena.ada.web.controllers.DocumentationController.userManagement()
+GET         /documentation/dataSetImport                                            org.edena.ada.web.controllers.DocumentationController.dataSetImport()
+GET         /documentation/technology                                               org.edena.ada.web.controllers.DocumentationController.technology()
+
+# HTML Snippets
+GET         /htmlSnippets                                                           org.edena.ada.web.controllers.HtmlSnippetController.find(p: Int ?= 0, s: String ?= "snippetId", filter: Seq[org.edena.core.FilterCondition] ?= Nil)
+GET         /htmlSnippets/all                                                       org.edena.ada.web.controllers.HtmlSnippetController.listAll(s: String ?= "snippetId")
+GET         /htmlSnippets/new                                                       org.edena.ada.web.controllers.HtmlSnippetController.create
+POST        /htmlSnippets/save                                                      org.edena.ada.web.controllers.HtmlSnippetController.save
+GET         /htmlSnippets/get/:id                                                   org.edena.ada.web.controllers.HtmlSnippetController.get(id: BSONObjectID)
+GET         /htmlSnippets/edit/:id                                                  org.edena.ada.web.controllers.HtmlSnippetController.edit(id: BSONObjectID)
+POST        /htmlSnippets/:id                                                       org.edena.ada.web.controllers.HtmlSnippetController.update(id: BSONObjectID)
+POST        /htmlSnippets/:id/delete                                                org.edena.ada.web.controllers.HtmlSnippetController.delete(id: BSONObjectID)
+GET         /htmlSnippets/linksAsHtml                                               org.edena.ada.web.controllers.HtmlSnippetController.getHtmlLinks
+
+# Map static resources from the /public folder to the /assets URL path
+GET         /assets/*file                                                           org.edena.play.CustomDirAssets.versioned(path="/public", file)
+
+# Map the webjar static assets to the /webjars URL
+->          /webjars                                                                webjars.Routes

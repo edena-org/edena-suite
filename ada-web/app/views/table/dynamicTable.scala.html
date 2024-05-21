@@ -1,0 +1,27 @@
+@import views.html.table.{dynamicTableInnerModal, dynamicTableJs, dynamicTableDiv }
+
+@(
+    domainName: String,
+    table: Html,
+    sortable: Boolean = false,
+    rowToModelJsFun: Html,
+    itemToRowJsFun: Html,
+    addModalInner: Html,
+    extraActions: Option[Html] = None,
+    gridWidth: Int = 4,
+    hideModalOnEnter: Boolean = true,
+    hideModalOnButtonPressed: Boolean = true,
+    itemsName: Option[String] = None
+)(
+    implicit request: RequestHeader
+)
+
+@dynamicTableDiv(
+    domainName,
+    table,
+    Some(dynamicTableInnerModal(domainName, addModalInner, hideModalOnButtonPressed)),
+    extraActions,
+    gridWidth
+)
+
+@dynamicTableJs(domainName, sortable, rowToModelJsFun, itemToRowJsFun, hideModalOnEnter, None, itemsName)

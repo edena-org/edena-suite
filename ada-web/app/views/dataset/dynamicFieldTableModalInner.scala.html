@@ -1,0 +1,63 @@
+@import views.html.filter.categoricalTree
+@import org.edena.ada.server.models.Category
+@import org.webjars.play.WebJarsUtil
+
+@(
+    categoriesOrCall: Option[Either[Traversable[Category], Call]] = None,
+    categoricalTreeId: String = "categoryTree"
+)(
+    implicit request: Request[_], webJarAssets: WebJarsUtil
+)
+
+@categoryTreeNodeSelectedJsFun = {
+    function(node) {
+        if (node.type.startsWith("field-")) {
+            var text = node.text
+            var nonNullCount = node.data.nonNullCount
+            if (nonNullCount) {
+                var lastIndex = text.lastIndexOf(" (" + nonNullCount + ")")
+                text = text.substring(0, lastIndex)
+            }
+            $('#modal-fields #fieldName').val(node.id);
+            $('#modal-fields #fieldTypeahead').val(text)
+        }
+    }
+}
+
+<div id="categoryDiv" class="row collapse" style="padding-bottom: 20px">
+    @if(categoriesOrCall.isDefined) {
+        @categoricalTree(categoricalTreeId, categoriesOrCall.get, Some(categoryTreeNodeSelectedJsFun))
+    }
+</div>
+<div class="row">
+    <div id="modal-fields" class="col-md-6">
+        <input type="text" id="fieldTypeahead" class="typeahead typeahead-full-width">
+        <input type="hidden" id="fieldName">
+    </div>
+    @if(categoriesOrCall.isDefined) {
+        <div class="pull-right" style="padding-right: 17px">
+            <a id="showCategoryTreeButton" class="btn btn-sm btn-default" data-toggle="tooltip" onclick="initCategoricalTreeIfNeeded();" title="Show Category Tree">
+                <span class="glyphicon glyphicon-leaf" aria-hidden="true"></span>
+            </a>
+        </div>
+    }
+</div>
+
+<script type="text/javascript">
+    $(function () {
+        @if(categoriesOrCall.isDefined) {
+            $("#@categoricalTreeId").on('open_node.jstree', function (event, data) {
+                data.instance.set_type(data.node, 'category-open');
+            });
+
+            $("#@categoricalTreeId").on('close_node.jstree', function (event, data) {
+                data.instance.set_type(data.node, 'category');
+            });
+        }
+    })
+
+    function initCategoricalTreeIfNeeded() {
+        $("#@categoricalTreeId").jsTreeWidget('init');
+        $('#categoryDiv').collapse("toggle")
+    }
+</script>

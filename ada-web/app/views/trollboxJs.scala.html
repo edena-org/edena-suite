@@ -1,0 +1,72 @@
+@import org.edena.ada.web.controllers.routes.javascript.{MessageController => messageJsRoutes}
+@import play.api.Configuration
+@import org.webjars.play.routes
+@import org.webjars.play.WebJarsUtil
+
+@()(implicit req: play.api.mvc.RequestHeader, webJarAssets: WebJarsUtil, conf: Configuration)
+
+@helper.javascriptRouter("jsMessageRoutes")(
+    messageJsRoutes.saveUserMessage,
+    messageJsRoutes.listMostRecent
+)
+
+@sensitivityConfirmationButtons = {
+    <button type="button" class="btn btn-primary" data-dismiss="modal">Close</button>
+    <button type="button" class="btn btn-default" data-dismiss="modal" onclick="sensitivityInfoConfirmation(); return false;">OK, I understand</button>
+}
+
+@sensitivityConfirmationModalInner = {
+    <p>Pls. be aware that messages are visible to the all logged users so pls. don't share any sensitive information here.</p>
+}
+
+@modal("sensitivityModalConfirmation", "Confirmation", sensitivityConfirmationModalInner, None, Some(sensitivityConfirmationButtons))
+
+@webJarAssets.locate("Autolinker.js", "Autolinker.min.js").script()
+<script type="text/javascript" defer="defer">
+    var sensitivityModalConfirmationShown = false
+    $(function() {
+        $('.trollmessagebox').css('max-height',$(window).height() - 220);
+
+        jsMessageRoutes.org.edena.ada.web.controllers.MessageController.listMostRecent(15).ajax( {
+            success: function(data) {
+                $.each(data.reverse(), function(index, json) {
+                    prependTrollboxJsonMessage(json, false);
+                });
+                $("#trollmessagebox").scrollTop($(document).height());
+                @if(conf.getBoolean("messages.listener.enabled").getOrElse(true)) {
+                    registerMessageEventSource('@org.edena.ada.web.controllers.routes.MessageController.eventStream.url');
+                }
+            },
+            error: function(data){
+                console.log(data);
+            }
+        })
+    });
+
+    function sensitivityInfoConfirmation() {
+        sensitivityModalConfirmationShown = true;
+        shoutMessage();
+    }
+
+    $("#shoutmessage").keydown(function(event) {
+        if (event.keyCode == 13) {
+            if (!sensitivityModalConfirmationShown) {
+                $("#sensitivityModalConfirmation").modal('show');
+            } else {
+                shoutMessage()
+            }
+        }
+    });
+
+    function shoutMessage() {
+        var message = $("#shoutmessage").val();
+        jsMessageRoutes.org.edena.ada.web.controllers.MessageController.saveUserMessage(message).ajax( {
+            success: function() {
+                $("#shoutmessage").val("");
+            },
+            error: function(data){
+                $("#shoutmessage").val(data.responseText);
+            }
+        });
+    }
+</script>

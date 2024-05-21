@@ -1,0 +1,119 @@
+@import org.edena.play.controllers.WebContext
+@import org.edena.play.controllers.WebContext._
+@import org.edena.play.routes.CustomDirAssets
+@import org.webjars.play.routes
+
+@(
+    title: String,
+    sideBar: Option[Html] = None,
+    topContentBar: Option[Html] = None,
+    topResources: Option[Html] = None,
+    bottomResources: Option[Html] = None,
+    extraMessages: Option[Html] = None,
+    showMessageBox: Boolean = true)(
+    content: Html
+)(
+    implicit context: WebContext
+)
+
+<!DOCTYPE html>
+
+<html>
+    <head>
+        <title>@title</title>
+        <!-- Latest compiled and minified CSS -->
+        @context.webJarAssets.locate("bootswatch-united", "bootstrap.min.css").css()
+        <link rel="stylesheet" type="text/css" media="screen" href="@CustomDirAssets.versioned("stylesheets/main.css")">
+
+        @* Optional theme *@
+		@* <link rel="stylesheet" media="screen" href="@routes.WebJarAssets.at(context.webJarAssets.locate("bootstrap", "bootstrap-theme.min.css"))"> *@
+        
+        <link rel="shortcut icon" type="image/png" href="@CustomDirAssets.versioned("images/favicon.png")">
+        @context.webJarAssets.locate("jquery.min.js").script()
+        <script type="text/javascript" src="@CustomDirAssets.versioned("javascripts/main.js")"></script>
+        <script type="text/javascript" src="@CustomDirAssets.versioned("javascripts/typeahead.js")"></script>
+
+        @if(topResources.isDefined) { @topResources.get }
+
+        <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
+	    <!--[if lt IE 9]>
+	      @context.webJarAssets.locate("html5shiv.js").script()
+	      @context.webJarAssets.locate("respond.min.js").script()
+	    <![endif]-->
+    </head>
+    <body>
+        @navbar()
+
+        <div class="container-fluid">
+            <div class="row-fluid">
+                <div class="menu col-md-2 col-sm-12">
+                    @sideBar.getOrElse("")
+                </div>
+                <div id="contentDiv" class="col-md-8-25 col-sm-12">
+                    @if(topContentBar.isDefined) {
+                        <div class="row-fluid">
+                            @topContentBar.get
+                        </div>
+                    }
+                    <div class="content">
+                        @if(showMessageBox) {
+                            <div class="hidden-sm hidden-xs showHideMessageBoxDiv">
+                                <a href="#" onclick="showHideMessageBox();"><span id="showHideMessageBoxSpan">&#8614;</span></a>
+                            </div>
+                        }
+                        <div id="messageContainer">
+                            @flashMessages()
+                            @if(extraMessages.isDefined) {
+                                @extraMessages.get
+                            }
+                        </div>
+                        <div class="inner-content">
+                            @content
+                        </div>
+                    </div>
+                    @footer()
+                </div>
+                <div id="messageBoxDiv" class="col-md-1-75 hidden-sm hidden-xs">
+                    @if(showMessageBox) {
+                        @deadboltRestricts.subjectPresent() {
+                            @trollbox()
+                        }
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Bootstrap core JavaScript
+	    ================================================== -->
+	    <!-- Placed at the end of the document so the pages load faster -->
+	    <!-- Latest compiled and minified JavaScript -->
+        @context.webJarAssets.locate("bootswatch-united", "bootstrap.min.js").script()
+
+        @if(bottomResources.isDefined) {
+            @bottomResources.get
+        }
+
+        <script type="text/javascript">
+            $.ajaxSetup({
+                beforeSend: function(xhr) {
+                    xhr.setRequestHeader('Csrf-Token','@helper.CSRF.getToken.value');
+                }
+            });
+
+            activateRowClickable();
+            addMessageDividerIfNeeded();
+            registerMessageDividerRemoval();
+
+            @deadboltRestricts.subjectPresent() {
+                document.onkeyup = function (e) {
+                    if (e.ctrlKey && e.altKey && e.key == 'u') {
+                        submit('get', '@{org.edena.ada.web.controllers.routes.RunnableController.find().url}')
+                    }
+                }
+            }
+        </script>
+        @deadboltRestricts.subjectPresent() {
+            @trollboxJs()
+        }
+    </body>
+</html>

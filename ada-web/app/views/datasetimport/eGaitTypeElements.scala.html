@@ -1,0 +1,8 @@
+@import org.edena.ada.server.models.dataimport.EGaitDataSetImport
+@import views.html.elements.{inputText, checkbox}
+@import org.edena.play.controllers.WebContext
+@import org.edena.play.controllers.WebContext._
+
+@(form: Form[EGaitDataSetImport])(implicit webContext: WebContext)
+
+@checkbox("eGaitDataSetImport", "importRawData", form)

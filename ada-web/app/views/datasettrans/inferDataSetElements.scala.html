@@ -1,0 +1,26 @@
+@import org.edena.ada.server.models.datatrans.InferDataSetTransformation
+@import views.html.elements.{inputText, checkbox}
+@import views.html.datasettrans.dataSetTypeahead
+@import play.api.i18n.Messages
+@import org.edena.play.controllers.WebContext
+@import org.edena.play.controllers.WebContext._
+@import reactivemongo.api.bson.BSONObjectID
+@import org.edena.ada.web.controllers.dataset.datatrans.OptionalIdForm
+
+@(
+    id: Option[BSONObjectID],
+    form: Form[InferDataSetTransformation]
+)(
+    implicit webContext: WebContext
+)
+
+@dataSetTypeahead("inferDataSetTransformation", "sourceDataSetId", form, id, Some("Infer"))
+
+@inputText("inferDataSetTransformation", "maxEnumValuesCount", form)
+@inputText("inferDataSetTransformation", "minAvgValuesPerEnum", form)
+@checkbox("inferDataSetTransformation", "booleanIncludeNumbers", form)
+
+@inputText("inferDataSetTransformation", "inferenceGroupSize", form)
+@inputText("inferDataSetTransformation", "inferenceGroupsInParallel", form)
+
+@checkbox("inferDataSetTransformation", "useExistingFields", form)

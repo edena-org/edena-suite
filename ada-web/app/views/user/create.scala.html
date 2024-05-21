@@ -1,0 +1,24 @@
+@import views.html.layout
+@import views.html.user.elements
+@import org.edena.ada.server.models.{DataSpaceMetaInfo, User}
+@import org.edena.play.controllers.WebContext._
+@import org.edena.play.controllers.WebContext
+@import org.edena.ada.web.controllers.DataSetControllerActionNames
+@import org.edena.ada.web.controllers.routes
+
+@(
+	form: Form[User],
+	metaInfos: Traversable[DataSpaceMetaInfo],
+	controllerActionNames: DataSetControllerActionNames
+)(
+	implicit context: WebContext
+)
+
+@layout.create(
+    "User",
+	"user",
+	form,
+	elements(form, metaInfos, controllerActionNames),
+	routes.UserController.save(),
+	routes.UserController.listAll()
+)
