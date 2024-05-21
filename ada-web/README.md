@@ -12,8 +12,8 @@ Install all the components including Mongo and Elastic Search _manually_, which 
 Note that if instead of installing a stand alone Ada app you want to use the _Ada web_ libraries in your project you can do so by adding the following dependencies in *build.sbt* (be sure the Scala compilation version is **2.12**)
 
 ```
-"org.edena" %% "ada-web" % "0.9.0",
-"org.edena" %% "ada-web" % "0.9.0" classifier "assets"
+"org.edena" %% "ada-web" % "0.9.2",
+"org.edena" %% "ada-web" % "0.9.2" classifier "assets"
 ```
 
 Alternatively if you use maven  your *pom.xml* has to contain
@@ -22,12 +22,12 @@ Alternatively if you use maven  your *pom.xml* has to contain
 <dependency>
     <groupId>org.edena</groupId>
     <artifactId>ada-web_2.12</artifactId>
-    <version>0.9.0</version>
+    <version>0.9.2</version>
 </dependency>
 <dependency>
     <groupId>org.edena</groupId>
     <artifactId>ada-web_2.12</artifactId>
-    <version>0.9.0</version>
+    <version>0.9.2</version>
     <classifier>assets</classifier>
 </dependency>
 ```
