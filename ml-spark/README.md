@@ -1,4 +1,4 @@
-# Edena Spark ML Library [![version](https://img.shields.io/badge/version-0.9.2-green.svg)](https://peterbanda.net) [![License](https://img.shields.io/badge/License-Apache%202.0-lightgrey.svg)](https://www.apache.org/licenses/LICENSE-2.0)
+# Edena Spark ML Library [![version](https://img.shields.io/badge/version-0.9.3-green.svg)](https://peterbanda.net) [![License](https://img.shields.io/badge/License-Apache%202.0-lightgrey.svg)](https://www.apache.org/licenses/LICENSE-2.0)
 
 This is an extension of Spark ML library (version *2.2.0*) providing:
 
@@ -35,7 +35,7 @@ Note that time-series classifications (and predictions) using convolutional neur
 All you need is **Scala 2.12**. To pull the library you have to add the following dependency to *build.sbt*
 
 ```
-"org.edena" %% "edena-spark_ml" % "0.9.2"
+"org.edena" %% "edena-spark_ml" % "0.9.3"
 ```
 
 or to *pom.xml* (if you use maven)
@@ -44,7 +44,7 @@ or to *pom.xml* (if you use maven)
 <dependency>
     <groupId>org.edena</groupId>
     <artifactId>edena-spark_ml_2.12</artifactId>
-    <version>0.9.2</version>
+    <version>0.9.3</version>
 </dependency>
 ```
 

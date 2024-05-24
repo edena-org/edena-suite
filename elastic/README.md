@@ -16,7 +16,7 @@ or to *pom.xml* (if you use maven)
 <dependency>
     <groupId>org.edena</groupId>
     <artifactId>edena-access-elastic_2.11</artifactId>
-    <version>0.9.2</version>
+    <version>0.9.3</version>
 </dependency>
 ```
 
@@ -26,7 +26,7 @@ respectively for Scala 2.12 as
 <dependency>
     <groupId>org.edena</groupId>
     <artifactId>edena-access-elastic_2.12</artifactId>
-    <version>0.9.2</version>
+    <version>0.9.3</version>
 </dependency>
 ```
 

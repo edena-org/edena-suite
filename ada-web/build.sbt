@@ -1,13 +1,11 @@
 import PlayKeys._
+import com.jsuereth.sbtpgp.PgpKeys.signedArtifacts
 import com.typesafe.config._
 import com.typesafe.sbt.license.{DepModuleInfo, LicenseInfo}
-import com.typesafe.sbt.pgp.PgpKeys._
 
 name := "ada-web"
 
 description := "Web part of Ada Discovery Analytics backed by Play Framework."
-
-licenses += "Apache 2.0" -> url("http://www.apache.org/licenses/LICENSE-2.0")
 
 resolvers ++= Seq(
   Resolver.mavenLocal
@@ -84,8 +82,8 @@ signedArtifacts := {
   val artifacts: Map[sbt.Artifact, java.io.File] = signedArtifacts.value
   val assets: java.io.File = (playPackageAssets in Compile).value
   artifacts ++ Seq(
-    Artifact(moduleName.value, "jar", "jar",     "assets") -> assets,
-    Artifact(moduleName.value, "jar", "jar.asc", "assets") -> new java.io.File(assets.getAbsolutePath + ".asc")  // manually sign assets.jar, uncomment, and republish
+    Artifact(moduleName.value, "jar", "jar",     "assets") -> assets
+//    Artifact(moduleName.value, "jar", "jar.asc", "assets") -> new java.io.File(assets.getAbsolutePath + ".asc")  // manually sign assets.jar, uncomment, and republish
   )
 }
 

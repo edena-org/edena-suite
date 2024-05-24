@@ -4,8 +4,6 @@ name := "edena-core"
 
 description := "Core library for Edena projects containing utility classes, repo interfaces, and shared/common models."
 
-licenses += "Apache 2.0" -> url("http://www.apache.org/licenses/LICENSE-2.0")
-
 resolvers ++= Seq(
   Resolver.mavenLocal
 )

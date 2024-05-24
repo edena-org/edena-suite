@@ -7,7 +7,6 @@ import org.edena.core.store.EdenaDataStoreException
 import DefaultReactiveMongoApi.BindingInfo
 
 import javax.inject._
-import scala.concurrent.duration.DurationInt
 import scala.concurrent.{Await, ExecutionContext, Future}
 
 final class ReactiveMongoModule extends ScalaModule {

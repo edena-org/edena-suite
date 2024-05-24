@@ -288,7 +288,10 @@ trait DistributionWidgetGeneratorHelper {
       (label, counts.map(_.count).sum)
     }.filter(_._2 > 0)
 
-    val sortedLabels: Seq[String] = nonZeroLabelSumCounts.toSeq.sortBy(_._2).map(_._1.toString)
+    val sortedLabels: Seq[String] = nonZeroLabelSumCounts.toSeq
+      .map { case (a, b) => (a.toString, b) }
+      .sortBy { case (label, count) => (count, label) } // sort by count but also label
+      .map(_._1)
 
     val topSortedLabels  = binCount match {
       case Some(maxCategoricalBinCount) => sortedLabels.takeRight(maxCategoricalBinCount)

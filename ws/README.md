@@ -7,7 +7,7 @@ WS client(s) and utils.
 All you need is **Scala 2.11** or **2.12**. To pull the library you have to add the following dependency to *build.sbt*
 
 ```
-"org.edena" %% "edena-ws" % "0.9.2"
+"org.edena" %% "edena-ws" % "0.9.3"
 ```
 
 or to *pom.xml* (if you use maven)
@@ -16,7 +16,7 @@ or to *pom.xml* (if you use maven)
 <dependency>
     <groupId>org.edena</groupId>
     <artifactId>edena-ws_2.11</artifactId>
-    <version>0.9.2</version>
+    <version>0.9.3</version>
 </dependency>
 ```
 
@@ -26,6 +26,6 @@ or using Scala 2.12
 <dependency>
     <groupId>org.edena</groupId>
     <artifactId>edena-ws_2.12</artifactId>
-    <version>0.9.2</version>
+    <version>0.9.3</version>
 </dependency>
 ```

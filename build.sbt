@@ -2,7 +2,7 @@ name := "edena-suite"
 
 organization in ThisBuild := "org.edena"
 scalaVersion in ThisBuild := "2.12.15"
-version in ThisBuild := "0.9.2"
+version in ThisBuild := "0.9.3"
 isSnapshot in ThisBuild := false
 
 lazy val core = (project in file("core"))
@@ -115,18 +115,35 @@ lazy val adaWeb = (project in file("ada-web"))
 
 fork in Test := true
 
-// POM settings for Sonatype
-homepage in ThisBuild := Some(url("https://peterbanda.net"))
-publishMavenStyle in ThisBuild := true
-scmInfo in ThisBuild := Some(ScmInfo(url("https://github.com/edena-org/edena-suite"), "scm:git@github.com:edena-org/edena-suite.git"))
 
-developers in ThisBuild := List(
+
+
+// POM settings for Sonatype
+ThisBuild / homepage := Some(url("https://peterbanda.net"))
+
+ThisBuild / sonatypeProfileName := "org.edena"
+
+ThisBuild / scmInfo := Some(
+  ScmInfo(url("https://github.com/edena-org/edena-suite"), "scm:git@github.com:edena-org/edena-suite.git")
+)
+
+ThisBuild / developers := List(
   Developer("bnd", "Peter Banda", "peter.banda@protonmail.com", url("https://peterbanda.net"))
 )
 
-publishTo in ThisBuild := Some(
-  if (isSnapshot.value)
-    Opts.resolver.sonatypeSnapshots
-  else
-    Opts.resolver.sonatypeStaging
-)
+//ThisBuild / publishTo := Some(
+//  if (isSnapshot.value)
+//    Opts.resolver.sonatypeSnapshots
+//  else
+//    Opts.resolver.sonatypeStaging
+//)
+
+ThisBuild / publishTo := sonatypePublishToBundle.value
+
+ThisBuild / publishMavenStyle := true
+
+ThisBuild / sonatypeCredentialHost := "s01.oss.sonatype.org"
+
+ThisBuild / sonatypeRepository := "https://s01.oss.sonatype.org/service/local"
+
+ThisBuild / licenses += "Apache 2.0" -> url("http://www.apache.org/licenses/LICENSE-2.0")

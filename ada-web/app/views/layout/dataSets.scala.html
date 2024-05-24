@@ -69,6 +69,12 @@
         @typeaheadJsImport()
 
         <script type="text/javascript">
+            $.ajaxSetup({
+                beforeSend: function(xhr) {
+                    xhr.setRequestHeader('Csrf-Token','@helper.CSRF.getToken.value');
+                }
+            });
+
             $(function () {
                 populateIdNameTypeaheadsFromUrl({
                     typeaheadElements: [$("#dataSpaceTypeahead"), $("#parentSpaceTypeahead")],
@@ -85,7 +91,7 @@
                     parentId = null
 
                 if (spaceId != parentId) {
-                    var r = dataSpaceJsRoutes.org.edena.ada.web.controllers.dataset.DataSpaceMetaInfoController.move(spaceId, parentId);
+                    const r = dataSpaceJsRoutes.org.edena.ada.web.controllers.dataset.DataSpaceMetaInfoController.move(spaceId, parentId);
                     submit('post', r.url, getQueryParams(r.url))
                 } else {
                     showError("Data space cannot be its own parent.")

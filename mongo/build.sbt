@@ -2,8 +2,6 @@ name := "edena-store-mongo"
 
 description := "Provides a convenient access layer for Mongo based on ReactiveMongo library."
 
-licenses += "Apache 2.0" -> url("http://www.apache.org/licenses/LICENSE-2.0")
-
 val reactivemongoVersion = "1.1.0-RC12"
 val reactivemongoPlayVersion = "1.1.0.play26-RC12"
 

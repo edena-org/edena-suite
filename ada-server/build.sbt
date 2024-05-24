@@ -4,8 +4,6 @@ name := "ada-server"
 
 description := "Server side of Ada Discovery Analytics containing a persistence layer, stats and data import/transformation services, and util classes."
 
-licenses += "Apache 2.0" -> url("http://www.apache.org/licenses/LICENSE-2.0")
-
 resolvers ++= Seq(
   "Sci Java" at "https://maven.scijava.org/content/repositories/public/", // for the T-SNE lib
   Resolver.mavenLocal

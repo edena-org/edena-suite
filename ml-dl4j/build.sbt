@@ -75,21 +75,3 @@ licenseOverrides := {
   | DepModuleInfo("com.github.os72", "protobuf-java-shaded-351", _) =>
     LicenseInfo(LicenseCategory.BSD, "BSD-3 Clause", "http://opensource.org/licenses/BSD-3-Clause")
 }
-
-// POM settings for Sonatype
-homepage := Some(url("https://edena.org"))
-
-publishMavenStyle := true
-
-scmInfo := Some(ScmInfo(url("https://github.com/edenac/edena-dl4j"), "scm:git@github.com:edenac/edena-dl4j.git"))
-
-developers := List(Developer("bnd", "Peter Banda", "peter.banda@protonmail.com", url("https://peterbanda.net")))
-
-licenses += "Apache 2.0" -> url("http://www.apache.org/licenses/LICENSE-2.0")
-
-publishTo := Some(
-  if (isSnapshot.value)
-    Opts.resolver.sonatypeSnapshots
-  else
-    Opts.resolver.sonatypeStaging
-)

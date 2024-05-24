@@ -4,8 +4,6 @@ name := "edena-store-ignite"
 
 description := "Provides a convenient access layer for Apache Ignite."
 
-licenses += "Apache 2.0" -> url("http://www.apache.org/licenses/LICENSE-2.0")
-
 val igniteVersion = "2.4.0"
 
 libraryDependencies ++= Seq(

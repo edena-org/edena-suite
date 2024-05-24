@@ -119,21 +119,3 @@ licenseOverrides := {
   case DepModuleInfo("org.slf4j", _, _) =>
     LicenseInfo(LicenseCategory.MIT, "MIT", "http://opensource.org/licenses/MIT")
 }
-
-// POM settings for Sonatype
-homepage := Some(url("https://edena.org"))
-
-publishMavenStyle := true
-
-scmInfo := Some(ScmInfo(url("https://github.com/peterbanda/edena-spark_ml"), "scm:git@github.com:peterbanda/edena-spark_ml.git"))
-
-developers := List(Developer("bnd", "Peter Banda", "peter.banda@protonmail.com", url("https://peterbanda.net")))
-
-licenses += "Apache 2.0" -> url("http://www.apache.org/licenses/LICENSE-2.0")
-
-publishTo := Some(
-  if (isSnapshot.value)
-    Opts.resolver.sonatypeSnapshots
-  else
-    Opts.resolver.sonatypeStaging
-)

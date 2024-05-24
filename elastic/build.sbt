@@ -4,8 +4,6 @@ name := "edena-store-elastic"
 
 description := "Provides a convenient access layer for Elastic Search based on Elastic4S library."
 
-licenses += "Apache 2.0" -> url("http://www.apache.org/licenses/LICENSE-2.0")
-
 val esVersion = "7.2.0" // "5.6.10"
 
 libraryDependencies ++= Seq(

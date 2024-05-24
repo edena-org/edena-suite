@@ -4,8 +4,6 @@ name := "edena-play"
 
 description := "Edena extension for Play Framework providing basic readonly/crud controllers, deadbolt-backed security, json formatters, etc."
 
-licenses += "Apache 2.0" -> url("http://www.apache.org/licenses/LICENSE-2.0")
-
 resolvers ++= Seq(
   Resolver.mavenLocal
 )
@@ -56,28 +54,3 @@ licenseOverrides := {
   case DepModuleInfo("org.slf4j", "slf4j-api", "1.7.21") =>
     LicenseInfo(LicenseCategory.MIT, "MIT License", "http://www.opensource.org/licenses/mit-license.php")
 }
-
-// POM settings for Sonatype
-
-homepage := Some(url("https://github.com/edena/edena-play"))
-
-publishMavenStyle := true
-
-scmInfo := Some(ScmInfo(url("https://github.com/edena/edena-play"), "scm:git@github.com:edena/edena-play.git"))
-
-developers := List(
-	Developer("bnd", "Peter Banda", "peter.banda@protonmail.com", url("https://peterbanda.net"))
-)
-
-licenses += "Apache 2.0" -> url("http://www.apache.org/licenses/LICENSE-2.0")
-
-publishMavenStyle := true
-
-// publishTo := sonatypePublishTo.value
-
-publishTo := Some(
-  if (isSnapshot.value)
-    Opts.resolver.sonatypeSnapshots
-  else
-    Opts.resolver.sonatypeStaging
-)
