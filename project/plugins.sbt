@@ -24,11 +24,15 @@ addSbtPlugin("com.typesafe.sbt" % "sbt-license-report" % "1.2.0")
 addSbtPlugin("org.bytedeco" % "sbt-javacpp" % "1.17")
 
 // play
-addSbtPlugin("com.typesafe.play" % "sbt-plugin" % "2.6.24")
+addSbtPlugin("com.typesafe.play" % "sbt-plugin" % "2.7.9") // 2.6.24"
 addSbtPlugin("com.typesafe.sbt" % "sbt-digest" % "1.1.3")
 addSbtPlugin("com.typesafe.sbt" % "sbt-gzip" % "1.0.2")
 
 //addSbtPlugin("com.github.sbt" % "sbt-digest" % "2.0.0")
 //addSbtPlugin("com.github.sbt" % "sbt-gzip" % "2.0.0")
-
 // addSbtPlugin("com.typesafe.sbt" % "sbt-twirl" % "1.1.1")
+
+//addSbtPlugin("com.typesafe.play" % "sbt-plugin" % "2.6.24") // 2.6.20
+//addSbtPlugin("com.typesafe.sbt" % "sbt-uglify" % "2.0.0")
+//addSbtPlugin("com.typesafe.sbt" % "sbt-gzip" % "1.0.2")
+

@@ -19,16 +19,23 @@ routesImport ++= Seq(
 
 libraryDependencies ++= Seq(ehcache)
 
-val mongoPlayVersion = "1.1.0.play26-RC12"
-val playVersion = "2.6.20"
+val playMongoVersion = "1.1.0.play27-RC12"
+val playVersion = "2.7.9"
+val playMailerVersion = "6.0.1"
+val playPac4j = "9.0.2" // "7.0.1"
+val pac4jOidcVersion = "4.1.0" // "3.8.3"
+val akkaVersion = "2.5.32"
+
+// val playVersion = "2.6.20" // JDK 17 is supported by Play 2.8 https://github.com/playframework/playframework/releases/tag/2.8.15
+// val guiceVersion = "5.1.0" // needed for JDK 17
 
 libraryDependencies ++= Seq(
-  "org.pac4j" %% "play-pac4j" % "7.0.1",
-  "org.pac4j" % "pac4j-oidc" % "3.8.3",
+  "org.pac4j" %% "play-pac4j" % playPac4j,
+  "org.pac4j" % "pac4j-oidc" % pac4jOidcVersion,
 
-  "org.reactivemongo" %% "play2-reactivemongo" % mongoPlayVersion,  // Mongo Play
-  "com.typesafe.play" %% "play-mailer" % "6.0.1",                   // to send emails
-  "com.typesafe.play" %% "play-mailer-guice" % "6.0.1",             // to send emails (Guice)
+  "org.reactivemongo" %% "play2-reactivemongo" % playMongoVersion,  // Mongo Play
+  "com.typesafe.play" %% "play-mailer" % playMailerVersion,         // to send emails
+  "com.typesafe.play" %% "play-mailer-guice" % playMailerVersion,   // to send emails (Guice)
 
   "com.typesafe.play" %% "play-ws" % playVersion,                   // WS to wrap Standalone WS
   "com.typesafe.play" %% "play-ahc-ws" % playVersion,               // WS to wrap Standalone WS
@@ -60,7 +67,11 @@ val jacksonVersion = "2.9.9" // "2.8.11"
 libraryDependencies ++= Seq(
   "net.codingwell" %% "scala-guice" % "4.2.11",   // uses guice 4.2.3 (bellow)
   "com.google.inject" % "guice" % "4.2.3" classifier "no_aop",  // no_aop is set due to https://github.com/google/guice/issues/1133 // 4.0.1
-  "com.google.inject.extensions" % "guice-assistedinject" % "4.2.3"
+  "com.google.inject.extensions" % "guice-assistedinject" % "4.2.3",
+
+  "com.typesafe.akka" %% "akka-stream" % akkaVersion, // Akka Streams
+  "com.typesafe.akka" %% "akka-actor" % akkaVersion,  // Akka Streams
+  "com.typesafe.akka" %% "akka-slf4j" % akkaVersion,  // Akka SLF4J
 )
 
 dependencyOverrides ++= Seq(
@@ -75,14 +86,14 @@ dependencyOverrides ++= Seq(
 packagedArtifacts in publishLocal := {
   val artifacts: Map[sbt.Artifact, java.io.File] = (packagedArtifacts in publishLocal).value
   val assets: java.io.File = (playPackageAssets in Compile).value
-  artifacts + (Artifact(moduleName.value, "jar", "jar", "assets") -> assets)
+  artifacts + (Artifact(moduleName.value, "jar", "jar", "web-assets") -> assets)
 }
 
 signedArtifacts := {
   val artifacts: Map[sbt.Artifact, java.io.File] = signedArtifacts.value
   val assets: java.io.File = (playPackageAssets in Compile).value
   artifacts ++ Seq(
-    Artifact(moduleName.value, "jar", "jar",     "assets") -> assets
+    Artifact(moduleName.value, "jar", "jar",     "web-assets") -> assets
 //    Artifact(moduleName.value, "jar", "jar.asc", "assets") -> new java.io.File(assets.getAbsolutePath + ".asc")  // manually sign assets.jar, uncomment, and republish
   )
 }

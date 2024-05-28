@@ -86,6 +86,8 @@ function addUrlParm(url, name, value) {
       add("&");
     }
   }
+
+  return url;
 }
 
 function getCoreURL(url) {

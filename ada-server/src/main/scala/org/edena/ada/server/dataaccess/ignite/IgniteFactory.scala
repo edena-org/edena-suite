@@ -39,6 +39,7 @@ class IgniteFactory @Inject() (
     ipFinder.setAddresses(Seq("127.0.0.1"))
     discoverySpi.setIpFinder(ipFinder)
     cfg.setDiscoverySpi(discoverySpi)
+    // cfg.setWorkDirectory("/tmp/ignite-work")
 
     Ignition.getOrStart(cfg)
   }

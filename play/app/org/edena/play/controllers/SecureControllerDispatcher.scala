@@ -3,7 +3,7 @@ package org.edena.play.controllers
 import be.objectify.deadbolt.scala.DeadboltHandler
 import org.edena.play.security.ActionSecurity.AuthActionTransformationAny
 import org.edena.play.security.ActionSecurity
-import play.api.routing.Router.Tags._
+import play.api.routing.Router.Attrs._
 import org.edena.play.security.SecurityUtil.toAuthenticatedAction
 
 import scala.collection.mutable.{Map => MMap}
@@ -40,8 +40,8 @@ abstract class SecureControllerDispatcher[C](controllerParamId: String) extends 
       val controllerId = getControllerId(request)
       val controller = getController(controllerId)
 
-      // TODO: migrate to "attrs"
-      val actionName = request.tags.get(RouteActionMethod).get
+      // TODO: migrate to "attrs" - done
+      val actionName = request.attrs.get(HandlerDef).get.method
 
       val actionTransformation = actionNameMap.getOrElseUpdate(
         (controllerId, actionName),

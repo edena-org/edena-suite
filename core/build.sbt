@@ -8,6 +8,9 @@ resolvers ++= Seq(
   Resolver.mavenLocal
 )
 
+val akkaVersion = "2.5.32"
+// val guiceVersion = "5.1.0"
+
 libraryDependencies ++= Seq(
   "org.scala-lang" % "scala-reflect" % scalaVersion.value,
 
@@ -17,7 +20,7 @@ libraryDependencies ++= Seq(
   "com.google.inject.extensions" % "guice-assistedinject" % "4.2.3",
 
   // Akka
-  "com.typesafe.akka" %% "akka-stream" % "2.5.17",
+  "com.typesafe.akka" %% "akka-stream" % akkaVersion,
 
   // Commons
   "commons-io" % "commons-io" % "2.6",

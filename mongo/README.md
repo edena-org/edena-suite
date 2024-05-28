@@ -7,7 +7,7 @@ This is a convenient repo-like access layer for Mongo based on [Reactive Mongo](
 All you need is **Scala 2.11** or **2.12**. To pull the library you have to add the following dependency to *build.sbt*
 
 ```
-"org.edena" %% "edena-store-mongo" % "0.9.3"
+"org.edena" %% "edena-store-mongo" % "0.9.4"
 ```
 
 or to *pom.xml* (if you use maven)
@@ -16,7 +16,7 @@ or to *pom.xml* (if you use maven)
 <dependency>
     <groupId>org.edena</groupId>
     <artifactId>edena-store-mongo_2.11</artifactId>
-    <version>0.9.3</version>
+    <version>0.9.4</version>
 </dependency>
 ```
 
@@ -26,6 +26,6 @@ respectively for Scala 2.12 as
 <dependency>
     <groupId>org.edena</groupId>
     <artifactId>edena-store-mongo_2.12</artifactId>
-    <version>0.9.3</version>
+    <version>0.9.4</version>
 </dependency>
 ```

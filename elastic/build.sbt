@@ -4,7 +4,7 @@ name := "edena-store-elastic"
 
 description := "Provides a convenient access layer for Elastic Search based on Elastic4S library."
 
-val esVersion = "7.2.0" // "5.6.10"
+val esVersion = "7.2.0"
 
 libraryDependencies ++= Seq(
   "com.sksamuel.elastic4s" %% "elastic4s-core" % esVersion, // exclude("com.vividsolutions" ,"jts"), // jts is LGPL licensed (up to version 1.14)

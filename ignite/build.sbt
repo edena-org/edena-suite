@@ -4,7 +4,7 @@ name := "edena-store-ignite"
 
 description := "Provides a convenient access layer for Apache Ignite."
 
-val igniteVersion = "2.4.0"
+val igniteVersion = "2.4.0" //  "2.14.0" - uses JDK 17
 
 libraryDependencies ++= Seq(
   "org.apache.ignite" % "ignite-core" % igniteVersion,

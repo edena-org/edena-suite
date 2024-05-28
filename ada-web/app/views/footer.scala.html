@@ -3,6 +3,10 @@
 
 @()(implicit msg: Messages, configuration: Configuration)
 
+@copyrightURL(href: String, text: String) = {
+    &copy; <a target="_blank" href="@href">@text</a>
+}
+
 <footer>
     <div align="center">
         <hr/>
@@ -23,13 +27,13 @@
             App Version: @configuration.getString("app.version").get@configuration.getString("project.name").map(", Project: " + _)
         </p>
         <p class="text-muted" align="center">
-            @defining((configuration.getString("copyright.url"), configuration.getString("copyright.text"))) { urlAndText: (Option[String], Option[String]) =>
-                @if(urlAndText._1.isDefined && urlAndText._2.isDefined) {
-                    &copy; <a target="_blank" href="@urlAndText._1.get">@urlAndText._2.get</a>
+            @{defining((configuration.getString("copyright.url"), configuration.getString("copyright.text"))) { urlAndText: (Option[String], Option[String]) =>
+                if(urlAndText._1.isDefined && urlAndText._2.isDefined) {
+                    copyrightURL(urlAndText._1.get, urlAndText._2.get)
                 } else {
-                    &copy; <a target="_blank" href="https://ada-discovery.github.io">Ada Discovery Analytics</a>
+                    copyrightURL("https://ada-discovery.github.io", "Ada Discovery Analytics")
                 }
-            }
+            }}
             2016-@(new java.util.Date().format("yyyy")). All rights reserved.
         </p>
     </div>

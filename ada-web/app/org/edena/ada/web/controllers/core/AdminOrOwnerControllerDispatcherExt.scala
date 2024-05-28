@@ -5,7 +5,7 @@ import org.edena.ada.web.models.security.DeadboltUser
 import org.edena.play.controllers.{SecureControllerDispatcher, WithNoCaching}
 import org.edena.play.security.SecurityUtil.toAuthenticatedAction
 import play.api.mvc.{Action, AnyContent, Request}
-import play.api.routing.Router.Tags.RouteActionMethod
+import play.api.routing.Router.Attrs.HandlerDef
 import reactivemongo.api.bson.BSONObjectID
 
 import scala.concurrent.Future
@@ -90,7 +90,7 @@ trait AdminOrOwnerControllerDispatcherExt[C] {
 
   private val actionPermission = { request: Request[AnyContent] =>
     val controllerId = getControllerId(request)
-    val actionName = request.tags.get(RouteActionMethod).get
+    val actionName = request.attrs.get(HandlerDef).get.method
 
     getPermission(controllerId, actionName).getOrElse(
       throw new IllegalArgumentException(s"No permission defined for the action '${actionName}' in the controller '${controllerId}'.")

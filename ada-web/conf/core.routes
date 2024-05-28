@@ -18,11 +18,11 @@ GET         /login                                                              
 GET         /loginForm                                                              org.edena.ada.web.controllers.AuthController.loginWithForm
 POST        /loginForm                                                              org.edena.ada.web.controllers.AuthController.authenticate
 GET         /loginOIDC                                                              org.edena.ada.web.controllers.OidcAuthController.oidcLogin
-GET         /oidc/callback                                                          @org.pac4j.play.CallbackController.callback()
+GET         /oidc/callback                                                          @org.pac4j.play.CallbackController.callback(request: play.mvc.Http.Request)
 
 GET         /logout                                                                 org.edena.ada.web.controllers.AuthController.logout
 GET         /loggedout                                                              org.edena.ada.web.controllers.AuthController.loggedOut
-GET         /logoutOIDC                                                             @org.pac4j.play.LogoutController.logout()
+GET         /logoutOIDC                                                             @org.pac4j.play.LogoutController.logout(request: play.mvc.Http.Request)
 
 # for no-authentication access
 GET         /loginBasic                                                             org.edena.ada.web.controllers.AuthController.loginBasic
@@ -41,6 +41,8 @@ POST        /admin/importLdapUsers                                              
 POST        /admin/purgeMissingLdapUsers                                            org.edena.ada.web.controllers.AdminController.purgeMissingLdapUsers
 POST        /admin/lockMissingLdapUsers                                             org.edena.ada.web.controllers.AdminController.lockMissingLdapUsers
 GET         /admin/dataSetIds                                                       org.edena.ada.web.controllers.AdminController.dataSetIds
+POST        /admin/testExport                                                       org.edena.ada.web.controllers.AdminController.testExport(filterOrId: Either[Seq[org.edena.core.FilterCondition], BSONObjectID], dataSet: String)
+
 
 # Runnable
 POST        /runnables/run                                                          org.edena.ada.web.controllers.RunnableController.runScript(className: String, finishCancelLink: Option[String] ?= None)

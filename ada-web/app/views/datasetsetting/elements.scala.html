@@ -61,6 +61,18 @@
     }
 }
 
+@rowToModel2 = {
+    function rowToModel(row) {
+        function value(x) { return getRowValue(row, x) }
+
+        const label = value("field1")
+        const url = value("field2")
+        const displayURLType = value("field3")
+
+        return {"label": label, "url": url, "displayURLType": displayURLType}
+    }
+}
+
 @dynamicNColumnTable(
     "extraNavigationItem",
     "Extra Navigation Items",
@@ -72,6 +84,16 @@
         }
     }).getOrElse(Nil),
     Some(rowToModel)
+)
+
+@dynamicNColumnTable(
+    "extraExportAction",
+    "Extra Export Actions",
+    Seq("Link Label", "Link URL", "Action Type"),
+    form.value.map(_.extraExportActions.map { case Link(label, url, displayURLType) =>
+        Seq(label, url, displayURLType.map(_.toString).getOrElse(""))
+    }).getOrElse(Nil),
+    Some(rowToModel2)
 )
 
 @inputText("dataSetSetting", "customControllerClassName", form)

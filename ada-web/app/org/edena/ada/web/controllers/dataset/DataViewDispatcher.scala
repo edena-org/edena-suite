@@ -2,13 +2,11 @@ package org.edena.ada.web.controllers.dataset
 
 import javax.inject.Inject
 import org.edena.ada.web.controllers.core.AdminOrOwnerControllerDispatcherExt
-import org.edena.ada.server.AdaException
 import org.edena.ada.server.models.{AggType, CorrelationType}
 import org.edena.ada.server.dataaccess.dataset.DataSetAccessorFactory
 import play.api.mvc.{Action, AnyContent, ControllerComponents, Request}
 import reactivemongo.api.bson.BSONObjectID
 import org.edena.core.FilterCondition
-import play.api.routing.Router.Tags.RouteActionMethod
 import scala.concurrent.ExecutionContext.Implicits.global
 
 class DataViewDispatcher @Inject()(

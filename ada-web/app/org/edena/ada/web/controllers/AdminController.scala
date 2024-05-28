@@ -3,16 +3,19 @@ package org.edena.ada.web.controllers
 import javax.inject.Inject
 import org.edena.ada.server.dataaccess.StoreTypes.DataSpaceMetaInfoStore
 import org.edena.ada.server.dataaccess.dataset.DataSetAccessorFactory
+import org.edena.ada.server.models.Filter.FilterOrId
 import org.edena.play.controllers.BaseController
 import org.edena.ada.server.services.UserManager
 import play.api.libs.json.Json
 import play.api.mvc.ControllerComponents
+import org.edena.ada.server.dataaccess.dataset.FilterRepoExtra._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
 class AdminController @Inject() (
   userManager: UserManager,
   dataSpaceMetaInfoRepo: DataSpaceMetaInfoStore,
+  dsaf: DataSetAccessorFactory,
   val controllerComponents: ControllerComponents
 ) extends BaseController {
 
@@ -49,5 +52,14 @@ class AdminController @Inject() (
         }
         Ok(Json.toJson(dataSetNameLabels))
       }
+  }
+
+  def testExport(filterOrId: FilterOrId, dataSet: String)= restrictAdminAny(noCaching = true) {
+    implicit request =>
+      for {
+        dsa <- dsaf.getOrError(dataSet)
+        filter <- dsa.filterStore.resolve(filterOrId)
+      } yield
+        Ok(s"Conditions: ${filter.conditions.size}, dataSet: $dataSet")
   }
 }

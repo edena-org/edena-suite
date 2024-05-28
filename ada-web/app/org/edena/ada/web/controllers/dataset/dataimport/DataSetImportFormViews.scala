@@ -56,6 +56,7 @@ abstract protected[controllers] class DataSetImportFormViews[E <: DataSetImport:
     "ownerId" -> ignored(Option.empty[BSONObjectID]),
     "showSideCategoricalTree" -> boolean,
     "extraNavigationItems" -> ignored(Seq[NavigationItem]()),
+    "extraExportActions" -> ignored(Seq[Link]()),
     "customControllerClassName" -> optional(text),
     "description" -> optional(text),
     "widgetEngineClassName" -> optional(text),

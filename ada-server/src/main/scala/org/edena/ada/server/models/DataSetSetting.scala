@@ -20,6 +20,7 @@ case class DataSetSetting(
   ownerId: Option[BSONObjectID] = None,
   showSideCategoricalTree: Boolean = true,
   extraNavigationItems: Seq[NavigationItem] = Nil,
+  extraExportActions: Seq[Link] = Nil,
   customControllerClassName: Option[String] = None,
   description: Option[String] = None,
   widgetEngineClassName: Option[String] = None,

@@ -53,7 +53,7 @@ class BinaryCacheFactory @Inject()(ignite: Ignite) extends Serializable {
     val cacheConfig = new CacheConfiguration[ID, BinaryObject]()
 
     cacheConfig.setName(cacheName)
-    cacheConfig.setCacheMode(CacheMode.LOCAL)
+    cacheConfig.setCacheMode(CacheMode.REPLICATED) // LOCAL
     cacheConfig.setAtomicityMode(CacheAtomicityMode.ATOMIC)
 
 //    val fieldNameTypeMap = fieldNamesAndTypes match {

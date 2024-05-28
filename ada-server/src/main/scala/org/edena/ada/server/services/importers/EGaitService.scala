@@ -126,7 +126,7 @@ protected[services] class EGaitServiceWSImpl @Inject() (
     import play.shaded.ahc.org.asynchttpclient._
 
     val asyncHttpClientConfig = new DefaultAsyncHttpClientConfig.Builder()
-      .setAcceptAnyCertificate(true)
+//      .setAcceptAnyCertificate(true)
       .setFollowRedirect(true).build
     val asyncHttpClient = new DefaultAsyncHttpClient(asyncHttpClientConfig)
     new StandaloneAhcWSClient(asyncHttpClient)

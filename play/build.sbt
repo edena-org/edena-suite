@@ -8,9 +8,13 @@ resolvers ++= Seq(
   Resolver.mavenLocal
 )
 
-val playVersion = "2.6.20"
-val deadboltVersion = "2.6.1"  // compatible with play 2.6.0
-val webjarsVersion = "2.6.3"   // compatible with play 2.6.10
+//val playVersion = "2.6.20"  // "com.typesafe.play" %% "play" % "2.7.9" - akka 2.5.31
+//val deadboltVersion = "2.6.1"  // compatible with play 2.6.0  //"be.objectify" %% "deadbolt-scala" % "2.7.1" - use play 2.7.3
+//val webjarsVersion = "2.6.3"   // compatible with play 2.6.10  // org.webjars" %% "webjars-play" % "2.7.3"
+
+val playVersion = "2.7.9"  // "com.typesafe.play" %% "play" % "2.7.9" - akka 2.5.31
+val deadboltVersion = "2.7.1"  // compatible with play 2.6.0  //"be.objectify" %% "deadbolt-scala" % "2.7.1" - use play 2.7.3
+val webjarsVersion = "2.7.3"   // compatible with play 2.6.10  // org.webjars" %% "webjars-play" % "2.7.3"
 
 libraryDependencies += guice
 

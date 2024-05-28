@@ -9,7 +9,8 @@ resolvers ++= Seq(
   Resolver.mavenLocal
 )
 
-val playWsVersion = "1.1.10"
+val playWsVersion = "2.0.8" // "1.1.10"
+// val guiceVersion = "5.1.0" // use with JDK 17
 
 libraryDependencies ++= Seq(
   "com.typesafe.play" %% "play-ws-standalone" % playWsVersion,

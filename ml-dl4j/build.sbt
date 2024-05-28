@@ -8,7 +8,6 @@ isSnapshot := false
 
 scalaVersion := "2.12.15" // "2.11.12"
 
-
 val dl4jVersion = "1.0.0-M1.1"
 
 // Java CPP setting

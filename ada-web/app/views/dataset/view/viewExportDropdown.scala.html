@@ -3,14 +3,45 @@
 @import org.edena.ada.web.controllers.dataset.DataSetWebContext._
 @import reactivemongo.api.bson.BSONObjectID
 @import org.edena.ada.server.models.FilterShowFieldStyle
+@import org.edena.ada.server.models.Link
+@import org.edena.play.security.SecurityRole
+@import org.edena.ada.web.models.security.DataSetPermission
+@import org.edena.ada.web.controllers.dataset.ControllerName
+@import org.edena.core.util.nonAlphanumericToUnderscore
+@import org.edena.ada.server.models.URLType
 
 @(
     dataViewId: BSONObjectID,
     dataSetName: String,
-    showFieldStyle: Option[FilterShowFieldStyle.Value]
+    showFieldStyle: Option[FilterShowFieldStyle.Value],
+    extraExportActions: Seq[Link]
 )(
     implicit context: DataSetWebContext
 )
+
+@onClickLink(url: String, text: String, method: String) = {
+    <a href="#" onclick="extraActionSubmit('@method', '@url')">@text</a>
+}
+
+@listItemAux(url: String, text: String, urlType: URLType.Value) = {
+    <li>
+    @{urlType match {
+        case URLType.GET => onClickLink(url, text, "get")
+        case URLType.POST => onClickLink(url, text, "post")
+        case URLType.DELETE => onClickLink(url, text, "delete")
+        case URLType.PUT => onClickLink(url, text, "put")
+    }}
+    </li>
+}
+
+@extraNavItem(extraExportAction: Link) = @{
+    restrictOrPattern(
+        Array(SecurityRole.admin),
+        DataSetPermission(context.dataSetId, ControllerName.extra, nonAlphanumericToUnderscore(extraExportAction.label.toLowerCase))
+    ) {
+        listItemAux(extraExportAction.url, extraExportAction.label, extraExportAction.displayURLType.getOrElse(URLType.GET))
+    }
+}
 
 @extraDropdownItems = {
     <li role="separator" class="divider"></li>
@@ -29,6 +60,10 @@
             Export Charts as PDF
         </a>
     </li>
+    @if(extraExportActions.nonEmpty) {
+        <li role="separator" class="divider"></li>
+        @extraExportActions.map(extraNavItem)
+    }
 }
 
 @dataSetExportDropdown(
@@ -48,5 +83,21 @@
         })
 
         widgetEngine.export(chartIds, type, chartsExportFileName)
+    }
+
+    function extraActionSubmit(method, url) {
+        const filters = $("#filtersTr").find(".filter-div")
+        const firstFilter = filters.first()
+
+        const filterModel = $(firstFilter).multiFilter("getModel")
+
+        const params = getQueryParams(url);
+        params["filterOrId"] = JSON.stringify(filterModel)
+        params["dataSet"] = '@{context.dataSetId}'
+
+        var newURL = addUrlParm(url, "filterOrId", params["filterOrId"])
+        newURL = addUrlParm(newURL, "dataSet", params["dataSet"])
+
+        submit(method, newURL, params)
     }
 </script>

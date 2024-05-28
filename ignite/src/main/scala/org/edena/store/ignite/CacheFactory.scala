@@ -61,7 +61,7 @@ class CacheFactory @Inject()(ignite: Ignite) extends Serializable {
     cacheConfig.setSqlFunctionClasses(classOf[CustomSqlFunctions])
     cacheConfig.setName(cacheName)
     cacheConfig.setQueryEntities(Seq(queryEntity))
-    cacheConfig.setCacheMode(CacheMode.LOCAL) // PARTITIONED
+    cacheConfig.setCacheMode(CacheMode.LOCAL) // REPLICATED
     cacheConfig.setAtomicityMode(CacheAtomicityMode.ATOMIC)
 //    cacheConfig.setAtomicWriteOrderMode(CacheAtomicWriteOrderMode.PRIMARY) was available in the version 1.6
 

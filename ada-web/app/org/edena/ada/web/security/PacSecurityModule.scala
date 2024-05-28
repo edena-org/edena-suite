@@ -8,7 +8,7 @@ import org.pac4j.core.config.Config
 import org.pac4j.oidc.client.OidcClient
 import org.pac4j.oidc.config.OidcConfiguration
 import org.pac4j.oidc.profile.OidcProfile
-import org.pac4j.play.http.{DefaultHttpActionAdapter, PlayHttpActionAdapter}
+import org.pac4j.play.http.PlayHttpActionAdapter
 import org.pac4j.play.scala.{DefaultSecurityComponents, SecurityComponents}
 import org.pac4j.play.store.{PlayCacheSessionStore, PlaySessionStore}
 import org.pac4j.play.{CallbackController, LogoutController}
@@ -42,7 +42,7 @@ class PacSecurityModule(environment: Environment, configuration: Configuration) 
     bind(classOf[LogoutController]).toInstance(logoutController)
   }
 
-  private def oidcClient: OidcClient[OidcProfile, OidcConfiguration] = {
+  private def oidcClient: OidcClient[OidcConfiguration] = {
     val config = new OidcConfiguration()
 
     def setConf(
@@ -96,7 +96,7 @@ class PacSecurityModule(environment: Environment, configuration: Configuration) 
       mandatory = false
     )
 
-    val oidcClient = new OidcClient[OidcProfile, OidcConfiguration](config)
+    val oidcClient = new OidcClient[OidcConfiguration](config)
     oidcClient
   }
 

@@ -51,6 +51,7 @@ class DataSetSettingController @Inject() (
   private implicit val widgetSpecFormatter = JsonFormatter[WidgetSpec]
   private implicit val bsonObjectIdFormatter = BSONObjectIDStringFormatter
   private implicit val navigationItemFormatter = JsonFormatter[NavigationItem]
+  private implicit val linkFormatter = JsonFormatter[Link]
 
   override protected[controllers] val form = Form(
     mapping(
@@ -71,6 +72,7 @@ class DataSetSettingController @Inject() (
       "ownerId" -> optional(of[BSONObjectID]),
       "showSideCategoricalTree" -> boolean,
       "extraNavigationItems" -> seq(of[NavigationItem]).transform(mergeMenus, mergeMenus),
+      "extraExportActions" -> seq(of[Link]),
       "customControllerClassName" -> optional(text),
       "description" -> optional(text),
       "widgetEngineClassName" -> optional(text),
