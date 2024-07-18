@@ -22,7 +22,14 @@ trait ElasticFormatSerializer[E] extends ElasticSerializer[E] {
   protected implicit val format: Format[E]
 
   protected implicit val indexable = new Indexable[E] {
-    def json(t: E) = Json.toJson(t).toString()
+    def json(t: E) =
+      try {
+        Json.toJson(t).toString()
+      } catch {
+        case e: Exception =>
+          logger.error(s"Failed to json serialize ${t.getClass.getName}: ${t.toString}", e)
+          throw e
+      }
   }
 
   private implicit def toHitAs[A: Reads] = new HitReader[A] {
