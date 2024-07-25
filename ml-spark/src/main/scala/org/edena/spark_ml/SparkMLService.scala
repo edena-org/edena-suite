@@ -3,7 +3,7 @@ package org.edena.spark_ml
 import org.apache.spark.sql.Encoders
 import org.apache.spark.ml.clustering.{BisectingKMeansModel, GaussianMixtureModel, KMeansModel, LDAModel}
 import org.apache.spark.ml.evaluation.{BinaryClassificationEvaluator, Evaluator, MulticlassClassificationEvaluator, RegressionEvaluator}
-import org.apache.spark.ml.{Model, util, _}
+import org.apache.spark.ml._
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.{DataFrame, Dataset, Row}
 import org.apache.spark.ml.linalg.{DenseVector, Vector}
@@ -17,7 +17,7 @@ import org.edena.spark_ml.models.classification.{ClassificationEvalMetric, Class
 import org.edena.spark_ml.models.regression.{RegressionEvalMetric, Regressor}
 import org.edena.spark_ml.CrossValidatorFactory.{CrossValidatorCreator, CrossValidatorCreatorWithProcessor}
 import org.edena.spark_ml.models.result._
-import org.edena.core.util.{STuple3, parallelize}
+import org.edena.core.util.{STuple3, parallelizeWithThreadPool}
 import org.edena.spark_ml.models.VectorScalerType
 import org.edena.spark_ml.models.clustering.Clustering
 import org.edena.spark_ml.models.setting._
@@ -185,7 +185,7 @@ trait SparkMLService extends MLBase {
 
     val count = df.count()
 
-    val resultHoldersFuture = parallelize(1 to setting.repetitions.getOrElse(1), repetitionParallelism) { index =>
+    val resultHoldersFuture = parallelizeWithThreadPool(1 to setting.repetitions.getOrElse(1), repetitionParallelism) { index =>
       logger.info(s"Execution of repetition $index started for $count rows.")
 
       val fullTrainer = new Pipeline().setStages((stages.map(_()) ++ Seq(trainer)).toArray)
@@ -349,7 +349,7 @@ trait SparkMLService extends MLBase {
 
     val count = df.count()
 
-    val resultHoldersFuture = parallelize(1 to setting.repetitions.getOrElse(1), repetitionParallelism) { index =>
+    val resultHoldersFuture = parallelizeWithThreadPool(1 to setting.repetitions.getOrElse(1), repetitionParallelism) { index =>
       logger.info(s"Execution of repetition $index started for $count rows.")
 
       val fullTrainer = new Pipeline().setStages((stages.map(_()) ++ Seq(trainer)).toArray)
