@@ -6,6 +6,7 @@ description := "Server side of Ada Discovery Analytics containing a persistence 
 
 resolvers ++= Seq(
   "Sci Java" at "https://maven.scijava.org/content/repositories/public/", // for the T-SNE lib
+  "jitpack" at "https://jitpack.io",
   Resolver.mavenLocal
 )
 
