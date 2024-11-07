@@ -8,7 +8,8 @@
     addModalInner: Option[Html] = None,
     extraActions: Option[Html] = None,
     multi: Boolean = false,
-    gridWidth: Int = 4
+    gridWidth: Int = 4,
+    itemsName: Option[String] = None
 )(
     implicit request: RequestHeader
 )
@@ -53,4 +54,14 @@
     }
 }
 
-@dynamicTable(domainName, table, sortable, rowToModelJsFun, itemToRowJsFun, addModalInner.getOrElse(defaultModalInner), extraActions, gridWidth = gridWidth)
+@dynamicTable(
+    domainName,
+    table,
+    sortable,
+    rowToModelJsFun,
+    itemToRowJsFun,
+    addModalInner.getOrElse(defaultModalInner),
+    extraActions,
+    gridWidth = gridWidth,
+    itemsName = itemsName
+)
