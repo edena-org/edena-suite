@@ -1,4 +1,4 @@
-# Edena Suite [![version](https://img.shields.io/badge/version-0.9.5-green.svg)](https://peterbanda.net) [![License](https://img.shields.io/badge/License-Apache%202.0-lightgrey.svg)](https://www.apache.org/licenses/LICENSE-2.0)
+# Edena Suite [![version](https://img.shields.io/badge/version-0.9.6-green.svg)](https://peterbanda.net) [![License](https://img.shields.io/badge/License-Apache%202.0-lightgrey.svg)](https://www.apache.org/licenses/LICENSE-2.0)
 
 #### License
 
