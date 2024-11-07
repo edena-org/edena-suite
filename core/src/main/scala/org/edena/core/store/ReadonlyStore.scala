@@ -27,6 +27,15 @@ trait ReadonlyStore[+E, ID] {
   def get(id: ID): Future[Option[E]]
 
   /**
+   * Gets an item by its id or throws an exception if not found
+   *
+   * @param id Id of an it
+   * @return An item (Future)
+   */
+  def getOrThrow(id: ID): Future[E] =
+    get(id).map(_.getOrElse(throw new EdenaDataStoreException(s"Item with id ${id} not found.")))
+
+  /**
     * Finds all the elements matching a sequence of criteria.
     *
     * @param criterion Filtering criteria. Use NoCriterion for no filtering / returns all.
