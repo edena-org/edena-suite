@@ -16,7 +16,8 @@
     data: Seq[Seq[String]] = Nil,
     customRowToModelJs: Option[Html] = None,
     itemsName: Option[String] = None,
-    labelGridWidth: Int = 2
+    labelGridWidth: Int = 2,
+    addModalInner: Option[Html] = None
 )(implicit webContext: WebContext)
 
 @dynamicTableJsImport()
@@ -79,7 +80,7 @@
     @labelValue(key, label, false, labelGridWidth = 4)(valueElement)
 }
 
-@modalInner = {
+@defaultModalInner = {
     <div class="row">
         @fieldLabels.zipWithIndex.map { case (label, index) =>
             @labelValueAux(s"field${index + 1}", label) {
@@ -91,6 +92,14 @@
 
 @labelValue(collectionItemName + "s", tableLabel, labelGridWidth = labelGridWidth){
     @dynamicTable(
-        collectionItemName, table, true, rowToModelJsFun, modalItemToRowJsFun, modalInner, None, 12, itemsName = itemsName
+        collectionItemName,
+        table,
+        true,
+        rowToModelJsFun,
+        modalItemToRowJsFun,
+        addModalInner.getOrElse(defaultModalInner),
+        None,
+        12,
+        itemsName = itemsName
     )
 }
