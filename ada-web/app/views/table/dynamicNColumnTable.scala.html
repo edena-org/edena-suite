@@ -17,13 +17,19 @@
     customRowToModelJs: Option[Html] = None,
     itemsName: Option[String] = None,
     labelGridWidth: Int = 2,
-    addModalInner: Option[Html] = None
+    addModalInner: Option[Html] = None,
+    modalItemToRowJsFun: Option[Html] = None,
+    fieldElement: Option[(Int, String) => Html] = None
 )(implicit webContext: WebContext)
 
 @dynamicTableJsImport()
 
-@fieldElement(index: Int)(row: Seq[String]) = {
-    <input type="text" id="field@{index + 1}" value="@row(index)">
+@defaultFieldElement(index: Int, value: String) = {
+    <input type="text" id="field@{index}" value="@value">
+}
+
+@fieldElementAux(index: Int)(row: Seq[String]) = {
+    @fieldElement.getOrElse(defaultFieldElement _)(index + 1, row(index))
 }
 
 @table = {
@@ -31,7 +37,7 @@
         data,
         typeColumns[Seq[String]](
             fieldLabels.zipWithIndex.map { case (fieldLabel, index) =>
-                (None, fieldLabel, fieldElement(index)(_))
+                (None, fieldLabel, fieldElementAux(index)(_))
             }:_*
         ),
         tableSelection = true
@@ -59,7 +65,7 @@
     }
 }
 
-@modalItemToRowJsFun = {
+@defaultModalItemToRowJsFun = {
     function(values) {
         // create row
         var row = $("<tr></tr>")
@@ -67,8 +73,9 @@
         row.append(checkboxColumn)
 
         @fieldLabels.zipWithIndex.map { case (label, index) =>
-            var fieldValue@{index + 1} = values["field@{index + 1}"].trim()
-            var field@{index + 1}Column = "<td><input type='text' id='field@{index + 1}' value='" + fieldValue@{index + 1} + "'/></td>";
+            var fieldValue@{index + 1} = values["field@{index + 1}"].trim().replace(/'/g, "&#39;")
+            const field@{index + 1}Column = "<td><input type='text' id='field@{index + 1}' value='" + fieldValue@{index + 1} + "'/></td>";
+
             row.append(field@{index + 1}Column)
         }
 
@@ -96,7 +103,7 @@
         table,
         true,
         rowToModelJsFun,
-        modalItemToRowJsFun,
+        modalItemToRowJsFun.getOrElse(defaultModalItemToRowJsFun),
         addModalInner.getOrElse(defaultModalInner),
         None,
         12,
