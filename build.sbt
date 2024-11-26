@@ -2,7 +2,7 @@ name := "edena-suite"
 
 organization in ThisBuild := "org.edena"
 scalaVersion in ThisBuild := "2.12.15"
-version in ThisBuild := "0.9.6"
+version in ThisBuild := "0.9.7"
 isSnapshot in ThisBuild := false
 
 lazy val core = (project in file("core"))
