@@ -6,3 +6,6 @@ class EdenaDataStoreException(message: String, cause: Throwable) extends EdenaEx
   def this(message: String) = this(message, null)
 }
 
+class EdenaDataStoreNotFoundException(message: String, cause: Throwable) extends EdenaDataStoreException(message, cause) {
+  def this(message: String) = this(message, null)
+}

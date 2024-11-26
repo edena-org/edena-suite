@@ -33,7 +33,7 @@ trait ReadonlyStore[+E, ID] {
    * @return An item (Future)
    */
   def getOrError(id: ID): Future[E] =
-    get(id).map(_.getOrElse(throw new EdenaDataStoreException(s"Item with id ${id} not found.")))
+    get(id).map(_.getOrElse(throw new EdenaDataStoreNotFoundException(s"Item with id ${id} not found.")))
 
   /**
     * Finds all the elements matching a sequence of criteria.
