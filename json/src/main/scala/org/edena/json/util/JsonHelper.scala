@@ -239,16 +239,16 @@ trait JsonHelper {
   def toString(value: JsReadable): Option[String] =
     value match {
       case JsNull => None
-      case JsString(s) => Some(s)
+      case _: JsUndefined => None
+      case JsString(s) => Some(s.trim)
       case JsNumber(n) => Some(n.toString)
       case JsBoolean(s) => Some(s.toString)
-      case JsArray(s) => Some(s.map(toString).mkString(", "))
+      case JsArray(s) => Some(s.flatMap(toString(_)).mkString(", "))
       case JsDefined(json) => toString(json)
-      case _: JsUndefined => None
+//      case x: JsObject =>
+//        val fieldsAsString = x.fields.map { case (fieldName, jsValue) => s"$fieldName: ${toString(jsValue)}"}
+//        Some(fieldsAsString.mkString(", "))
       case _ => Some(value.toString)
-      case x: JsObject =>
-        val fieldsAsString = x.fields.map { case (fieldName, jsValue) => s"$fieldName: ${toString(jsValue)}"}
-        Some(fieldsAsString.mkString(", "))
     }
 
   def getValueFromJson(jsValue: JsValue): Any =
