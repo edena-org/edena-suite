@@ -31,12 +31,18 @@ libraryDependencies ++= Seq(
   // Test
   "org.scalatest" %% "scalatest" % "3.0.0" % "test",
 
-  // SLF4J
-  "org.slf4j" % "slf4j-api" % "1.7.21"
+  // Logging
+  "com.typesafe.scala-logging" %% "scala-logging" % "3.9.5",
+  "ch.qos.logback" % "logback-classic" % "1.4.14", // requires JDK11, in order to use JDK8 switch to 1.3.5
+  "org.slf4j" % "slf4j-api" % "1.7.26"
+
+//  "com.typesafe.scala-logging" %% "scala-logging" % "3.5.0",
+//  "ch.qos.logback" % "logback-classic" % "1.2.3", // to provide slf4j implementation % Runtime
+//  "org.apache.logging.log4j" % "log4j-to-slf4j" % "2.14.0", // to use slf4j instead of log4j
 )
 
 dependencyOverrides ++= Seq(
-  "org.slf4j" % "slf4j-api" % "1.7.21"
+  "org.slf4j" % "slf4j-api" % "1.7.26"
 )
 
 // some of the libs' licenses are not included hence we need to provide them (override) manually

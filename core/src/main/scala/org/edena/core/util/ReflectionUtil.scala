@@ -40,7 +40,10 @@ object ReflectionUtil {
     }
 
   def getCaseClassMemberMethods[T: TypeTag]: Traversable[MethodSymbol] =
-    typeOf[T].members.collect {
+    getCaseClassMemberMethods(typeOf[T])
+
+  def getCaseClassMemberMethods(typ: ru.Type): Traversable[MethodSymbol] =
+    typ.members.collect {
       case m: MethodSymbol if m.isCaseAccessor => m
     }
 
@@ -49,6 +52,15 @@ object ReflectionUtil {
     mirror: Mirror = defaultMirror
   ): Traversable[(String, Any)] = {
     val members = getCaseClassMemberMethods[T]
+    getFieldNamesAndValues(instance, members, mirror)
+  }
+
+  def getCaseClassMemberNamesAndValuesForType[T: ClassTag](
+    runType: ru.Type,
+    instance: T,
+    mirror: Mirror = defaultMirror
+  ): Traversable[(String, Any)] = {
+    val members = getCaseClassMemberMethods(runType)
     getFieldNamesAndValues(instance, members, mirror)
   }
 
