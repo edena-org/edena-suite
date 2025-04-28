@@ -63,7 +63,7 @@ protected[dataaccess] class DataSetAccessorFactoryImpl @Inject()(
 
   @Deprecated
   def applySync(id: String): Option[DataSetAccessor] =
-    Await.result(apply(id), 10 minutes)
+    Await.result(apply(id), 10.minutes)
 
   override protected def createInstance(
     dataSetId: String

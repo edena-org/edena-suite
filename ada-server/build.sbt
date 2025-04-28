@@ -1,4 +1,5 @@
 import com.typesafe.sbt.license.{DepModuleInfo, LicenseInfo}
+import Dependencies.Versions
 
 name := "ada-server"
 
@@ -10,24 +11,23 @@ resolvers ++= Seq(
   Resolver.mavenLocal
 )
 
-val playWsVersion = "2.0.8" // "1.1.10"
 // val guiceVersion = "5.1.0" // use with JDK 17
 
 libraryDependencies ++= Seq(
-  "com.typesafe.play" %% "play-ws-standalone" % playWsVersion,
-  "com.typesafe.play" %% "play-ahc-ws-standalone" % playWsVersion,
-  "com.typesafe.play" %% "play-ws-standalone-json" % playWsVersion,
-  "com.typesafe.play" %% "play-ws-standalone-xml" % playWsVersion,
+  "com.typesafe.play" %% "play-ws-standalone" % Versions.playWs,
+  "com.typesafe.play" %% "play-ahc-ws-standalone" % Versions.playWs,
+  "com.typesafe.play" %% "play-ws-standalone-json" % Versions.playWs,
+  "com.typesafe.play" %% "play-ws-standalone-xml" % Versions.playWs,
 
   "ch.qos.logback" % "logback-classic" % "1.2.3",                                                  // to provide slf4j implementation % Runtime
 
   "org.reflections" % "reflections" % "0.9.10" exclude("com.google.code.findbugs", "annotations"),  // class finder - TODO: upgrade to 0.9.12
   "com.unboundid" % "unboundid-ldapsdk" % "2.3.8",                                                  // LDAP
   "com.github.lejon.T-SNE-Java" % "tsne" % "v2.5.0",                                                // t-SNE Java
-  "org.scalanlp" %% "breeze" % "0.13.2",                                                            // linear algebra and stuff
-  "org.scalanlp" %% "breeze-natives" % "0.13.2",                                                    // linear algebra and stuff (native)
-  //  "org.scalanlp" %% "breeze-viz" % "0.13.2",    // breeze visualization
-  "org.scalatest" %% "scalatest" % "3.0.0" % "test"
+  "org.scalanlp" %% "breeze" % Versions.breeze,                                                     // linear algebra and stuff
+  "org.scalanlp" %% "breeze-natives" % Versions.breeze,                                             // linear algebra and stuff (native)
+  //  "org.scalanlp" %% "breeze-viz" % Versions.breeze,    // breeze visualization
+  "org.scalatest" %% "scalatest" % Versions.scalaTest % "test"
 ) map { _.exclude("org.slf4j","slf4j-log4j12").exclude("com.google.inject", "guice").exclude("com.google.inject.extensions", "guice-assistedinject") }
 
 libraryDependencies ++= Seq(

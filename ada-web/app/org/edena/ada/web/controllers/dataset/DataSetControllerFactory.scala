@@ -43,7 +43,7 @@ protected class DataSetControllerFactoryImpl @Inject()(
             controller
           }
 
-          Await.result(controllerFuture, 30 seconds)
+          Await.result(controllerFuture, 30.seconds)
         }
     }
   }

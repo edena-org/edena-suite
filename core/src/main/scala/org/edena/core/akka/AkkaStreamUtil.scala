@@ -46,6 +46,7 @@ object AkkaStreamUtil {
       .groupBy(maxSubstreams, _._1)
       .map { case (a, b) => a -> Buffer(b)}
       .reduce((l, r) ⇒ (l._1, {l._2.appendAll(r._2); l._2}))
+      .map { case (l, r) => (l, r.toSeq) }
       .mergeSubstreams
 
   def zipSources[A, B](
@@ -173,7 +174,7 @@ object AkkaTest extends App {
   val combinedFlow = AkkaStreamUtil.zipNFlows(Seq(sumFlow, minFlow, maxFlow))
 
   val resultsFuture = source.via(combinedFlow).runWith(Sink.head)
-  val results = Await.result(resultsFuture, 1 minute)
+  val results = Await.result(resultsFuture, 1.minute)
 
   println(results.mkString("\n"))
 }

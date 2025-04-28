@@ -190,12 +190,12 @@ class ElasticDocTest extends AsyncFlatSpec
 
   override protected def beforeAll = {
     println("Before All - Cleanup")
-    Await.result(docStore.deleteAll, 10 seconds)
+    Await.result(docStore.deleteAll, 10.seconds)
   }
 
   override protected def afterAll = {
     println("After All - Cleanup")
-    Await.result(docStore.deleteAll, 10 seconds)
+    Await.result(docStore.deleteAll, 10.seconds)
   }
 }
 

@@ -54,8 +54,8 @@ trait LoggingSupport {
     functionName: String,
     params: P
   ): String = {
-    val fieldValues = paramsToString(typeOf[P], params)
-    funCallMessageAux(functionName, fieldValues)
+    val fieldValues = paramsToStrings(typeOf[P], params)
+    formatFunCallMessage(functionName, fieldValues)
   }
 
   protected def funCallMessage[P1: ClassTag: TypeTag, P2: ClassTag: TypeTag](
@@ -63,24 +63,22 @@ trait LoggingSupport {
     params1: P1,
     params2: P2
   ): String = {
-    val fieldValues1 = paramsToString(typeOf[P1], params1)
-    val fieldValues2 = paramsToString(typeOf[P2], params2)
+    val fieldValues1 = paramsToStrings(typeOf[P1], params1)
+    val fieldValues2 = paramsToStrings(typeOf[P2], params2)
     val fieldValues = fieldValues1 ++ fieldValues2
-    funCallMessageAux(functionName, fieldValues)
+    formatFunCallMessage(functionName, fieldValues)
   }
 
   protected def funCallMessage(
     functionName: String,
     paramValues: Seq[(String, Any)] = Nil
-  ): String = {
-    val fieldValues = paramValues.map((fieldValueToLogString _).tupled)
-    funCallMessageAux(functionName, fieldValues)
-  }
+  ): String =
+    formatFunCallMessage(functionName, fieldValuesToLogStrings(paramValues))
 
-  private def funCallMessageAux(
+  protected def formatFunCallMessage(
     functionName: String,
     params: Seq[String]
-  ) = {
+  ): String = {
     val withParamsPart = if (params.nonEmpty) s" with params ${params.mkString(", ")}" else ""
     s"${functionName.capitalize} called$withParamsPart."
   }
@@ -93,7 +91,7 @@ trait LoggingSupport {
   )(
     block: => R
   ): R = {
-    val fieldValues = paramsToString(typeOf[P], params)
+    val fieldValues = paramsToStrings(typeOf[P], params)
     val paramsString = fieldValues.mkString(", ")
     logExecutionTime(functionName, Some(paramsString))(block)
   }
@@ -120,7 +118,12 @@ trait LoggingSupport {
 
   // Reflection based param case class to string conversion
 
-  protected def paramsToString[T: ClassTag](
+  protected def paramsToStrings[P: ClassTag: TypeTag](
+    caseClassParams: P
+  ): Seq[String] =
+    paramsToStrings(typeOf[P], caseClassParams)
+
+  protected def paramsToStrings[T: ClassTag](
     typ: Type,
     caseClassParams: T
   ): Seq[String] = {
@@ -133,13 +136,18 @@ trait LoggingSupport {
       val isCaseClass = typ.members.exists(m => m.isMethod && m.asMethod.isCaseAccessor)
 
       if (isCaseClass) {
-        paramsToString(typ, value).map { nestedFieldValue =>
+        paramsToStrings(typ, value).map { nestedFieldValue =>
           s"${fieldName}.${nestedFieldValue}"
         }
       } else
         Seq(fieldValueToLogString(fieldName, value))
     }
   }
+
+  protected def fieldValuesToLogStrings(
+    paramValues: Seq[(String, Any)]
+  ): Seq[String] =
+    paramValues.map((fieldValueToLogString _).tupled)
 
   protected def fieldValueToLogString(
     fieldName: String,

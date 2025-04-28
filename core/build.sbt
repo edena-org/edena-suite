@@ -1,4 +1,5 @@
 import com.typesafe.sbt.license.{DepModuleInfo, LicenseInfo}
+import Dependencies.Versions
 
 name := "edena-core"
 
@@ -7,9 +8,6 @@ description := "Core library for Edena projects containing utility classes, repo
 resolvers ++= Seq(
   Resolver.mavenLocal
 )
-
-val akkaVersion = "2.5.32"
-// val guiceVersion = "5.1.0"
 
 libraryDependencies ++= Seq(
   "org.scala-lang" % "scala-reflect" % scalaVersion.value,
@@ -20,7 +18,7 @@ libraryDependencies ++= Seq(
   "com.google.inject.extensions" % "guice-assistedinject" % "4.2.3",
 
   // Akka
-  "com.typesafe.akka" %% "akka-stream" % akkaVersion,
+  "com.typesafe.akka" %% "akka-stream" % Versions.akka,
 
   // Commons
   "commons-io" % "commons-io" % "2.6",
@@ -29,7 +27,7 @@ libraryDependencies ++= Seq(
   "joda-time" % "joda-time" % "2.9.9",
 
   // Test
-  "org.scalatest" %% "scalatest" % "3.0.0" % "test",
+  "org.scalatest" %% "scalatest" % Versions.scalaTest % "test",
 
   // Logging
   "com.typesafe.scala-logging" %% "scala-logging" % "3.9.5",

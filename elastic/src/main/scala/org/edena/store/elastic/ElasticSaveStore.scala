@@ -76,4 +76,10 @@ abstract class ElasticSaveStore[E, ID](
   }.recover(
     handleExceptions
   )
+
+  protected def refreshAux = {
+    client execute refreshIndex(indexName) map (_ => ())
+  }.recover(
+    handleExceptions
+  )
 }

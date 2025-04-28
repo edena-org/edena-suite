@@ -1,4 +1,5 @@
 import com.typesafe.sbt.license.{DepModuleInfo, LicenseInfo}
+import Dependencies.Versions
 
 name := "edena-spark_ml"
 
@@ -12,19 +13,16 @@ resolvers ++= Seq(
   Resolver.mavenLocal
 )
 
-val sparkVersion = "2.4.7"  // TODO: Spark 3 is JDK 11 compatible, should upgrade (the latest version is 3.2.1)
-val reactivemongoVersion = "1.1.0-RC12"
-
 libraryDependencies ++= Seq(
-  "org.apache.spark" %% "spark-core" % sparkVersion,
-  "org.apache.spark" %% "spark-sql" % sparkVersion,
-  "org.apache.spark" %% "spark-mllib" % sparkVersion,
+  "org.apache.spark" %% "spark-core" % Versions.spark,
+  "org.apache.spark" %% "spark-sql" % Versions.spark,
+  "org.apache.spark" %% "spark-mllib" % Versions.spark,
 
-  "com.bnd-lib" %% "bnd-network-guice" % "0.7.3",
+  "com.bnd-lib" %% "bnd-network-guice" % Versions.bnd,
   "tech.tablesaw" % "tablesaw-jsplot" % "0.36.0",
   "org.slf4j" % "slf4j-api" % "1.7.21",
 
-  "org.reactivemongo" %% "reactivemongo-bson-api" % reactivemongoVersion,              // because of BSONObjectID - should be removed
+  "org.reactivemongo" %% "reactivemongo-bson-api" % Versions.reactivemongo,              // because of BSONObjectID - should be removed
 )
 
 // For licenses not automatically downloaded (need to list them manually)

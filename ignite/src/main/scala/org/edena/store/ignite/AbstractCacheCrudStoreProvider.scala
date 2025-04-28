@@ -56,7 +56,7 @@ abstract class AbstractCacheCrudStoreProvider[ID, E, STORE_ID, STORE_E] extends 
     } yield
       ()
 
-    Await.result(future, 2 minutes)
+    Await.result(future, 2.minutes)
   }
 
   override def writeAll(entries: util.Collection[Entry[_ <: ID, _ <: E]]): Unit = {

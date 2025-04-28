@@ -2,6 +2,7 @@ import PlayKeys._
 import com.jsuereth.sbtpgp.PgpKeys.signedArtifacts
 import com.typesafe.config._
 import com.typesafe.sbt.license.{DepModuleInfo, LicenseInfo}
+import Dependencies.Versions
 
 name := "ada-web"
 
@@ -19,26 +20,16 @@ routesImport ++= Seq(
 
 libraryDependencies ++= Seq(ehcache)
 
-val playMongoVersion = "1.1.0.play27-RC12"
-val playVersion = "2.7.9"
-val playMailerVersion = "6.0.1"
-val playPac4j = "9.0.2" // "7.0.1"
-val pac4jOidcVersion = "4.1.0" // "3.8.3"
-val akkaVersion = "2.5.32"
-
-// val playVersion = "2.6.20" // JDK 17 is supported by Play 2.8 https://github.com/playframework/playframework/releases/tag/2.8.15
-// val guiceVersion = "5.1.0" // needed for JDK 17
-
 libraryDependencies ++= Seq(
-  "org.pac4j" %% "play-pac4j" % playPac4j,
-  "org.pac4j" % "pac4j-oidc" % pac4jOidcVersion,
+  "org.pac4j" %% "play-pac4j" % Versions.playPac4j,
+  "org.pac4j" % "pac4j-oidc" % Versions.pac4jOidc,
 
-  "org.reactivemongo" %% "play2-reactivemongo" % playMongoVersion,  // Mongo Play
-  "com.typesafe.play" %% "play-mailer" % playMailerVersion,         // to send emails
-  "com.typesafe.play" %% "play-mailer-guice" % playMailerVersion,   // to send emails (Guice)
+  "org.reactivemongo" %% "play2-reactivemongo" % Versions.playMongo,  // Mongo Play
+  "com.typesafe.play" %% "play-mailer" % Versions.playMailer,         // to send emails
+  "com.typesafe.play" %% "play-mailer-guice" % Versions.playMailer,   // to send emails (Guice)
 
-  "com.typesafe.play" %% "play-ws" % playVersion,                   // WS to wrap Standalone WS
-  "com.typesafe.play" %% "play-ahc-ws" % playVersion,               // WS to wrap Standalone WS
+  "com.typesafe.play" %% "play-ws" % Versions.play,                   // WS to wrap Standalone WS
+  "com.typesafe.play" %% "play-ahc-ws" % Versions.play,               // WS to wrap Standalone WS
 
   "org.scalaz" %% "scalaz-core" % "7.2.24",
   "org.webjars" % "typeaheadjs" % "0.11.1",                         // typeahead (autocompletion)
@@ -55,32 +46,38 @@ libraryDependencies ++= Seq(
   // Because of Spark (turning janino logging to warn: https://github.com/janino-compiler/janino/issues/13)
   "ch.qos.logback" % "logback-classic" % "1.2.3"
 
-//  "com.typesafe.scala-logging" %% "scala-logging" % "3.5.0",
-//  "ch.qos.logback" % "logback-classic" % "1.2.3",                                                          // to provide slf4j implementation % Runtime
-//  "org.apache.logging.log4j" % "log4j-to-slf4j" % "2.14.0"                                                 // to use slf4j instead of log4j
+  //  "com.typesafe.scala-logging" %% "scala-logging" % "3.5.0",
+  //  "ch.qos.logback" % "logback-classic" % "1.2.3",                                                          // to provide slf4j implementation % Runtime
+  //  "org.apache.logging.log4j" % "log4j-to-slf4j" % "2.14.0"                                                 // to use slf4j instead of log4j
 ) map {
-  _.exclude("org.slf4j","slf4j-log4j12").exclude("com.google.inject", "guice").exclude("com.google.inject.extensions", "guice-assistedinject")
+  _.exclude("org.slf4j","slf4j-log4j12")
+    .exclude("com.google.inject", "guice")
+    .exclude("com.google.inject.extensions", "guice-assistedinject")
 }
-
-val jacksonVersion = "2.9.9" // "2.8.11"
 
 libraryDependencies ++= Seq(
   "net.codingwell" %% "scala-guice" % "4.2.11",   // uses guice 4.2.3 (bellow)
   "com.google.inject" % "guice" % "4.2.3" classifier "no_aop",  // no_aop is set due to https://github.com/google/guice/issues/1133 // 4.0.1
   "com.google.inject.extensions" % "guice-assistedinject" % "4.2.3",
 
-  "com.typesafe.akka" %% "akka-stream" % akkaVersion, // Akka Streams
-  "com.typesafe.akka" %% "akka-actor" % akkaVersion,  // Akka Streams
-  "com.typesafe.akka" %% "akka-slf4j" % akkaVersion,  // Akka SLF4J
+  "com.typesafe.akka" %% "akka-stream" % Versions.akka, // Akka Streams
+  "com.typesafe.akka" %% "akka-actor" % Versions.akka,  // Akka Streams
+  "com.typesafe.akka" %% "akka-slf4j" % Versions.akka,  // Akka SLF4J
+).map(
+  _.exclude("org.apache.logging.log4j", "log4j-slf4j-impl")   // Log4j2 bridge
+  .exclude("org.slf4j", "slf4j-log4j12")
 )
 
 dependencyOverrides ++= Seq(
-  "com.fasterxml.jackson.module" %% "jackson-module-scala" % jacksonVersion,
-  "com.fasterxml.jackson.core" % "jackson-core" % jacksonVersion,
-  "com.fasterxml.jackson.core" % "jackson-annotations" % jacksonVersion,
-  "com.fasterxml.jackson.core" % "jackson-databind" % jacksonVersion,
-  "com.fasterxml.jackson.datatype" % "jackson-datatype-jdk8" % jacksonVersion,
-  "com.fasterxml.jackson.datatype" % "jackson-datatype-jsr310" % jacksonVersion
+  "com.fasterxml.jackson.module" %% "jackson-module-scala" % Versions.jackson,
+  "com.fasterxml.jackson.core" % "jackson-core" % Versions.jackson,
+  "com.fasterxml.jackson.core" % "jackson-annotations" % Versions.jackson,
+  "com.fasterxml.jackson.core" % "jackson-databind" % Versions.jackson,
+  "com.fasterxml.jackson.datatype" % "jackson-datatype-jdk8" % Versions.jackson,
+  "com.fasterxml.jackson.datatype" % "jackson-datatype-jsr310" % Versions.jackson,
+//  "com.typesafe.scala-logging" %% "scala-logging" % "3.5.0",
+//  "ch.qos.logback" % "logback-classic" % "1.2.3",                                                          // to provide slf4j implementation % Runtime
+//  "org.apache.logging.log4j" % "log4j-to-slf4j" % "2.14.0"                                                 // to use slf4j instead of log4j
 )
 
 packagedArtifacts in publishLocal := {

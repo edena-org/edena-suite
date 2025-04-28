@@ -118,6 +118,6 @@ class OidcAuthController @Inject() (
           result
       }
 
-      Await.result(futureResult, 5 minutes)
+      Await.result(futureResult, 5.minutes)
   }
 }

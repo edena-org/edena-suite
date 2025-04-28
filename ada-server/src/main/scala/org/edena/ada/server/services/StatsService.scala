@@ -1056,7 +1056,7 @@ private[services] class StatsServiceImpl @Inject() (
   ): (Seq[Double], Seq[Seq[Double]]) = {
     val EigSym(eigenValues, eigenVectors) = eigSym(DenseMatrix(matrix: _*))
 
-    (eigenValues.toScalaVector().reverse, eigenVectors.data.toSeq.grouped(eigenVectors.rows).toSeq.reverse)
+    (eigenValues.toScalaVector.reverse, eigenVectors.data.toSeq.grouped(eigenVectors.rows).toSeq.reverse)
   }
 
   override def calcEigenValuesAndVectorsBreeze(
@@ -1064,8 +1064,8 @@ private[services] class StatsServiceImpl @Inject() (
   ): (Seq[Double], Seq[Double], Seq[Seq[Double]]) = {
     val result = eig(DenseMatrix(matrix: _*))
 
-    val eigenValues = result.eigenvalues.toScalaVector()
-    val eigenValuesComplex = result.eigenvaluesComplex.toScalaVector()
+    val eigenValues = result.eigenvalues.toScalaVector
+    val eigenValuesComplex = result.eigenvaluesComplex.toScalaVector
     val eigenVectors = result.eigenvectors.data.toSeq.grouped(result.eigenvectors.rows).toSeq
 
     val sortedResult = (eigenValues, eigenValuesComplex, eigenVectors).zipped.toSeq.sortBy(-_._1)

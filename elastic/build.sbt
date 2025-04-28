@@ -1,21 +1,20 @@
 import com.typesafe.sbt.license.{DepModuleInfo, LicenseInfo}
+import Dependencies.Versions
 
 name := "edena-store-elastic"
 
 description := "Provides a convenient access layer for Elastic Search based on Elastic4S library."
 
-val esVersion = "7.2.0"
-
 libraryDependencies ++= Seq(
-  "com.sksamuel.elastic4s" %% "elastic4s-core" % esVersion, // exclude("com.vividsolutions" ,"jts"), // jts is LGPL licensed (up to version 1.14)
-  "com.sksamuel.elastic4s" %% "elastic4s-client-esjava" % esVersion,
-  "com.sksamuel.elastic4s" %% "elastic4s-client-akka" % esVersion,
-  //  "com.sksamuel.elastic4s" %% "elastic4s-http" % esVersion,
-  "com.sksamuel.elastic4s" %% "elastic4s-http-streams" % esVersion,
+  "com.sksamuel.elastic4s" %% "elastic4s-core" % Versions.elastic4s, // exclude("com.vividsolutions" ,"jts"), // jts is LGPL licensed (up to version 1.14)
+  "com.sksamuel.elastic4s" %% "elastic4s-client-esjava" % Versions.elastic4s,
+  "com.sksamuel.elastic4s" %% "elastic4s-client-akka" % Versions.elastic4s,
+  //  "com.sksamuel.elastic4s" %% "elastic4s-http" % Versions.elastic4s,
+  "com.sksamuel.elastic4s" %% "elastic4s-http-streams" % Versions.elastic4s,
 //  "javax.inject" % "javax.inject" % "1",
   "org.apache.commons" % "commons-lang3" % "3.5",
   "org.slf4j" % "slf4j-api" % "1.7.21",
-  "org.scalatest" %% "scalatest" % "3.0.1" % "test"                     // testing
+  "org.scalatest" %% "scalatest" % Versions.scalaTest % "test"               // testing
 )
 
 // For licenses not automatically downloaded (need to list them manually)
