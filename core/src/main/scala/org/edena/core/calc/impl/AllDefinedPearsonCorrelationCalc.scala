@@ -130,8 +130,8 @@ object AllDefinedPearsonCorrelationCalc extends Calculator[AllDefinedPearsonCorr
   ): Seq[Seq[PersonIterativeAccum]] = {
     logger.info("Converting the global streamed accumulator to the partial ones.")
 
-    (globalAccum.pSums, globalAccum.sumSqSums).zipped.map { case (rowPSums, (sum1, sqSum1)) =>
-      (rowPSums, globalAccum.sumSqSums).zipped.map { case (pSum, (sum2, sqSum2)) =>
+    (globalAccum.pSums, globalAccum.sumSqSums).zipped.toSeq.map { case (rowPSums, (sum1, sqSum1)) =>
+      (rowPSums, globalAccum.sumSqSums).zipped.toSeq.map { case (pSum, (sum2, sqSum2)) =>
         PersonIterativeAccum(sum1, sum2, sqSum1, sqSum2, pSum, globalAccum.count)
       }
     }
