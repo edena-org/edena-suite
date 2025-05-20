@@ -5,6 +5,7 @@ import org.edena.core.util.hasNonAlphanumericUnderscore
 import org.edena.play.formatters.EnumFormatter
 import play.api.data.Forms.{mapping, nonEmptyText, number, of, optional}
 import play.api.data.Mapping
+import org.edena.core.DefaultTypes.Seq
 
 trait MappingHelper {
 

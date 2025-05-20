@@ -12,6 +12,8 @@ import org.edena.core.runnables.{InputFutureRunnable, InputFutureRunnableExt}
 import org.edena.ada.server.services.{StatsService, TSNESetting}
 import org.slf4j.LoggerFactory
 
+import org.edena.core.DefaultTypes.Seq
+
 import scala.concurrent.ExecutionContext.Implicits.global
 
 class CalcTSNEProjectionFromFile @Inject()(

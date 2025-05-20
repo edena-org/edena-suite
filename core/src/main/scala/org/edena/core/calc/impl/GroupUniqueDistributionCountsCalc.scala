@@ -3,6 +3,7 @@ package org.edena.core.calc.impl
 import org.edena.core.calc.{Calculator, NoOptionsCalculatorTypePack}
 import org.edena.core.akka.AkkaStreamUtil.{seqFlow, countFlow}
 import org.edena.core.util.GroupMapList
+import org.edena.core.DefaultTypes.Seq
 
 trait GroupUniqueDistributionCountsCalcTypePack[G, T] extends NoOptionsCalculatorTypePack {
   type IN = (Option[G], Option[T])

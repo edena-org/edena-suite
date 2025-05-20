@@ -4,6 +4,8 @@ import org.edena.ada.web.models.security.DataSetPermission
 import org.edena.play.controllers.SecureControllerDispatcher
 import org.edena.play.security.SecurityRole
 
+import org.edena.core.DefaultTypes.Seq
+
 abstract class DataSetLikeDispatcher[C](
   controllerName: ControllerName.Value
 ) extends SecureControllerDispatcher[C]("dataSet") {

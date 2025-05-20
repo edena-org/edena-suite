@@ -4,6 +4,7 @@ import akka.stream.scaladsl.Flow
 import org.edena.core.calc.{Calculator, NoOptionsCalculatorTypePack}
 import org.edena.core.akka.AkkaStreamUtil.{countFlow, seqFlow}
 import org.edena.core.util.GroupMapList
+import org.edena.core.DefaultTypes.Seq
 
 trait GroupCumulativeOrderedCountsCalcTypePack[G, T] extends NoOptionsCalculatorTypePack {
   type IN = (Option[G], Option[T])

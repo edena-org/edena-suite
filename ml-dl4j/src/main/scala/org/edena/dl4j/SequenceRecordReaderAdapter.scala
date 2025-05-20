@@ -13,7 +13,7 @@ import org.datavec.api.records.{Record, SequenceRecord}
 import org.datavec.api.split.InputSplit
 import org.datavec.api.writable.Writable
 
-import scala.collection.JavaConversions._
+import scala.jdk.CollectionConverters._
 
 private class SequenceRecordReaderAdapter(
   underlying: RecordReader
@@ -62,7 +62,7 @@ private class SequenceRecordReaderAdapter(
     underlying.getListeners
 
   override def setListeners(listeners: RecordListener*) =
-    underlying.setListeners(listeners)
+    underlying.setListeners(listeners.asJava)
 
   override def setListeners(listeners: util.Collection[RecordListener]) =
     underlying.setListeners(listeners)
@@ -83,19 +83,19 @@ private class SequenceRecordReaderAdapter(
 
   override def sequenceRecord(uri: URI, dataInputStream: DataInputStream): util.List[util.List[Writable]] = {
     val writebles = underlying.record(uri, dataInputStream)
-    Seq(writebles)
+    Seq(writebles).asJava
   }
 
   override def nextSequence: SequenceRecord = {
     val record = underlying.nextRecord()
 
-    new SequenceRecordImpl(Seq(record.getRecord), record.getMetaData)
+    new SequenceRecordImpl(Seq(record.getRecord).asJava, record.getMetaData)
   }
 
   override def loadSequenceFromMetaData(recordMetaData: RecordMetaData): SequenceRecord = {
     val record = underlying.loadFromMetaData(recordMetaData)
 
-    new SequenceRecordImpl(Seq(record.getRecord),  recordMetaData)
+    new SequenceRecordImpl(Seq(record.getRecord).asJava,  recordMetaData)
   }
 
   override def loadSequenceFromMetaData(
@@ -103,9 +103,9 @@ private class SequenceRecordReaderAdapter(
   ): util.List[SequenceRecord] = {
     val records = underlying.loadFromMetaData(recordMetaDatas)
 
-    records.map { record =>
-      new SequenceRecordImpl(Seq(record.getRecord),  record.getMetaData)
-    }
+    records.asScala.map { record =>
+      new SequenceRecordImpl(Seq(record.getRecord).asJava, record.getMetaData): SequenceRecord
+    }.asJava
   }
 }
 

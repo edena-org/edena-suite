@@ -14,6 +14,7 @@ import org.edena.store.mongo.{CommonReactiveMongoApiFactory, MongoCrudStore}
 
 import javax.cache.configuration.Factory
 import javax.inject.Inject
+import org.edena.core.DefaultTypes.Seq
 
 private[dataaccess] class DataSetMetaInfoCacheCrudStoreFactoryImpl @Inject()(
   cacheRepoFactory: CacheCrudStoreFactory,

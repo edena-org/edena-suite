@@ -2,6 +2,8 @@ package org.edena.core.calc.impl
 
 import akka.stream.scaladsl.Flow
 import org.edena.core.calc.{Calculator, NoOptionsCalculatorTypePack}
+import scala.collection.parallel.CollectionConverters._
+import org.edena.core.DefaultTypes.Seq
 
 trait MatrixRowColumnSumCalcTypePack extends NoOptionsCalculatorTypePack {
   type IN = Seq[Double]
@@ -19,7 +21,7 @@ private object MatrixRowColumnSumCalcAux extends Calculator[MatrixRowColumnSumCa
       values.foldLeft(0.0) { case (sum, row) => sum + row(index) }
 
     val rowSums = values.map(_.sum).toSeq
-    val columnSums = (0 until elementsCount).par.map(columnSum).toList
+    val columnSums = (0 until elementsCount).par.map(i => columnSum(i)).toList
 
     (rowSums, columnSums)
   }

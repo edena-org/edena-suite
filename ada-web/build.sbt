@@ -31,7 +31,7 @@ libraryDependencies ++= Seq(
   "com.typesafe.play" %% "play-ws" % Versions.play,                   // WS to wrap Standalone WS
   "com.typesafe.play" %% "play-ahc-ws" % Versions.play,               // WS to wrap Standalone WS
 
-  "org.scalaz" %% "scalaz-core" % "7.2.24",
+  "org.scalaz" %% "scalaz-core" % Versions.scalazCore,
   "org.webjars" % "typeaheadjs" % "0.11.1",                         // typeahead (autocompletion)
   "org.webjars" % "html5shiv" % "3.7.0",
   "org.webjars" % "respond" % "1.4.2",
@@ -41,7 +41,7 @@ libraryDependencies ++= Seq(
   "org.webjars.bower" % "d3" % "3.5.16",
   "org.webjars.bower" % "Autolinker.js" % "0.25.0",                 // to convert links to a-href elements
   "org.webjars" % "jquery-ui" % "1.11.1",
-  "org.scalatestplus.play" %% "scalatestplus-play" % "3.1.2" % "test",
+  "org.scalatestplus.play" %% "scalatestplus-play" % Versions.scalatestplusPlay % "test",
 
   // Because of Spark (turning janino logging to warn: https://github.com/janino-compiler/janino/issues/13)
   "ch.qos.logback" % "logback-classic" % "1.2.3"

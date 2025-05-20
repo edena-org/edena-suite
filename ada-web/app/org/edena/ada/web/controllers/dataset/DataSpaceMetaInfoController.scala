@@ -23,6 +23,7 @@ import org.edena.play.controllers._
 import org.edena.ada.web.services.DataSpaceService
 import org.edena.play.controllers
 import play.api.libs.json.{JsArray, Json}
+import org.edena.core.DefaultTypes.Seq
 
 class DataSpaceMetaInfoController @Inject() (
   repo: DataSpaceMetaInfoStore,

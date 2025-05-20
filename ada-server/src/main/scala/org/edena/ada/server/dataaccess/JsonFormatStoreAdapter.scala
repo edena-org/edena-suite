@@ -11,6 +11,7 @@ import org.edena.store.json.StoreTypes.{JsonCrudStore, JsonReadonlyStore}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
+import org.edena.core.DefaultTypes.Seq
 
 private[dataaccess] abstract class AbstractJsonFormatReadonlyStoreAdapter[E: Format, ID] extends JsonReadonlyStore {
 

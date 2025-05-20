@@ -9,6 +9,7 @@ import play.api.libs.json._
 
 import com.google.inject.ImplementedBy
 import javax.inject.Singleton
+import org.edena.core.DefaultTypes.Seq
 
 @ImplementedBy(classOf[TranSMARTServiceImpl])
 trait TranSMARTService {

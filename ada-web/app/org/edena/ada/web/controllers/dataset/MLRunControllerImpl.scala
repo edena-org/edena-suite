@@ -41,6 +41,7 @@ import play.twirl.api.Html
 import scala.reflect.runtime.universe.typeOf
 import scala.reflect.runtime.universe.TypeTag
 import scala.concurrent.Future
+import org.edena.core.DefaultTypes.Seq
 
 protected[controllers] abstract class MLRunControllerImpl[R <: MLResult : Format, ML](
   implicit override val typeTag: TypeTag[R], identity: Identity[ML, BSONObjectID], actorSystem: ActorSystem, materializer: Materializer
@@ -131,7 +132,7 @@ protected[controllers] abstract class MLRunControllerImpl[R <: MLResult : Format
   override protected def getListViewData(
     page: Page[R],
     conditions: Seq[FilterCondition]
-  ) = { request =>
+  ) = { implicit request: AuthenticatedRequest[_] =>
     val treeFuture = dataSpaceService.getTreeForCurrentUser(request)
     val nameFuture = dsa.dataSetName
 

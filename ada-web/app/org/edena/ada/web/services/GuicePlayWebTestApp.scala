@@ -5,6 +5,8 @@ import org.pac4j.play.store.{PlayCacheSessionStore, PlaySessionStore}
 import play.api.{Application, inject}
 import play.api.inject.guice.GuiceApplicationBuilder
 
+import org.edena.core.DefaultTypes.Seq
+
 object GuicePlayWebTestApp extends GuicePlayTestApp {
 
   override def apply(moduleNames: Seq[String] = Nil, excludeModules: Seq[String] = Nil): Application = {

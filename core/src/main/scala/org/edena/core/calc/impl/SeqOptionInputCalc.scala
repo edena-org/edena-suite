@@ -3,6 +3,7 @@ package org.edena.core.calc.impl
 import akka.stream.scaladsl.Flow
 import org.edena.core.calc.{Calculator, CalculatorTypePack}
 import org.edena.core.calc.{Calculator, CalculatorTypePack}
+import org.edena.core.DefaultTypes.Seq
 
 private[calc] abstract class SeqOptionInputCalc[C <: CalculatorTypePack](val allDefinedCalc: Calculator[C]) {
 

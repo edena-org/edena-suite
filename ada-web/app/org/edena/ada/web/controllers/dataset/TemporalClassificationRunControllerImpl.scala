@@ -28,6 +28,8 @@ import org.edena.ada.web.services.{DataSpaceService, WidgetGenerationService}
 import views.html.{classificationrun => view}
 
 import scala.concurrent.Future
+import org.edena.core.DefaultTypes.Seq
+import org.edena.core.DefaultTypes.Seq
 
 class TemporalClassificationRunControllerImpl @Inject()(
   @Assisted dataSetId: String,

@@ -9,6 +9,7 @@ import play.api.libs.json._
 import views.html.{regressionrun => view}
 
 import scala.reflect.runtime.universe.TypeTag
+import org.edena.core.DefaultTypes.Seq
 
 abstract class RegressionRunControllerImpl[E <: RegressionResult : Format : TypeTag](
   implicit actorSystem: ActorSystem, materializer: Materializer

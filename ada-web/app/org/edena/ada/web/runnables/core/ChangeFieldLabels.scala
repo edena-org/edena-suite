@@ -13,6 +13,7 @@ import play.twirl.api.Html
 import views.html.elements._
 
 import scala.concurrent.ExecutionContext.Implicits.global
+import org.edena.core.DefaultTypes.Seq
 
 class ChangeFieldLabels @Inject() (
   dsaf: DataSetAccessorFactory

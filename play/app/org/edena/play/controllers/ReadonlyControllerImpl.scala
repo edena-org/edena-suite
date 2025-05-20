@@ -8,10 +8,14 @@ import org.edena.play.Page
 import org.edena.play.security.HasAuthAction
 import org.edena.core.store._
 import org.edena.play.util.WebUtil.toSort
-import play.api.i18n.Lang
+import org.edena.play.controllers.BaseController
+import org.webjars.play.WebJarsUtil
+import play.api.Configuration
+import play.api.i18n.{Lang, MessagesApi}
 
 import scala.concurrent.duration._
-import scala.concurrent.{Await, Future}
+import scala.concurrent.{Await, ExecutionContext, Future}
+import org.edena.core.DefaultTypes.Seq
 
 /**
   * Trait defining a controller with basic read (find/get) operations, i.e., no data alternation is allowed.
@@ -44,9 +48,9 @@ abstract class ReadonlyControllerImpl[E: Format, ID] extends BaseController
 
   protected val pageLimit = 20
 
-  protected implicit val executionContext = defaultExecutionContext
+  protected implicit val executionContext: ExecutionContext = defaultExecutionContext
 
-  protected val timeout = 200 seconds
+  protected val timeout = 200.seconds
 
   protected def homeCall: Call
 
@@ -88,6 +92,9 @@ abstract class ReadonlyControllerImpl[E: Format, ID] extends BaseController
           case None => NotFound(s"$entityName #${formatId(id)} not found")
           case Some(entity) =>
             implicit val req = request: Request[_]
+
+//            implicit val webcontext = webContext(request)
+
             render {
               case Accepts.Html() => Ok(showViewWithContext(viewData.get))
               case Accepts.Json() => Ok(toJson(entity))

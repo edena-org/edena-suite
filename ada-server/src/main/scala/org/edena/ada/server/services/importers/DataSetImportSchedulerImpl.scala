@@ -9,6 +9,7 @@ import org.edena.ada.server.services.{InputExec, InputExecSchedulerImpl, LookupC
 import reactivemongo.api.bson.BSONObjectID
 
 import scala.concurrent.ExecutionContext
+import org.edena.core.DefaultTypes.Seq
 
 protected[services] class DataSetImportSchedulerImpl @Inject() (
   val system: ActorSystem,

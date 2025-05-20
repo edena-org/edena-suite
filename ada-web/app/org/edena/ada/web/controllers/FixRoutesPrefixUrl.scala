@@ -3,6 +3,8 @@ package org.edena.ada.web.controllers
 import play.api.{Configuration, Environment}
 import play.api.inject.{Binding, Module}
 
+import org.edena.core.DefaultTypes.Seq
+
 /**
   * Hacky solution to pass play.http.context (if defined) to routes during an initialization.
   *

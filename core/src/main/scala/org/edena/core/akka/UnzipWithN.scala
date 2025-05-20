@@ -3,7 +3,7 @@ package org.edena.core.akka
 import akka.stream.{Attributes, UniformFanOutShape}
 import akka.stream.stage.{GraphStage, GraphStageLogic, InHandler, OutHandler}
 
-import scala.collection.immutable
+import org.edena.core.DefaultTypes.Seq
 
 object UnzipN {
   def apply[A](n: Int): GraphStage[UniformFanOutShape[Seq[A], A]] = new UnzipN[A](n)
@@ -15,7 +15,7 @@ private final class UnzipN[A](n: Int) extends UnzipWithN[Seq[A], A](identity)(n)
 }
 
 object UnzipWithN {
-  def apply[A, O](unzipper: A ⇒ immutable.Seq[O])(n: Int): GraphStage[UniformFanOutShape[A, O]] = new UnzipWithN[A, O](unzipper)(n)
+  def apply[A, O](unzipper: A ⇒ Seq[O])(n: Int): GraphStage[UniformFanOutShape[A, O]] = new UnzipWithN[A, O](unzipper)(n)
 }
 
 private class UnzipWithN[A, O](unzipper: A ⇒ Seq[O])(n: Int) extends GraphStage[UniformFanOutShape[A, O]] {

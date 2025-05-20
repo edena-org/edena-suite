@@ -16,12 +16,13 @@ import play.api.libs.json.JsObject
 import org.edena.core.store._
 import org.edena.store.ignite.BinaryCacheCrudStoreFactory
 
-import scala.collection.JavaConversions._
+import scala.jdk.CollectionConverters._
 import scala.concurrent.duration._
 import org.edena.ada.server.dataaccess.ignite.BinaryJsonUtil.{escapeIgniteFieldName, getValueFromJson}
 import org.edena.ada.server.field.FieldTypeHelper
 
 import scala.reflect.ClassTag
+import org.edena.core.DefaultTypes.Seq
 import scala.concurrent.ExecutionContext.Implicits.global
 
 class BinaryCacheFactory @Inject()(ignite: Ignite) extends Serializable {
@@ -82,10 +83,10 @@ class BinaryCacheFactory @Inject()(ignite: Ignite) extends Serializable {
       setKeyType(tagId.runtimeClass.getName)
       setValueType(cacheName)
 //      setIndexes(fieldNames.map(fieldName => new QueryIndex(fieldName)))
-      setFields(new java.util.LinkedHashMap[String, String](fieldNameTypeNameMap))
+      setFields(new java.util.LinkedHashMap[String, String](fieldNameTypeNameMap.asJava))
     }
 
-    cacheConfig.setQueryEntities(Seq(queryEntity))
+    cacheConfig.setQueryEntities(Seq(queryEntity).asJava)
 
     cacheStoreFactoryOption.foreach{ cacheStoreFactory =>
       cacheConfig.setCacheStoreFactory(cacheStoreFactory)

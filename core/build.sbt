@@ -11,6 +11,7 @@ resolvers ++= Seq(
 
 libraryDependencies ++= Seq(
   "org.scala-lang" % "scala-reflect" % scalaVersion.value,
+  "org.scala-lang.modules" %% "scala-parallel-collections" % "1.0.4", // to be able to call par for Scala 2.13
 
   // Guice
   "net.codingwell" %% "scala-guice" % "4.2.11",   // uses guice 4.2.3 (bellow)

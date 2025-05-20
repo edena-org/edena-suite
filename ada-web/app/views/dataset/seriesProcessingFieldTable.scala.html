@@ -16,7 +16,7 @@
 
 @processingTypeElement(_processingType: Option[SeriesProcessingType.Value]) = {
     <select id="processingType" name="processingType">
-        @SeriesProcessingType.values.map { processingType =>
+        @SeriesProcessingType.values.toSeq.map { processingType =>
             <option value="@{processingType}" @if(_processingType.isDefined && _processingType.get == processingType) {selected="selected"}>@{processingType}</option>
         }
     </select>

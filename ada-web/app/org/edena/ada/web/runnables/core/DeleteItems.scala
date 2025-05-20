@@ -1,9 +1,11 @@
 package org.edena.ada.web.runnables.core
 
-import runnables.DsaInputFutureRunnable
+import org.edena.ada.server.runnables.DsaInputFutureRunnable
 import org.edena.core.runnables.RunnableHtmlOutput
 import reactivemongo.api.bson.BSONObjectID
 import scala.concurrent.ExecutionContext.Implicits.global
+
+import org.edena.core.DefaultTypes.Seq
 
 class DeleteItems extends DsaInputFutureRunnable[DeleteItemsSpec] with RunnableHtmlOutput {
 

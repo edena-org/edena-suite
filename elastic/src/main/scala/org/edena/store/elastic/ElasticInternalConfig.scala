@@ -3,7 +3,7 @@ package org.edena.store.elastic
 import com.sksamuel.exts.StringOption
 import com.typesafe.config.Config
 import org.edena.core.store.EdenaDataStoreException
-import scala.collection.JavaConversions._
+import scala.jdk.CollectionConverters._
 
 private[elastic] case class ElasticInternalConfig(
   host: String,
@@ -40,10 +40,10 @@ private[elastic] object ElasticInternalConfig {
       (host, port,  Map())
     }
 
-    val finalOptions = options ++ elasticConfig.entrySet.map { entry =>
+    val finalOptions = options ++ elasticConfig.entrySet.asScala.map { entry =>
       entry.getKey -> entry.getValue.unwrapped.toString
     }.filter(_._1 != "uri").toMap
 
-    ElasticInternalConfig(host, port, finalOptions)
+    ElasticInternalConfig(host, port, finalOptions.toMap)
   }
 }

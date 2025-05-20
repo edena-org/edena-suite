@@ -13,6 +13,7 @@ import reactivemongo.api.bson.BSONObjectID
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
+import org.edena.core.DefaultTypes.Seq
 
 class CheckIfFieldsAlphanumericForDataSpaceRecursively @Inject() (
   val fieldRepoFactory: FieldStoreFactory,

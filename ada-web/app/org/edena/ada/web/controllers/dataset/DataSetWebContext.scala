@@ -11,10 +11,11 @@ import play.api.Configuration
 import play.api.i18n.Messages
 import play.api.mvc.Flash
 import scala.collection.mutable
+import scala.jdk.CollectionConverters._
 
-import scala.collection.JavaConversions._
 import org.edena.play.routes.CustomDirAssets
 import play.twirl.api.Html
+import org.edena.core.DefaultTypes.Seq
 
 class DataSetWebContext(
   val dataSetId: String)(
@@ -182,7 +183,8 @@ object DataSetWebContext {
       getEntrySafe(configuration.getString(_, None), "widget_engine.defaultClassName")
     )
 
-    jsWidgetEngineProvidersMap(configuration, webJarAssets).get(engineClassName).getOrElse(
+    jsWidgetEngineProvidersMap(configuration, webJarAssets).getOrElse(
+      engineClassName,
       throw new AdaException(s"Configuration for a widget engine provider class '${engineClassName}' not found. You must register it first.")
     )
   }
@@ -193,10 +195,10 @@ object DataSetWebContext {
   ): Map[String, Html] = {
     val providerConfigs = getEntrySafe(configuration.getObjectList, "widget_engine.providers")
 
-    providerConfigs.map { providerConfig =>
+    providerConfigs.asScala.map { providerConfig =>
       val className = configValue[String](providerConfig, "className")
       val jsImportConfigs = configValue[ju.ArrayList[ju.HashMap[String, String]]](providerConfig, "jsImports")
-      val importsHtml = jsWidgetEngineImports(jsImportConfigs, webJarAssets)
+      val importsHtml = jsWidgetEngineImports(jsImportConfigs.asScala.toSeq, webJarAssets)
       (className, importsHtml)
     }.toMap
   }
@@ -206,11 +208,11 @@ object DataSetWebContext {
   ): Seq[(String, String)] = {
     val providerConfigs = getEntrySafe(configuration.getObjectList, "widget_engine.providers")
 
-    providerConfigs.map { providerConfig =>
+    providerConfigs.asScala.map { providerConfig =>
       val name = configValue[String](providerConfig, "name")
       val className = configValue[String](providerConfig, "className")
       (className, name)
-    }
+    }.toSeq
   }
 
   private val coreWidgetJsPath = "widget-engine.js"
@@ -225,7 +227,7 @@ object DataSetWebContext {
     }
 
     val importsString = jsImportConfigs.map { jsImportConfigJavaMap =>
-      val jsImportConfigMap: mutable.Map[String, String] = jsImportConfigJavaMap
+      val jsImportConfigMap: mutable.Map[String, String] = jsImportConfigJavaMap.asScala
 
       // path
       val path = jsImportConfigMap.getOrElse(

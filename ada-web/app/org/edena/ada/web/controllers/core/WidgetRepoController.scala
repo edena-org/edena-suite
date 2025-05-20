@@ -14,6 +14,8 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.reflect.runtime.universe._
 
+import org.edena.core.DefaultTypes.Seq
+
 trait WidgetRepoController[E] {
 
   protected def store: ReadonlyStore[E, _]

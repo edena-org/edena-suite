@@ -45,7 +45,7 @@ abstract class ElasticCrudStore[E, ID](
 
     if (updateDefAndIds.nonEmpty) {
       client execute {
-        bulk {
+        ElasticDsl.bulk {
           updateDefAndIds.toSeq map (_._1)
         } refresh asNative(setting.updateBulkRefresh)
       } map { response =>

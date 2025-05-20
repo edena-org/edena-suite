@@ -23,6 +23,7 @@ import scala.collection.mutable.ListBuffer
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.util.Random
+import org.edena.core.DefaultTypes.Seq
 
 private class MatchGroupsWithConfoundersTransformer extends AbstractDataSetTransformer[MatchGroupsWithConfoundersTransformation] {
 
@@ -230,7 +231,7 @@ private class MatchGroupsWithConfoundersTransformer extends AbstractDataSetTrans
       ((id, confoundingSample), Math.sqrt(squareSum))
     }.filter { case (_, distance) => distance < Math.min(numericDistTolerance, Double.PositiveInfinity) }
 
-    idSampleDistances.sortBy(_._2).take(selectCount).map(_._1)
+    idSampleDistances.sortBy(_._2).take(selectCount).map(_._1).toSeq
   }
 
   private def doubleValue(fieldTypeId: FieldTypeId.Value): Option[Any] => Option[Double] = {

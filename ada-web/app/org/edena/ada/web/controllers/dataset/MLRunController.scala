@@ -6,6 +6,8 @@ import org.edena.spark_ml.models.setting.ClassificationRunSpec
 import play.api.mvc.{Action, AnyContent}
 import reactivemongo.api.bson.BSONObjectID
 
+import org.edena.core.DefaultTypes.Seq
+
 trait MLRunController extends ReadonlyController[BSONObjectID]{
 
   def create: Action[AnyContent]

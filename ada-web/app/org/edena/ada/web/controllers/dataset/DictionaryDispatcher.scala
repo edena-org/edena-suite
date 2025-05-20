@@ -4,6 +4,8 @@ import org.edena.core.FilterCondition
 import javax.inject.Inject
 import play.api.mvc.ControllerComponents
 
+import org.edena.core.DefaultTypes.Seq
+
 class DictionaryDispatcher @Inject() (
   val dscf: DataSetControllerFactory,
   factory: DictionaryControllerFactory,

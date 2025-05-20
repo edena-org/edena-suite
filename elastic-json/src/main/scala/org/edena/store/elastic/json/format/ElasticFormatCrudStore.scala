@@ -12,7 +12,7 @@ abstract class ElasticFormatCrudStore[E, ID](
 ) extends ElasticCrudStore[E, ID](indexName, setting) with ElasticFormatSerializer[E] {
 
   override protected def createSaveDef(entity: E, id: ID) =
-    indexInto(index) source entity id idToString(id)
+    ElasticDsl.indexInto(index) source entity id idToString(id)
 
   override def createUpdateDef(entity: E, id: ID) =
     ElasticDsl.update(idToString(id)) in index source entity

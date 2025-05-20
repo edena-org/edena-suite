@@ -4,6 +4,7 @@ import org.edena.play.controllers.{GenericJsRouter, GenericRouter}
 import reactivemongo.api.bson.BSONObjectID
 
 import scalaz.Scalaz._
+import org.edena.core.DefaultTypes.Seq
 
 /**
   * Container for various calls available for the data set controller.

@@ -1,6 +1,7 @@
 package org.edena.core.calc.impl
 
 import org.edena.core.calc.{Calculator, FullDataCalculatorAdapter, FullDataCalculatorTypePack}
+import org.edena.core.DefaultTypes.Seq
 
 trait AllDefinedQuartilesCalcTypePack[T] extends FullDataCalculatorTypePack {
   type IN = T

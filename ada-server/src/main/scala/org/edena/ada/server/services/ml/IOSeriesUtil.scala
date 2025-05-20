@@ -11,6 +11,7 @@ import play.api.libs.json.JsObject
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
+import org.edena.core.DefaultTypes.Seq
 
 object IOSeriesUtil {
 
@@ -75,7 +76,7 @@ object IOSeriesUtil {
       (index, Vectors.dense(oneSeries.toArray))
     }
 
-    val df = session.createDataFrame(rows).toDF("id", "features")
+    val df = session.createDataFrame(rows.toList).toDF("id", "features")
     val newDf = VectorColumnScaler(transformType).fit(df).transform(df)
 
     for {

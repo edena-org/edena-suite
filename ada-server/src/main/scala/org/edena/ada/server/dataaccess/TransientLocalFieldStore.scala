@@ -10,11 +10,12 @@ import org.edena.core.util.ReflectionUtil
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
+import org.edena.core.DefaultTypes.Seq
 
 // important: this store doesn't persist changes to the underlying fields (hence the "transient" adjective)
 private class TransientLocalFieldStore(fields: Seq[Field]) extends FieldStore {
 
-  private val fieldMap = MMap[String, Field](fields.map(field => (field.name, field)):_*)
+  private val fieldMap = MMap[String, Field](fields.map(field => (field.name, field)).toList:_*)
 
   override def update(entity: Field) = Future {
     fieldMap.update(entity.name, entity)
@@ -54,7 +55,7 @@ private class TransientLocalFieldStore(fields: Seq[Field]) extends FieldStore {
     projection: Traversable[String],
     limit: Option[Int],
     skip: Option[Int]
-  ) = Future {
+  ): Future[Seq[Field]] = Future {
     // filter by criteria
     val filteredFields =
       fieldMap.values.filter { field =>
@@ -90,8 +91,8 @@ private class TransientLocalFieldStore(fields: Seq[Field]) extends FieldStore {
 
         val sorted: Seq[Field] = (processed ++ Seq(tail)).map(sortBy(_, sort)).fold(Nil)(_ ++ _)
 
-        val equals = sorted.zip(sorted.tail).map { case (field1, field2) => compareFields(field1, field2, sort) == 0}
-        sorted.zip(Seq(true) ++ equals)
+        val equals: Seq[Boolean] = sorted.zip(sorted.tail).map { case (field1, field2) => compareFields(field1, field2, sort) == 0}
+        sorted.toList.zip(true +: equals)
       }
 
     val sortedFields = sortedEqFields.map(_._1)

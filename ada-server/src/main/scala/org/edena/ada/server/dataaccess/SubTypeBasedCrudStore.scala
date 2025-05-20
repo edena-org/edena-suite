@@ -10,6 +10,7 @@ import org.edena.core.store.ValueMapAux.ValueMap
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
+import org.edena.core.DefaultTypes.Seq
 
 private class SubTypeBasedCrudStoreAdapter[SUB_E: Manifest, E >: SUB_E, ID](
   underlying: CrudStore[E, ID]

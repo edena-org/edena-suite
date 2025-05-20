@@ -15,7 +15,7 @@ private[dataaccess] class PlayIgniteLifecycleBean extends LifecycleBean {
         println("closing Mongo Ignite connections")
         for {
           connection <- mongoApi.connection
-          _ <- connection.close()(1 minutes)
+          _ <- connection.close()(1.minutes)
           _ <- mongoApi.driver.close()
         } yield
           ()

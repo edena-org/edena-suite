@@ -19,6 +19,8 @@ import scala.concurrent.{Await, Future}
 import scala.concurrent.ExecutionContext.Implicits._
 import org.edena.store.json.BSONObjectIDFormat
 
+import org.edena.core.DefaultTypes.Seq
+
 class MessageController @Inject() (
   repo: MessageStore,
   val controllerComponents: ControllerComponents

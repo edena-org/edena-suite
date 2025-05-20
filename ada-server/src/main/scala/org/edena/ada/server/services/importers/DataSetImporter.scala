@@ -20,6 +20,8 @@ import scala.concurrent.Future
 import scala.io.Source
 import scala.reflect.runtime.universe.{TypeTag, typeOf}
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.collection.parallel.CollectionConverters._
+import org.edena.core.DefaultTypes.Seq
 
 trait DataSetImporter[T <: DataSetImport] extends InputFutureRunnable[T]
 

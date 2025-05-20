@@ -28,6 +28,7 @@ import json2bson.{toDocumentReader, toDocumentWriter, toReader}
 
 import scala.concurrent.Future
 import scala.util.{Random, Try}
+import org.edena.core.DefaultTypes.Seq
 
 class MongoReadonlyStore[E: Format, ID: Format](
   collectionName : String,
@@ -275,11 +276,11 @@ class MongoReadonlyStore[E: Format, ID: Format](
 
       case c: InCriterion[_] =>
         val inValues = c.value.map(toJson(_): JsValueWrapper)
-        Json.obj("$in" -> Json.arr(inValues: _*))
+        Json.obj("$in" -> Json.arr(inValues.toList: _*))
 
       case c: NotInCriterion[_] =>
         val inValues = c.value.map(toJson(_): JsValueWrapper)
-        Json.obj("$nin" -> Json.arr(inValues: _*))
+        Json.obj("$nin" -> Json.arr(inValues.toList: _*))
 
       case c: GreaterCriterion[_] =>
         Json.obj("$gt" -> toJson(c.value))

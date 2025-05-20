@@ -10,6 +10,7 @@ import reactivemongo.api.bson.BSONObjectID
 
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
+import org.edena.core.DefaultTypes.Seq
 
 private final class RunnableSpecCrudStore extends CrudStore[BaseRunnableSpec, BSONObjectID] {
 

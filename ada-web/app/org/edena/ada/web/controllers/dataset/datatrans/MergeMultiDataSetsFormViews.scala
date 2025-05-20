@@ -5,6 +5,7 @@ import org.edena.play.formatters.SeqOptionFormatter
 import org.edena.play.controllers.WebContext
 import play.api.data.Forms.{nonEmptyText, of, seq}
 import views.html.{datasettrans => view}
+import org.edena.core.DefaultTypes.Seq
 
 object MergeMultiDataSetsFormViews extends DataSetTransformationFormViews[MergeMultiDataSetsTransformation] {
 

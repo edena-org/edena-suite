@@ -8,6 +8,8 @@ import play.api.data.Form
 import play.api.data.Forms._
 import views.html.{datasetimport => view}
 
+import org.edena.core.DefaultTypes.Seq
+
 object RedCapFormViews extends DataSetImportFormViews[RedCapDataSetImport] {
 
   override protected val imagePath = Some("images/logos/redcap.jpg")

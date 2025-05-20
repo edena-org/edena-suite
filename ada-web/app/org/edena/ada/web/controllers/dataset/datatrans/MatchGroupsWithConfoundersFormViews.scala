@@ -8,6 +8,7 @@ import play.api.data.Form
 import play.api.data.Forms.{of, seq}
 import play.api.data.Forms._
 import views.html.{datasettrans => view}
+import org.edena.core.DefaultTypes.Seq
 
 object MatchGroupsWithConfoundersFormViews extends DataSetTransformationFormViews[MatchGroupsWithConfoundersTransformation] {
 

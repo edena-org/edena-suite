@@ -26,6 +26,7 @@ import org.edena.ada.web.services.DataSpaceService
 import views.html.{category => view}
 
 import scala.concurrent.Future
+import org.edena.core.DefaultTypes.Seq
 
 trait CategoryControllerFactory {
   def apply(dataSetId: String): CategoryController

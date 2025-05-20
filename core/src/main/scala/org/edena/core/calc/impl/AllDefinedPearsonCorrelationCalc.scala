@@ -4,8 +4,10 @@ import akka.stream.scaladsl.{Flow, Sink}
 import org.slf4j.{Logger, LoggerFactory}
 import org.edena.core.calc.{Calculator, CalculatorTypePack}
 import org.edena.core.util.GrouppedVariousSize
+import scala.collection.parallel.CollectionConverters._
 
 import scala.collection.mutable
+import org.edena.core.DefaultTypes.Seq
 
 trait AllDefinedPearsonCorrelationCalcTypePack extends CalculatorTypePack {
   type IN = Seq[Double]
@@ -57,7 +59,7 @@ object AllDefinedPearsonCorrelationCalc extends Calculator[AllDefinedPearsonCorr
           if (accumGlobal.sumSqSums.isEmpty)
             PersonIterativeAccumGlobalArray(
               sumSqSums = for (i <- 0 to n - 1) yield (0d, 0d),
-              pSums = (for (i <- 0 to n - 1) yield mutable.ArraySeq(Seq.fill(i)(0d): _*)).toArray,
+              pSums = (for (i <- 0 to n - 1) yield mutable.ArraySeq.fill(i)(0d)).toArray,
               count = 0
             )
           else

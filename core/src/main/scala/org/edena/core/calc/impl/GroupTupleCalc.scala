@@ -5,6 +5,8 @@ import org.edena.core.calc.{Calculator, NoOptionsCalculatorTypePack}
 import org.edena.core.akka.AkkaStreamUtil._
 import org.edena.core.util.GroupMapList3
 
+import org.edena.core.DefaultTypes.Seq
+
 trait GroupTupleCalcTypePack[G, A, B] extends NoOptionsCalculatorTypePack {
   type IN = (Option[G], Option[A], Option[B])
   type OUT = Traversable[(Option[G], Traversable[(A, B)])]

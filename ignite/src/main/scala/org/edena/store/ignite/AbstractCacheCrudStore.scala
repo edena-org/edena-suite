@@ -13,8 +13,9 @@ import org.edena.core.Identity
 import org.edena.core.store.ValueMapAux.ValueMap
 import org.slf4j.{Logger, LoggerFactory}
 import org.edena.core.store._
+import org.edena.core.DefaultTypes.Seq
 
-import scala.collection.JavaConversions._
+import scala.jdk.CollectionConverters._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.util.control.NonFatal
@@ -62,8 +63,8 @@ abstract class AbstractCacheCrudStore[ID, E, CACHE_ID, CACHE_E](
     )
 
   protected val fieldNameAndTypeNames: Traversable[(String, String)] = {
-    val queryEntity = cache.getConfiguration(classOf[CacheConfiguration[CACHE_ID, CACHE_E]]).getQueryEntities.head
-    queryEntity.getFields
+    val queryEntity = cache.getConfiguration(classOf[CacheConfiguration[CACHE_ID, CACHE_E]]).getQueryEntities.asScala.head
+    queryEntity.getFields.asScala
   }
 
 //  protected val fieldNameAndClasses: Traversable[(String, Class[Any])] =
@@ -103,11 +104,13 @@ abstract class AbstractCacheCrudStore[ID, E, CACHE_ID, CACHE_E](
     var query = new SqlFieldsQuery(sql)
 
     if (whereClauseAndArgs._2.nonEmpty)
-      query = query.setArgs(whereClauseAndArgs._2.asInstanceOf[Seq[Object]]:_*)
+      query = query.setArgs(
+        whereClauseAndArgs._2.asInstanceOf[Seq[Object]].toList :_*
+      )
 
     Future {
       val cursor = cache.query(query)
-      val result = cursor.head.head.asInstanceOf[Long].toInt
+      val result = cursor.iterator().next().asScala.head.asInstanceOf[Long].toInt
       val end = new ju.Date()
       cursor.close
 
@@ -126,12 +129,12 @@ abstract class AbstractCacheCrudStore[ID, E, CACHE_ID, CACHE_E](
     val cursorToResult = { (cursor: QueryCursor[ju.List[_]], projectionSeq: Seq[String]) =>
       projection match {
         case Nil =>
-          cursor.map { values =>
+          cursor.asScala.map { values =>
             toItem(values.get(0).asInstanceOf[CACHE_E])
           }
 
         case _ =>
-          val values = cursor.map(list => list : Seq[_])
+          val values = cursor.asScala.map(list => list.asScala.toSeq)
           findResultsToItems(projectionSeq, values)
       }
     }
@@ -152,7 +155,7 @@ abstract class AbstractCacheCrudStore[ID, E, CACHE_ID, CACHE_E](
           throw new EdenaDataStoreException("Projection expected for the 'findAsValueMap' store/repo function.")
 
         case _ =>
-          val values = cursor.map(list => list : Seq[_])
+          val values = cursor.asScala.map(list => list.asScala.toSeq)
           findResultsToValueMaps(projectionSeq, values)
       }
     }
@@ -209,8 +212,11 @@ abstract class AbstractCacheCrudStore[ID, E, CACHE_ID, CACHE_E](
 
     var query = new SqlFieldsQuery(sql)
 
-    if (whereClauseAndArgs._2.nonEmpty)
-      query = query.setArgs(whereClauseAndArgs._2.asInstanceOf[Seq[Object]]:_*)
+    if (whereClauseAndArgs._2.nonEmpty) {
+      val args = whereClauseAndArgs._2.toList.asInstanceOf[List[Object]]
+
+      query = query.setArgs(args :_*)
+    }
 
     Future {
       val cursor = cache.query(query)
@@ -300,18 +306,18 @@ abstract class AbstractCacheCrudStore[ID, E, CACHE_ID, CACHE_E](
 
       case InCriterion(_, values) =>
         val placeholders = values.map(_ => "?").mkString(",")
-        if (values.nonEmpty && isJavaDBType(values.get(0)))
+        if (values.nonEmpty && isJavaDBType(values.apply(0)))
           (s"binIn($fieldName, $placeholders)", values)
-        else if (values.nonEmpty && values.get(0).isInstanceOf[String] && nonNativeFieldTypeFlag)
+        else if (values.nonEmpty && values.apply(0).isInstanceOf[String] && nonNativeFieldTypeFlag)
           (s"binStringIn($fieldName, $placeholders)", values)
         else
           (s"$fieldName in ($placeholders)", values)
 
       case NotInCriterion(_, values) =>
         val placeholders = values.map(_ => "?").mkString(",")
-        if (values.nonEmpty && isJavaDBType(values.get(0)))
+        if (values.nonEmpty && isJavaDBType(values.apply(0)))
           (s"binNotIn($fieldName, $placeholders)", values)
-        else if (values.nonEmpty && values.get(0).isInstanceOf[String] && nonNativeFieldTypeFlag)
+        else if (values.nonEmpty && values.apply(0).isInstanceOf[String] && nonNativeFieldTypeFlag)
           (s"binStringNotIn($fieldName, $placeholders)", values)
         else
           (s"$fieldName not in ($placeholders)", values)
@@ -362,7 +368,7 @@ abstract class AbstractCacheCrudStore[ID, E, CACHE_ID, CACHE_E](
       val idWithCacheItems = entities.map(createNewIdWithCacheItem)
       val ids = idWithCacheItems.map(_._1)
       val cacheIdItems = idWithCacheItems.map { case (id, cacheItem) => (toCacheId(id), cacheItem) }.toMap
-      cache.putAll(cacheIdItems)
+      cache.putAll(cacheIdItems.asJava)
       ids
     }
 
@@ -390,7 +396,11 @@ abstract class AbstractCacheCrudStore[ID, E, CACHE_ID, CACHE_E](
     Future(cache.remove(toCacheId(id)))
 
   override def delete(ids: Traversable[ID]): Future[Unit] =
-    Future(cache.removeAll(ids.map(toCacheId).toSet[CACHE_ID]))
+    Future(
+      cache.removeAll(
+        ids.map(toCacheId).toSet[CACHE_ID].asJava
+      )
+    )
 
   override def deleteAll: Future[Unit] = Future {
     // Note that this operation is transactional if AtomicWriteOrderMode is not set to PRIMARY

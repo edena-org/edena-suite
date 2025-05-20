@@ -7,6 +7,8 @@ import play.api.mvc.BodyParsers.parse
 import play.api.mvc.{Action, AnyContent, BodyParser}
 import org.edena.play.security.SecurityUtil._
 
+import org.edena.core.DefaultTypes.Seq
+
 trait RestrictedReadonlyController[ID] extends ReadonlyController[ID] {
 
   abstract override def get(id: ID): Action[AnyContent] =

@@ -13,6 +13,7 @@ import org.edena.ada.web.services.DataSpaceService
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
+import org.edena.core.DefaultTypes.Seq
 
 class CountSanityCheckForDataSpaceRecursively @Inject() (
     val dsaf: DataSetAccessorFactory,

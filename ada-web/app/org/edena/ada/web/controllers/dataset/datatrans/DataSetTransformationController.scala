@@ -29,6 +29,7 @@ import views.html.{datasettrans => view}
 
 import scala.concurrent.Future
 import scala.util.Random
+import org.edena.core.DefaultTypes.Seq
 
 class DataSetTransformationController @Inject()(
   repo: DataSetTransformationStore,

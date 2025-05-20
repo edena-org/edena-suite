@@ -1,5 +1,6 @@
 package org.edena.store.elastic.caseclass
 
+import com.sksamuel.elastic4s.ElasticDsl
 import com.sksamuel.elastic4s.requests.indexes.IndexRequest
 import org.edena.store.elastic.ElasticSaveStore
 import org.edena.store.elastic.ElasticSetting
@@ -18,5 +19,5 @@ abstract class ElasticCaseClassSaveStore[E, ID](
   protected def idToString(id: ID) = id.toString
 
   override protected def createSaveDef(entity: E, id: ID): IndexRequest =
-    indexInto(index) source entity id(idToString(id))
+    ElasticDsl.indexInto(index) source entity id(idToString(id))
 }

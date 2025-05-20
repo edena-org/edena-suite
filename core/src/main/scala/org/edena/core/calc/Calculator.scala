@@ -3,6 +3,7 @@ package org.edena.core.calc
 import akka.NotUsed
 import akka.stream.scaladsl.Flow
 import org.edena.core.akka.AkkaStreamUtil.seqFlow
+import org.edena.core.DefaultTypes.Seq
 
 trait Calculator[C <: CalculatorTypePack] {
 

@@ -2,6 +2,8 @@ package org.edena.play.controllers
 
 import play.api.routing.JavaScriptReverseRoute
 
+import org.edena.core.DefaultTypes.Seq
+
 /**
   * @author Peter Banda
   */

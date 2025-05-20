@@ -29,6 +29,8 @@ import play.api.libs.json.{JsArray, Json}
 import org.edena.ada.web.services.DataSpaceService
 import play.api.mvc.ControllerComponents
 
+import org.edena.core.DefaultTypes.Seq
+
 class RegressorController @Inject()(
   repo: RegressorStore,
   dataSpaceService: DataSpaceService,

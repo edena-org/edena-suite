@@ -6,6 +6,7 @@ import org.edena.ada.web.util.shorten
 import org.edena.core.calc.impl._
 
 import scala.reflect.runtime.universe._
+import org.edena.core.DefaultTypes.Seq
 
 private class ValueScatterWidgetGenerator[T1, T2, T3](
     implicit inputTypeTag: TypeTag[Tuple3CalcTypePack[T1, T2, T3]#IN]

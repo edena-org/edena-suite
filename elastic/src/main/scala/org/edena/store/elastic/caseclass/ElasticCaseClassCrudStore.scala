@@ -19,7 +19,7 @@ abstract class ElasticCaseClassCrudStore[E, ID](
   protected def idToString(id: ID) = id.toString
 
   override protected def createSaveDef(entity: E, id: ID) =
-    indexInto(index) source entity id(idToString(id))
+    ElasticDsl.indexInto(index) source entity id(idToString(id))
 
   override def createUpdateDef(entity: E, id: ID) =
     ElasticDsl.update(idToString(id)) in index source entity

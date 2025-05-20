@@ -15,6 +15,7 @@ import views.html.elements.{inputText, textarea}
 import javax.inject.Inject
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
+import org.edena.core.DefaultTypes.Seq
 
 class MoveDataSets @Inject() (
   dataSetMetaInfoRepoFactory: DataSetMetaInfoStoreFactory,

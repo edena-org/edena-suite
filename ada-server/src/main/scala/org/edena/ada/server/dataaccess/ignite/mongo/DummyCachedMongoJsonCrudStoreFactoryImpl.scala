@@ -5,6 +5,8 @@ import org.edena.core.field.FieldTypeSpec
 import org.edena.store.json.StoreTypes.JsonCrudStore
 import org.edena.store.mongo.MongoJsonCrudStoreFactory
 
+import org.edena.core.DefaultTypes.Seq
+
 private[dataaccess] class DummyCachedMongoJsonCrudStoreFactoryImpl extends MongoJsonCrudStoreFactory {
 
   override def apply(

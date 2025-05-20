@@ -9,6 +9,8 @@ import play.api.libs.functional.syntax._
 import reactivemongo.api.bson.BSONObjectID
 import org.edena.store.json.BSONObjectIDFormat
 
+import org.edena.core.DefaultTypes.Seq
+
 object FilterConditionExtraFormats {
   implicit val conditionTypeFormat = EnumFormat(ConditionType)
 

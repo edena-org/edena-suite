@@ -1,7 +1,9 @@
 package org.edena.core.store
+
 import org.edena.core.store.ValueMapAux.ValueMap
 
 import scala.concurrent.{ExecutionContext, Future}
+import org.edena.core.DefaultTypes.Seq
 
 private final class CrudStoreIdAdapter[E, ID_IN, ID_OUT](
   underlying: CrudStore[E, ID_IN],

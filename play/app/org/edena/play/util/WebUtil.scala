@@ -3,6 +3,7 @@ package org.edena.play.util
 import org.edena.core.store.{AscSort, DescSort, Sort}
 import play.api.mvc.Results.Redirect
 import play.api.mvc.{AnyContent, Call, Request, Result}
+import org.edena.core.DefaultTypes.Seq
 
 object WebUtil {
 

@@ -4,6 +4,8 @@ import org.edena.ada.web.models.BasicStatsWidget
 import org.edena.ada.server.models._
 import org.edena.core.calc.impl.BasicStatsCalcTypePack
 
+import org.edena.core.DefaultTypes.Seq
+
 object BasicStatsWidgetGenerator extends CalculatorWidgetGenerator[BasicStatsWidgetSpec, BasicStatsWidget, BasicStatsCalcTypePack]
   with NoOptionsCalculatorWidgetGenerator[BasicStatsWidgetSpec] {
 

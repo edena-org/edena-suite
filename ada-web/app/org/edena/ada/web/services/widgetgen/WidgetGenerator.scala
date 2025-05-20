@@ -13,6 +13,7 @@ import play.api.libs.json.JsObject
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
+import org.edena.core.DefaultTypes.Seq
 
 trait WidgetGenerator[S <: WidgetSpec, +W <: Widget] {
 

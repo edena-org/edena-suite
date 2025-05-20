@@ -1,4 +1,4 @@
-package runnables
+package org.edena.ada.server.runnables
 
 import javax.inject.Inject
 import org.edena.ada.server.AdaException

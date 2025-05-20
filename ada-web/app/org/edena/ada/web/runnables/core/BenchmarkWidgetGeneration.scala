@@ -13,6 +13,8 @@ import reactivemongo.api.bson.BSONObjectID
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
+import org.edena.core.DefaultTypes.Seq
+
 class BenchmarkWidgetGenerationForMultiDataSets @Inject()(
     val dsaf: DataSetAccessorFactory,
     val wgs: WidgetGenerationService

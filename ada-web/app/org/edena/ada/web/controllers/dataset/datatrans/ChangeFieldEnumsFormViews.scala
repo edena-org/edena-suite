@@ -7,6 +7,8 @@ import org.edena.play.formatters.JsonFormatter
 import play.api.data.Forms._
 import views.html.{datasettrans => view}
 
+import org.edena.core.DefaultTypes.Seq
+
 object ChangeFieldEnumsFormViews extends DataSetMetaTransformationFormViews[ChangeFieldEnumsTransformation] {
 
   private implicit val tupleFormat = TupleFormat[String, String, String]

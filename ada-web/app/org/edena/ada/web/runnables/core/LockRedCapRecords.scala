@@ -13,9 +13,10 @@ import org.edena.play.controllers.WebContext._
 import views.html.elements.{inputText, select, textarea}
 import org.edena.ada.web.util.enumToValueString
 
-import scala.collection.JavaConversions._
+import scala.jdk.CollectionConverters._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future.sequence
+import org.edena.core.DefaultTypes.Seq
 
 class LockRedCapRecords @Inject()(
   configuration: Configuration,
@@ -27,7 +28,7 @@ class LockRedCapRecords @Inject()(
   private val confPrefix = "runnables.lock_redcap_records."
   private val host = configuration.getString(confPrefix + "host").getOrElse(throwConfigMissing("host"))
   private val token = configuration.getString(confPrefix + "token").getOrElse(throwConfigMissing("token"))
-  private val visits = configuration.getObjectList(confPrefix + "visits").getOrElse(throwConfigMissing("visits")).map(
+  private val visits = configuration.getObjectList(confPrefix + "visits").getOrElse(throwConfigMissing("visits")).asScala.map(
     item => (
       item.get("value").unwrapped().toString,
       item.get("label").unwrapped().toString
@@ -134,7 +135,7 @@ class LockRedCapRecords @Inject()(
 
       selectAux("delimiter", enumToValueString(RedCapRecordDelimiter)),
 
-      selectAux("visit", visits),
+      selectAux("visit", visits.toSeq),
 
       selectAux("action", enumToValueString(RedCapLockAction))
     )

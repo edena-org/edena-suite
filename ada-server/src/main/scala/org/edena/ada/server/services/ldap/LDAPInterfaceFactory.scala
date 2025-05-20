@@ -167,6 +167,6 @@ object LDAPInterfaceFactory {
       case server: InMemoryDirectoryServer => server.shutDown(true)
       case connection: LDAPConnection => connection.close()
       case connectionPool: LDAPConnectionPool => connectionPool.close()
-      case _ => Unit
+      case _ => ()
     }
 }

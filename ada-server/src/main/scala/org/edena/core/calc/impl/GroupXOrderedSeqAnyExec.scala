@@ -4,6 +4,7 @@ import org.edena.ada.server.calc.{CalculatorExecutor, ToFields, WithSeqFields}
 import org.edena.ada.server.models.Field
 
 import scala.reflect.runtime.universe._
+import org.edena.core.DefaultTypes.Seq
 
 private final class GroupXOrderedSeqAnyExecWrapper[G: TypeTag, F] {
 

@@ -68,7 +68,7 @@ protected class DataSetAccessorImpl(
 
   override def dataSetStore = {
     if (_dataSetStore.isEmpty) {
-      _dataSetStore = Some(result(createDataSetStore(None), 10 seconds))
+      _dataSetStore = Some(result(createDataSetStore(None), 10.seconds))
     }
     _dataSetStore.get
   }

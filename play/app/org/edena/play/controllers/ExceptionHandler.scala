@@ -7,6 +7,8 @@ import play.api.Logger
 import play.api.mvc.{Call, Request, Result}
 import play.api.mvc.Results.{InternalServerError, Redirect}
 
+import org.edena.core.DefaultTypes.Seq
+
 trait ExceptionHandler {
 
   protected def homeCall: Call

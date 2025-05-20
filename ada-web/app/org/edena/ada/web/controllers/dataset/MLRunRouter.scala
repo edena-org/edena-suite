@@ -4,6 +4,8 @@ import org.edena.play.controllers.ReadonlyRouter
 import play.api.mvc.Call
 import reactivemongo.api.bson.BSONObjectID
 
+import org.edena.core.DefaultTypes.Seq
+
 trait MLRunRouter extends ReadonlyRouter[BSONObjectID] {
   val create: Call
   val delete: (BSONObjectID) => Call

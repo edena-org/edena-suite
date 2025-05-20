@@ -14,6 +14,7 @@ import reactivemongo.api.bson.BSONObjectID
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
+import org.edena.core.DefaultTypes.Seq
 
 @ImplementedBy(classOf[DataSpaceServiceImpl])
 // TODO: move access/permissions functions outside and create DataSpacePermissionService

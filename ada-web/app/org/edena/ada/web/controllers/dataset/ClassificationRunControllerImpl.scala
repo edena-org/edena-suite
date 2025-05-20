@@ -15,6 +15,7 @@ import org.edena.core.field.{FieldTypeId, FieldTypeSpec}
 import views.html.{classificationrun => view}
 
 import scala.reflect.runtime.universe.TypeTag
+import org.edena.core.DefaultTypes.Seq
 
 abstract class ClassificationRunControllerImpl[R <: ClassificationResult: Format : TypeTag](
   implicit actorSystem: ActorSystem, materializer: Materializer

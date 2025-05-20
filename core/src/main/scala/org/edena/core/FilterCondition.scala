@@ -3,6 +3,8 @@ package org.edena.core
 import org.edena.core.store.Criterion
 import org.edena.core.store._
 
+import org.edena.core.DefaultTypes.Seq
+
 /**
   * Filter condition to be transformed to a repo criterion.
   *

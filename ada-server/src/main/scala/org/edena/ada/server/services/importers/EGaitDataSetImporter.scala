@@ -18,6 +18,7 @@ import org.edena.core.field.FieldTypeId
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import org.edena.core.util.ConfigImplicits._
+import org.edena.core.DefaultTypes.Seq
 
 private class EGaitDataSetImporter @Inject()(
   eGaitServiceFactory: EGaitServiceFactory,

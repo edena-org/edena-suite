@@ -26,6 +26,8 @@ import org.edena.play.controllers._
 import org.edena.play.formatters._
 import views.html.{layout, clustering => view}
 
+import org.edena.core.DefaultTypes.Seq
+
 class ClusteringController @Inject()(
   repo: ClusteringStore,
   dataSpaceService: DataSpaceService,

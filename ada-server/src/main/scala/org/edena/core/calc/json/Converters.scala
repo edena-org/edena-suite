@@ -4,7 +4,7 @@ import org.edena.ada.server.models.Field
 import play.api.libs.json.JsObject
 import org.edena.ada.server.field.JsonFieldUtil._
 import org.edena.core.calc.impl._
-
+import org.edena.core.DefaultTypes.Seq
 import scala.reflect.runtime.universe._
 
 ////////////////////////

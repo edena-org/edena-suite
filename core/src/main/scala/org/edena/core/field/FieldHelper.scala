@@ -6,8 +6,9 @@ import org.edena.core.EdenaException
 import org.edena.core.util.ReflectionUtil
 import org.edena.core.util.ReflectionUtil.newCurrentThreadMirror
 
-import scala.collection.Traversable
 import scala.reflect.runtime.universe._
+import org.edena.core.DefaultTypes.Seq
+import scala.collection.{Set, Traversable}
 
 trait FieldHelper {
 
@@ -141,11 +142,11 @@ trait FieldHelper {
         FieldTypeSpec(FieldTypeId.Date)
 
       // json
-      case t if t subMatches (jsonTypes :_*) =>
+      case t if t subMatches (jsonTypes.toList :_*) =>
         FieldTypeSpec(FieldTypeId.Json)
 
       // array/seq
-      case t if t subMatches (typeOf[Seq[_]], typeOf[Set[_]]) =>
+      case t if t subMatches (typeOf[scala.collection.Seq[_]], typeOf[Set[_]]) =>
         val innerType = t.typeArgs.head
         try {
           toFieldTypeSpec(innerType, treatEnumAsString, mirror, jsonTypes).copy(isArray = true)

@@ -5,6 +5,8 @@ import org.edena.ada.server.models.{CumulativeCountWidgetSpec, Field}
 import org.edena.ada.web.models.{Count, NumericalCountWidget}
 import org.edena.core.calc.impl._
 
+import org.edena.core.DefaultTypes.Seq
+
 private class CumulativeNumericBinCountWidgetGenerator(
   flowMin: Double,
   flowMax: Double

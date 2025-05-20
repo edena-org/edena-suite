@@ -16,6 +16,7 @@ import org.edena.core.util.seqFutures
 import collection.mutable.{Map => MMap}
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
+import org.edena.core.DefaultTypes.Seq
 
 private class TranSmartDataSetImporter extends AbstractDataSetImporter[TranSmartDataSetImport] {
 

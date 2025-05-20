@@ -1,6 +1,6 @@
 package org.edena.ada.server.runnables.core
 
-import runnables.DsaInputFutureRunnable
+import org.edena.ada.server.runnables.DsaInputFutureRunnable
 import org.edena.ada.server.models._
 import org.edena.core.field.FieldTypeId
 

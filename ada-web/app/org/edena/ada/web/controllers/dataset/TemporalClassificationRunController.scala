@@ -3,6 +3,8 @@ package org.edena.ada.web.controllers.dataset
 import org.edena.spark_ml.models.setting.TemporalClassificationRunSpec
 import play.api.mvc.{Action, AnyContent}
 
+import org.edena.core.DefaultTypes.Seq
+
 trait TemporalClassificationRunController extends MLRunController {
 
   def launch(

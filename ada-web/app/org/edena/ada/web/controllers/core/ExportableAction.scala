@@ -14,6 +14,7 @@ import org.edena.play.controllers.ReadonlyControllerImpl
 import org.edena.play.util.WebUtil.toSort
 
 import scala.concurrent.Future
+import org.edena.core.DefaultTypes.Seq
 
 trait ExportableAction[E] {
 

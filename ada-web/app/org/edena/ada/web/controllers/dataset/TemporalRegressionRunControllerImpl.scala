@@ -27,6 +27,7 @@ import org.edena.ada.web.services.{DataSpaceService, WidgetGenerationService}
 import views.html.{regressionrun => view}
 
 import scala.concurrent.Future
+import org.edena.core.DefaultTypes.Seq
 
 protected[controllers] class TemporalRegressionRunControllerImpl @Inject()(
   @Assisted dataSetId: String,

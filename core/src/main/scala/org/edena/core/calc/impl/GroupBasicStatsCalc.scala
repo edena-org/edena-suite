@@ -5,6 +5,7 @@ import org.edena.core.calc.{Calculator, NoOptionsCalculatorTypePack}
 import org.edena.core.util.GroupMapList
 import org.edena.core.calc.CalculatorHelper._
 import org.edena.core.akka.AkkaStreamUtil.seqFlow
+import org.edena.core.DefaultTypes.Seq
 
 trait GroupBasicStatsCalcTypePack[G] extends NoOptionsCalculatorTypePack{
   type IN = (G, Option[Double])

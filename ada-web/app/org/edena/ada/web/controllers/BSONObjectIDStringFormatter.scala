@@ -4,6 +4,8 @@ import play.api.data.FormError
 import play.api.data.format.Formatter
 import reactivemongo.api.bson.BSONObjectID
 
+import org.edena.core.DefaultTypes.Seq
+
 object BSONObjectIDStringFormatter extends Formatter[BSONObjectID] {
 
   override def bind(key: String, data: Map[String, String]) = {

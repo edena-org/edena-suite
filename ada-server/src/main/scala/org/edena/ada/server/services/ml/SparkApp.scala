@@ -6,7 +6,8 @@ import org.apache.spark.sql.SparkSession
 import org.edena.core.util.ConfigImplicits._
 
 import javax.inject.Inject
-import scala.collection.JavaConversions._
+import scala.jdk.CollectionConverters._
+import org.edena.core.DefaultTypes.Seq
 
 trait SparkApp {
   def session: SparkSession
@@ -22,7 +23,7 @@ private[services] class SparkAppImpl @Inject() (
 
   private val reservedKeys = Set("spark.master.url", "spark.driver.jars")
 
-  private val settings = configuration.entrySet().map(_.getKey).filter(key =>
+  private val settings = configuration.entrySet().asScala.map(_.getKey).filter(key =>
     key.startsWith("spark.") && !reservedKeys.contains(key)
   ).flatMap { key =>
     println(key)

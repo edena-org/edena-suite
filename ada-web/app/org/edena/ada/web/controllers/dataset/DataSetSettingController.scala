@@ -26,6 +26,7 @@ import org.edena.play.controllers._
 import org.edena.play.formatters._
 import play.api.data.format.Formatter
 import play.api.libs.json.Json
+import org.edena.core.DefaultTypes.Seq
 
 import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.Future
@@ -80,7 +81,7 @@ class DataSetSettingController @Inject() (
     )(DataSetSetting.apply)(DataSetSetting.unapply)
   )
 
-  override protected val homeCall = routes.DataSetSettingController.find()
+  override protected val homeCall = dataSetSettingRoutes.find()
 
   // create view
 
@@ -212,5 +213,5 @@ class DataSetSettingController @Inject() (
           items :+ Menu(header, links)
         )
       }
-    }
+    }.toSeq
 }

@@ -2,6 +2,7 @@ package org.edena.ada.server.services.transformers
 
 import javax.inject.Inject
 import org.edena.ada.server.models.datatrans._
+import org.edena.core.DefaultTypes.Seq
 
 private class LinkSortedTwoDataSetsTransformer @Inject()(multiTransformer: LinkSortedMultiDataSetsTransformer) extends AbstractDataSetTransformer[LinkSortedTwoDataSetsTransformation] {
 

@@ -26,6 +26,7 @@ import org.edena.store.json.JsObjectIdentity
 import org.edena.core.util.ConfigImplicits._
 
 import scala.concurrent.{Await, Future}
+import org.edena.core.DefaultTypes.Seq
 
 trait MachineLearningService {
 

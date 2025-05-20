@@ -6,6 +6,8 @@ import org.edena.play.controllers.WebContext
 import play.api.data.Form
 import views.html.{datasetimport => view}
 
+import org.edena.core.DefaultTypes.Seq
+
 object EGaitFormViews extends DataSetImportFormViews[EGaitDataSetImport] {
 
   override protected[controllers] val displayName = "eGaIT"

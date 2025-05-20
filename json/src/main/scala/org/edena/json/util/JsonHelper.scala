@@ -8,6 +8,8 @@ import java.util.Date
 import java.util.regex.Pattern
 import scala.reflect.runtime.universe._
 
+import org.edena.core.DefaultTypes.Seq
+
 trait JsonHelper {
 
   private val optionType = typeOf[Option[_]]
@@ -77,12 +79,10 @@ trait JsonHelper {
 
     path.split('.').foldLeft(Seq(json: JsValue)) {
       case (jsons: Seq[JsValue], fieldName) =>
-        jsons.map { json =>
-          json match {
-            case x: JsObject => extractJsValues(x, fieldName)
-            case _ => None
-          }
-        }.flatten.flatten
+        jsons.flatMap {
+          case x: JsObject => extractJsValues(x, fieldName)
+          case _ => None
+        }.flatten
     }
   }
 
@@ -179,7 +179,7 @@ trait JsonHelper {
       nonPrefixFields ++ deflattedPrefixFields
     }
 
-    JsObject(deflattenFields(json.fields))
+    JsObject(deflattenFields(json.fields.toList))
   }
 
   private def replaceAll(
@@ -288,16 +288,27 @@ trait JsonHelper {
       value match {
         case x: JsValue => x // nothing to do
         case x: String => JsString(x)
-        case x: BigDecimal => JsNumber(x)
+        case x: Int => JsNumber(BigDecimal.valueOf(x.toLong))
         case x: Integer => JsNumber(BigDecimal.valueOf(x.toLong))
+        case x: Byte => JsNumber(BigDecimal.valueOf(x))
         case x: Long => JsNumber(BigDecimal.valueOf(x))
         case x: Double => JsNumber(BigDecimal.valueOf(x))
         case x: Float => JsNumber(BigDecimal.valueOf(x.toDouble))
+        case x: BigDecimal => JsNumber(x)
+        case x: BigInt => JsNumber(BigDecimal(x))
         case x: Boolean => JsBoolean(x)
         case x: ju.Date => Json.toJson(x)
-        case x: Option[_] => x.map(toJson).getOrElse(JsNull)
+
+        case Some(x) => toJson(x)
+        case None => JsNull
+
         case x: Array[_] => JsArray(x.map(toJson))
-        case x: Seq[_] => JsArray(x.map(toJson))
+        case x: scala.collection.Seq[_] => JsArray(x.map(toJson))
+        case x: Set[_] => JsArray(x.map(toJson).toSeq)
+        case map: Map[String, _] =>
+          val fields = map.map { case (fieldName, value) => (fieldName, toJson(value))}
+          JsObject(fields)
+
         case _ => throw new IllegalArgumentException(s"No JSON formatter found for the class ${value.getClass.getName}.")
       }
 

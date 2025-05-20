@@ -9,7 +9,7 @@ import org.apache.ignite.lang.IgniteBiInClosure
 import org.edena.core.store.{CrudStore, StoreSynchronizer}
 import org.slf4j.LoggerFactory
 
-import scala.collection.convert.ImplicitConversions.`collection AsScalaIterable`
+import scala.jdk.CollectionConverters._
 import scala.concurrent.duration._
 import scala.concurrent.Await
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -27,7 +27,7 @@ abstract class AbstractCacheCrudStoreProvider[ID, E, STORE_ID, STORE_E] extends 
 
   protected val logger = LoggerFactory getLogger getClass.getName
   private val crudStore: CrudStore[STORE_E, STORE_ID] = repoFactory.create
-  private lazy val syncStore = StoreSynchronizer(crudStore, 2 minutes)
+  private lazy val syncStore = StoreSynchronizer(crudStore, 2.minutes)
 
   override def delete(key: Any): Unit = {
     val id = toStoreId(key.asInstanceOf[ID])
@@ -35,7 +35,7 @@ abstract class AbstractCacheCrudStoreProvider[ID, E, STORE_ID, STORE_E] extends 
   }
 
   override def deleteAll(keys: util.Collection[_]): Unit =
-    syncStore.delete(keys.map(key => toStoreId(key.asInstanceOf[ID])))
+    syncStore.delete(keys.asScala.map(key => toStoreId(key.asInstanceOf[ID])))
 
   override def write(entry: Entry[_ <: ID, _ <: E]): Unit = {
     val id = toStoreId(entry.getKey)
@@ -60,8 +60,8 @@ abstract class AbstractCacheCrudStoreProvider[ID, E, STORE_ID, STORE_E] extends 
   }
 
   override def writeAll(entries: util.Collection[Entry[_ <: ID, _ <: E]]): Unit = {
-    val ids = entries.map(_.getKey)
-    val items = entries.map(entry => toStoreItem(entry.getValue))
+    val ids = entries.asScala.map(_.getKey)
+    val items = entries.asScala.map(entry => toStoreItem(entry.getValue))
 
     if (items.nonEmpty) {
       // TODO: save vs update

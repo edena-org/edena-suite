@@ -4,6 +4,7 @@ import org.edena.core.store.{CrudStore, Criterion, Sort}
 import play.api.libs.json.{JsObject, JsValue}
 
 import scala.concurrent.Future
+import org.edena.core.DefaultTypes.Seq
 
 trait MongoCrudExtraStore[E, ID] extends CrudStore[E, ID] {
 
@@ -18,10 +19,10 @@ trait MongoCrudExtraStore[E, ID] extends CrudStore[E, ID] {
     rootCriterion: Option[Criterion],
     subCriterion: Option[Criterion],
     sort: Seq[Sort],
-    projection : Option[JsObject],
-    idGroup : Option[JsValue],
-    groups : Seq[(String, String, Seq[Any])],
-    unwindFieldName : Option[String],
+    projection: Option[JsObject],
+    idGroup: Option[JsValue],
+    groups: Seq[(String, String, Seq[Any])],
+    unwindFieldName: Option[String],
     limit: Option[Int],
     skip: Option[Int]
   ): Future[Traversable[JsObject]]

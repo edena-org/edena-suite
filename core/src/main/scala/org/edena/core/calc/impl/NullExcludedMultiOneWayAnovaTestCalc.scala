@@ -3,6 +3,7 @@ package org.edena.core.calc.impl
 import akka.stream.scaladsl.Flow
 import org.edena.core.calc.{Calculator, NoOptionsCalculatorTypePack}
 import org.edena.core.calc.CalculatorHelper._
+import org.edena.core.DefaultTypes.Seq
 
 trait NullExcludedMultiOneWayAnovaTestCalcTypePack[G] extends NoOptionsCalculatorTypePack{
   type IN = (Option[G], Seq[Option[Double]])

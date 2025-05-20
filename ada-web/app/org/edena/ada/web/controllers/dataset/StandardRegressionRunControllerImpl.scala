@@ -30,6 +30,7 @@ import org.edena.ada.server.services.StatsService
 import views.html.{regressionrun => view}
 
 import scala.concurrent.{Future, TimeoutException}
+import org.edena.core.DefaultTypes.Seq
 
 protected[controllers] class StandardRegressionRunControllerImpl @Inject()(
   @Assisted dataSetId: String,

@@ -7,6 +7,8 @@ import org.edena.play.controllers.{BaseController, CrudControllerImpl, ReadonlyC
 import play.api.libs.json.Format
 import play.api.i18n.I18nSupport
 
+import org.edena.core.DefaultTypes.Seq
+
 abstract class AdaReadonlyControllerImpl[E: Format, ID] extends ReadonlyControllerImpl[E, ID] with AdaExceptionHandler {
   override type USER = DeadboltUser
 }

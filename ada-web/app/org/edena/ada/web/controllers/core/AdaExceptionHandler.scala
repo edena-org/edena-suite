@@ -11,6 +11,8 @@ import play.api.Logger
 import play.api.mvc.{Request, Result}
 import play.api.mvc.Results.{BadRequest, InternalServerError, Ok, Redirect}
 
+import org.edena.core.DefaultTypes.Seq
+
 trait AdaExceptionHandler extends ExceptionHandler {
 
   override protected def handleExceptions(

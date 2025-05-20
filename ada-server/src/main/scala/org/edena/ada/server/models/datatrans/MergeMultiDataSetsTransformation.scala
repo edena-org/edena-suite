@@ -10,6 +10,8 @@ import org.edena.store.json.BSONObjectIDFormat
 import play.api.libs.json.Json
 import reactivemongo.api.bson.BSONObjectID
 
+import org.edena.core.DefaultTypes.Seq
+
 case class MergeMultiDataSetsTransformation(
   _id: Option[BSONObjectID] = None,
 

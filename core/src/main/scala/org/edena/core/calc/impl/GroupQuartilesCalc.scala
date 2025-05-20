@@ -4,6 +4,7 @@ import akka.stream.scaladsl.Flow
 import org.edena.core.calc.{Calculator, CalculatorTypePack}
 import org.edena.core.akka.AkkaStreamUtil.{groupFlow, seqFlow}
 import org.edena.core.util.GroupMapList
+import org.edena.core.DefaultTypes.Seq
 
 trait GroupQuartilesCalcTypePack[G, T] extends CalculatorTypePack {
   type IN = (Option[G], Option[T])

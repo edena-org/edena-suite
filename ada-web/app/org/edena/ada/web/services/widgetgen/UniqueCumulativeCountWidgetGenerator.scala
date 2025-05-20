@@ -6,6 +6,8 @@ import org.edena.ada.web.models.{Count, NumericalCountWidget}
 import org.edena.core.calc.impl.UniqueDistributionCountsCalc.UniqueDistributionCountsCalcTypePack
 import org.edena.core.calc.impl._
 
+import org.edena.core.DefaultTypes.Seq
+
 object UniqueCumulativeCountWidgetGenerator extends WidgetGenerator[CumulativeCountWidgetSpec, NumericalCountWidget[Any]] with CumulativeCountWidgetGeneratorHelper {
 
   private val ftf = FieldTypeHelper.fieldTypeFactory()

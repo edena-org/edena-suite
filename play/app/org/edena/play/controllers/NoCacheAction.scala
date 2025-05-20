@@ -4,6 +4,7 @@ import play.api.http.HeaderNames
 import play.api.mvc._
 
 import scala.concurrent.{ExecutionContext, Future}
+import org.edena.core.DefaultTypes.Seq
 
 /**
   * @author Peter Banda

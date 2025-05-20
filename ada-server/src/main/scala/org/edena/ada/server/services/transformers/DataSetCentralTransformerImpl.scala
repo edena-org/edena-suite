@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
+import org.edena.core.DefaultTypes.Seq
 
 /**
   * Implementation of a central transformer containing all available transformers, which are automatically registered via a package scan.

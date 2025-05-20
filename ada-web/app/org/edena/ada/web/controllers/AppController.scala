@@ -13,6 +13,7 @@ import play.api.cache.Cached
 import play.api.mvc.ControllerComponents
 
 import scala.concurrent.Future
+import org.edena.core.DefaultTypes.Seq
 
 class AppController @Inject() (
   dataSpaceService: DataSpaceService,

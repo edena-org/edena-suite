@@ -37,6 +37,7 @@ import org.edena.core.field.FieldTypeId
 import views.html.{dataview, dictionary => view}
 import org.edena.core.util.toHumanReadableCamel
 
+import org.edena.core.DefaultTypes.Seq
 import scala.concurrent.Future
 
 trait DictionaryControllerFactory {

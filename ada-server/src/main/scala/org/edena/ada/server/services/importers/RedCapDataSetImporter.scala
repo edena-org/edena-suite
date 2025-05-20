@@ -21,6 +21,8 @@ import reactivemongo.api.bson.BSONObjectID
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
+import scala.collection.parallel.CollectionConverters._
+import org.edena.core.DefaultTypes.Seq
 
 private class RedCapDataSetImporter @Inject() (
     redCapServiceFactory: RedCapServiceFactory

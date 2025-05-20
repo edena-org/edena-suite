@@ -14,6 +14,7 @@ import org.edena.core.runnables.{InputFutureRunnable, InputFutureRunnableExt}
 import org.edena.ada.server.services.StatsService
 import org.slf4j.LoggerFactory
 
+import org.edena.core.DefaultTypes.Seq
 import scala.concurrent.Future
 
 class CalcCorrelations @Inject()(

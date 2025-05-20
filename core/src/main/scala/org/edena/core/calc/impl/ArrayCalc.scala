@@ -2,6 +2,7 @@ package org.edena.core.calc.impl
 
 import akka.stream.scaladsl.Flow
 import org.edena.core.calc.{Calculator, CalculatorTypePack, NoOptionsCalculatorTypePack}
+import org.edena.core.DefaultTypes.Seq
 
 private[calc] class ArrayCalc[C <: CalculatorTypePack, CC <: ArrayCalculatorTypePack[C]](val innerCalculator: Calculator[C]) extends Calculator[CC] {
 

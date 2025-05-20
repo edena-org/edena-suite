@@ -1,6 +1,7 @@
 package org.edena.spark_ml.models.setting
 
 import reactivemongo.api.bson.BSONObjectID
+import org.edena.core.DefaultTypes.Seq
 
 case class IOSpec(
   inputFieldNames: Seq[String],

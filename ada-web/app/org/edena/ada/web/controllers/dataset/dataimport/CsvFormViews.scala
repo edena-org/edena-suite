@@ -9,6 +9,8 @@ import play.api.data.Forms._
 import play.api.data.format.Formats._
 import views.html.{datasetimport => view}
 
+import org.edena.core.DefaultTypes.Seq
+
 object CsvFormViews extends DataSetImportFormViews[CsvDataSetImport] {
 
   override protected[controllers] val displayName = "CSV"

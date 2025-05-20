@@ -2,7 +2,7 @@ package org.edena.ada.server.runnables.core
 
 import org.edena.ada.server.AdaException
 import play.api.libs.json._
-import runnables.DsaInputFutureRunnable
+import org.edena.ada.server.runnables.DsaInputFutureRunnable
 import org.edena.ada.server.field.FieldUtil.FieldOps
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer

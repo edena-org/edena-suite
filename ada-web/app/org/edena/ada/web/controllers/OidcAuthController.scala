@@ -16,6 +16,7 @@ import play.api.libs.crypto.CookieSigner
 import scala.concurrent.duration._
 
 import scala.concurrent.{Await, Future}
+import org.edena.core.DefaultTypes.Seq
 
 class OidcAuthController @Inject() (
   val controllerComponents: SecurityComponents,

@@ -10,6 +10,8 @@ import org.edena.core.field.FieldTypeId
 import org.edena.core.calc.impl._
 import org.edena.core.calc.impl.UniqueDistributionCountsCalc.UniqueDistributionCountsCalcTypePack
 
+import org.edena.core.DefaultTypes.Seq
+
 object CategoricalDistributionWidgetGenerator extends CalculatorWidgetGenerator[DistributionWidgetSpec, CategoricalCountWidget, UniqueDistributionCountsCalcTypePack[Any]]
   with DistributionWidgetGeneratorHelper
   with NoOptionsCalculatorWidgetGenerator[DistributionWidgetSpec] {

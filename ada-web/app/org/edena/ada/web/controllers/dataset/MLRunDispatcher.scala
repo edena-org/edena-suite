@@ -3,6 +3,8 @@ package org.edena.ada.web.controllers.dataset
 import org.edena.core.FilterCondition
 import reactivemongo.api.bson.BSONObjectID
 
+import org.edena.core.DefaultTypes.Seq
+
 abstract class MLRunDispatcher[C <: MLRunController](
   controllerName: ControllerName.Value
 ) extends DataSetLikeDispatcher[C](controllerName) with MLRunController {

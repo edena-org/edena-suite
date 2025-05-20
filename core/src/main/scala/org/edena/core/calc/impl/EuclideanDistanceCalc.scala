@@ -1,5 +1,7 @@
 package org.edena.core.calc.impl
 
+import org.edena.core.DefaultTypes.Seq
+
 object EuclideanDistanceCalc extends DistanceCalc[Option[Double], DistanceCalcTypePack[Option[Double]]] {
 
   override protected def dist(

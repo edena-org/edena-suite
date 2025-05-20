@@ -3,6 +3,7 @@ package org.edena.ada.web.controllers.dataset
 import org.edena.play.controllers.{GenericJsRouter, GenericRouter}
 
 import scalaz.Scalaz._
+import org.edena.core.DefaultTypes.Seq
 
 class StandardRegressionRunRouter(dataSetId: String) extends GenericRouter(routes.StandardRegressionRunDispatcher, "dataSet", dataSetId) with MLRunRouter {
   val list = routes.find _ map route

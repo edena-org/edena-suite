@@ -7,6 +7,8 @@ import play.api.data.Form
 import play.api.data.Forms._
 import views.html.{datasetimport => view}
 
+import org.edena.core.DefaultTypes.Seq
+
 object SynapseFormViews extends DataSetImportFormViews[SynapseDataSetImport] {
 
   override protected val imagePath = Some("images/logos/synapse.png")

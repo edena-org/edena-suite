@@ -3,6 +3,8 @@ package org.edena.play.controllers
 import be.objectify.deadbolt.scala.views.html.di._
 import javax.inject.{Inject, Singleton}
 
+import org.edena.core.DefaultTypes.Seq
+
 @Singleton
 class DeadboltRestricts @Inject() (
   val dynamic: dynamic,

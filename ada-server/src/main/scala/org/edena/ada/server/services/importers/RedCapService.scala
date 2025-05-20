@@ -22,6 +22,7 @@ import play.api.libs.ws.JsonBodyWritables._
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
+import org.edena.core.DefaultTypes.Seq
 
 trait RedCapServiceFactory {
   def apply(@Assisted("url") url: String, @Assisted("token") token: String): RedCapService
@@ -145,7 +146,7 @@ protected[services] class RedCapServiceWSImpl @Inject() (
     } else
       ws
 
-  private val req: StandaloneWSRequest = wsClient.url(url).withRequestTimeout(timeout millis)
+  private val req: StandaloneWSRequest = wsClient.url(url).withRequestTimeout(timeout.millis)
 
   private val baseRequestData = Map(
     "token" -> token,
@@ -260,7 +261,9 @@ protected[services] class RedCapServiceWSImpl @Inject() (
     queryParams: Map[String, String] = Map(),
     customErrorHandle: Option[PartialFunction[StandaloneWSResponse, Unit]] = None
   ) =
-    req.withQueryStringParameters(queryParams.toSeq:_*).post(requestData.map { case (a, b) => (a, Seq(b)) }).map { response =>
+    req.withQueryStringParameters(queryParams.toList :_*).post(
+      requestData.map { case (a, b) => (a, List(b)) }
+    ).map { response =>
       try {
         // handle error
         customErrorHandle.map( customHandle =>

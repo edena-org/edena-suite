@@ -3,7 +3,7 @@ package org.edena.ada.web.runnables.core
 import java.io.{File, PrintWriter}
 
 import play.api.Logger
-import runnables.DsaInputFutureRunnable
+import org.edena.ada.server.runnables.DsaInputFutureRunnable
 import org.edena.json.util
 import org.edena.ada.web.runnables.RunnableFileOutput
 import org.apache.commons.lang3.StringEscapeUtils
@@ -11,6 +11,7 @@ import org.edena.core.store.AscSort
 import play.api.libs.json.{JsObject, JsString, Json}
 
 import scala.concurrent.ExecutionContext.Implicits.global
+import org.edena.core.DefaultTypes.Seq
 
 class ExportDictionary extends DsaInputFutureRunnable[ExportDictionarySpec] with RunnableFileOutput {
 

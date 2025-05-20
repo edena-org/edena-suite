@@ -39,6 +39,8 @@ import org.edena.store.json.StoreTypes.JsonCrudStore
 import org.slf4j.LoggerFactory
 
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.collection.parallel.CollectionConverters._
+import org.edena.core.DefaultTypes.Seq
 
 trait DataSetService {
 
@@ -1697,7 +1699,7 @@ private[services] class DataSetServiceImpl @Inject()(
     if (unmatchedSuffixOption.isDefined) {
       throw new AdaParseException(s"Unmatched suffix detected ${unmatchedSuffixOption.get}.")
     }
-    fixedItems
+    fixedItems.toSeq
   }
 
   override def loadDataAndFields(

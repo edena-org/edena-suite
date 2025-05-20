@@ -5,6 +5,8 @@ import org.edena.core.field.FieldTypeSpec
 import StoreTypes.ElasticJsonCrudStore
 import org.edena.store.elastic.ElasticSetting
 
+import org.edena.core.DefaultTypes.Seq
+
 trait ElasticJsonCrudStoreFactory {
 
   def apply(

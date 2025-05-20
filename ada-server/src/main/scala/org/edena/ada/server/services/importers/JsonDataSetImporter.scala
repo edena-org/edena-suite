@@ -13,6 +13,8 @@ import org.edena.json.{util => JsonUtil}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.io.Source
+import scala.collection.parallel.CollectionConverters._
+import org.edena.core.DefaultTypes.Seq
 
 private class JsonDataSetImporter extends AbstractDataSetImporter[JsonDataSetImport] {
 
@@ -40,7 +42,7 @@ private class JsonDataSetImporter extends AbstractDataSetImporter[JsonDataSetImp
 
       Json.parse(fileContent) match {
         case JsArray(items) =>
-          val jsons = items.map(_.as[JsObject])
+          val jsons = items.toSeq.map(_.as[JsObject])
           val fieldNames = jsons.flatMap { json => json.fields.map(_._1) }.toSet
 
           val fieldNameTypes = fieldNames.par.map { fieldName =>
@@ -78,7 +80,7 @@ private class JsonDataSetImporter extends AbstractDataSetImporter[JsonDataSetImp
               dataSetService.updateFields(importInfo.dataSetId, fields, true, true)
             }
 
-            // since we possible changed the dictionary (the data structure) we need to update the data set repo
+            // since we possibly changed the dictionary (the data structure) we need to update the data set repo
             _ <- dsa.updateDataSetStore
 
             // delete the old data

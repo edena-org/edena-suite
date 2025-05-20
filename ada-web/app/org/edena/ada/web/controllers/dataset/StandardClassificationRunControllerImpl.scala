@@ -28,6 +28,7 @@ import org.edena.ada.web.models.{ScatterWidget, Widget}
 import views.html.{classificationrun => view}
 
 import scala.concurrent.Future
+import org.edena.core.DefaultTypes.Seq
 
 class StandardClassificationRunControllerImpl @Inject()(
   @Assisted dataSetId: String,

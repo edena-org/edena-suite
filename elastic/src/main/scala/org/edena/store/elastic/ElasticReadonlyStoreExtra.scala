@@ -123,7 +123,7 @@ trait ElasticReadonlyStoreExtraImpl[E, ID] extends ElasticReadonlyStoreExtra[E, 
     // highlighting
     val addHighlightingDef = (searchDefinition: SearchRequest) =>
       searchDefinition.highlighting {
-        highlight(highlightField)
+        ElasticDsl.highlight(highlightField)
           .setIfDefined(_.highlighterType(_: String), setting.highlighterType)
           .setIfDefined(_.fragmentSize(_: Int), setting.highlightFragmentSize)
           .setIfDefined(_.fragmentOffset(_: Int), setting.highlightFragmentOffset)
@@ -206,13 +206,13 @@ trait ElasticReadonlyStoreExtraImpl[E, ID] extends ElasticReadonlyStoreExtra[E, 
       case c: And =>
         c.criteria.flatMap(toQueryFuzzy(_, fuzzyField)) match {
           case Nil => None
-          case queries => Some(must(queries))
+          case queries => Some(ElasticDsl.must(queries))
         }
 
       case c: Or =>
         c.criteria.flatMap(toQueryFuzzy(_, fuzzyField)) match {
           case Nil => None
-          case queries => Some(should(queries))
+          case queries => Some(ElasticDsl.should(queries))
         }
 
       case NoCriterion => None

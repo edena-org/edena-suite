@@ -7,7 +7,7 @@ import org.edena.core.calc.CalculatorHelper._
 import org.edena.core.calc.impl.{ChiSquareResult, ChiSquareTestCalc}
 import org.scalatest._
 
-import scala.collection.Seq.fill
+import org.edena.core.DefaultTypes.Seq
 import scala.concurrent.Future
 import scala.util.Random
 import scala.util.Random.shuffle
@@ -31,7 +31,7 @@ class ChiSquareTest extends AsyncFlatSpec with Matchers with ExtraMatchers {
 
   def createSeq[T](counts: (Int, T)*): Seq[T] =
     shuffle(
-      counts.flatMap { case (count, value) => fill(count)(value) }
+      counts.flatMap { case (count, value) => Seq.fill(count)(value) }
     )
 
   private val precision = 0.00000000001

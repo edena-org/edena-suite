@@ -12,6 +12,7 @@ import org.edena.ada.server.field.FieldUtil.{fieldTypeOrdering, valueOrdering}
 import scala.reflect.runtime.universe._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
+import org.edena.core.DefaultTypes.Seq
 
 private class GroupCumulativeOrderedCountsAnyExec[G, F](
     implicit inputTypeTag: TypeTag[GroupCumulativeOrderedCountsCalcTypePack[G, Any]#IN]

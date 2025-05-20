@@ -26,7 +26,11 @@ import org.apache.commons.math3.linear.{Array2DRowRealMatrix, EigenDecomposition
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
-import scala.collection.JavaConversions._
+import scala.jdk.CollectionConverters._
+import scala.collection.parallel.CollectionConverters._
+import scala.language.postfixOps
+import org.edena.core.DefaultTypes.Seq
+
 import org.edena.core.calc.CalculatorHelperExt._
 import org.edena.core.calc.CalculatorHelper._
 import org.edena.core.calc.impl.SeqBinCountCalc.SeqBinCountCalcTypePack
@@ -333,7 +337,7 @@ private[services] class StatsServiceImpl @Inject() (
       (Option.empty[T], count)
     }
 
-    Future.sequence(countFutures ++ Seq(naValueFuture))
+    Future.sequence(countFutures ++ Seq(naValueFuture)).map(_.toSeq)
   }
 
   // grouped
@@ -1054,7 +1058,9 @@ private[services] class StatsServiceImpl @Inject() (
   override def calcEigenValuesAndVectorsSymMatrixBreeze(
     matrix: Seq[Seq[Double]]
   ): (Seq[Double], Seq[Seq[Double]]) = {
-    val EigSym(eigenValues, eigenVectors) = eigSym(DenseMatrix(matrix: _*))
+    val denseMatrix = DenseMatrix(matrix.map(_.toList).toList: _*)
+
+    val EigSym(eigenValues, eigenVectors) = eigSym(denseMatrix)
 
     (eigenValues.toScalaVector.reverse, eigenVectors.data.toSeq.grouped(eigenVectors.rows).toSeq.reverse)
   }
@@ -1062,7 +1068,8 @@ private[services] class StatsServiceImpl @Inject() (
   override def calcEigenValuesAndVectorsBreeze(
     matrix: Seq[Seq[Double]]
   ): (Seq[Double], Seq[Double], Seq[Seq[Double]]) = {
-    val result = eig(DenseMatrix(matrix: _*))
+    val denseMatrix = DenseMatrix(matrix.map(_.toList).toList: _*)
+    val result = eig(denseMatrix)
 
     val eigenValues = result.eigenvalues.toScalaVector
     val eigenValuesComplex = result.eigenvaluesComplex.toScalaVector

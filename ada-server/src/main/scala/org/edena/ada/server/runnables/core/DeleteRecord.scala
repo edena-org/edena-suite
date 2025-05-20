@@ -1,6 +1,6 @@
 package org.edena.ada.server.runnables.core
 
-import runnables.DsaInputFutureRunnable
+import org.edena.ada.server.runnables.DsaInputFutureRunnable
 
 import scala.concurrent.ExecutionContext.Implicits.global
 

@@ -14,6 +14,7 @@ import org.edena.core.field.FieldTypeId
 import scala.reflect.runtime.universe._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
+import org.edena.core.DefaultTypes.Seq
 
 trait QuartilesCalcNoOptionsTypePack[T] extends NoOptionsCalculatorTypePack {
   type IN = Option[T]

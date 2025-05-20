@@ -8,6 +8,7 @@ import play.api.mvc.Request
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
+import org.edena.core.DefaultTypes.Seq
 
 /**
   * @author Peter Banda

@@ -21,6 +21,7 @@ import scala.concurrent.Await.result
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.concurrent.duration._
+import org.edena.core.DefaultTypes.Seq
 
 trait SynapseServiceFactory {
   def apply(@Assisted("username") username: String, @Assisted("password") password: String): SynapseService
@@ -178,7 +179,7 @@ protected[services] class SynapseServiceWSImpl @Inject() (
 
   private val logger = LoggerFactory getLogger getClass.getName
 
-  private val timeout = 10 minutes
+  private val timeout = 10.minutes
   private val tableCsvResultPollingFreq = 200
   private val bulkDownloadResultPollingFreq = 400
   private var sessionToken: Option[String] = None

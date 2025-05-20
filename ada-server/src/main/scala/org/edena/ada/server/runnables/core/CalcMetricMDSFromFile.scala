@@ -7,6 +7,7 @@ import org.edena.ada.server.services.StatsService
 import org.slf4j.LoggerFactory
 
 import scala.concurrent.ExecutionContext.Implicits.global
+import org.edena.core.DefaultTypes.Seq
 
 class CalcMetricMDSFromFile @Inject() (statsService: StatsService) extends InputFutureRunnableExt[CalcMetricMDSFromFileSpec] {
 

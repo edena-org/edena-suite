@@ -13,6 +13,8 @@ import org.edena.ada.web.controllers.dataset.IndependenceTestResult.independence
 import org.edena.core.calc.impl.{BasicStatsResult, IndependenceTestResult, Quartiles}
 import org.edena.core.field.FieldTypeId
 
+import org.edena.core.DefaultTypes.Seq
+
 abstract class Widget {
   val title: String
   val displayOptions: DisplayOptions

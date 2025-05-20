@@ -12,6 +12,8 @@ import play.api.mvc.{ControllerComponents, Request, Result}
 import reactivemongo.api.bson.BSONObjectID
 import views.html.{translation => view}
 
+import org.edena.core.DefaultTypes.Seq
+
 class TranslationController @Inject() (
   translationRepo: TranslationStore,
   val controllerComponents: ControllerComponents

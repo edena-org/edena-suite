@@ -13,8 +13,9 @@ import org.edena.core.store.{And, Criterion}
 import reactivemongo.api.bson.BSONObjectID
 import org.edena.ada.server.models._
 
-import scala.collection.Traversable
 import scala.concurrent.Future
+import scala.collection.{Set, Traversable}
+import org.edena.core.DefaultTypes.Seq
 import scala.concurrent.ExecutionContext.Implicits.global
 
 object FieldUtil extends FieldHelper {

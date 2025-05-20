@@ -13,7 +13,7 @@ import org.datavec.api.split.InputSplit
 import org.datavec.api.writable._
 import org.edena.core.EdenaException
 
-import scala.collection.JavaConversions._
+import scala.jdk.CollectionConverters._
 
 class IdSeqRecordReader[ID](
   idItems: Seq[(ID, Seq[Option[Any]])],
@@ -22,7 +22,7 @@ class IdSeqRecordReader[ID](
 
   private val idItemMap = idItems.toMap
 
-  protected var iterator: util.Iterator[(ID, Seq[Option[Any]])] = idItems.toIterator
+  protected var iterator: util.Iterator[(ID, Seq[Option[Any]])] = idItems.toIterator.asJava
 
   private var configuration: Configuration = null
 
@@ -66,7 +66,7 @@ class IdSeqRecordReader[ID](
     if (debug)
       println("Reset called")
 
-    iterator = idItems.iterator
+    iterator = idItems.iterator.asJava
   }
 
   override def resetSupported = true
@@ -96,12 +96,12 @@ class IdSeqRecordReader[ID](
   override def loadFromMetaData(
     recordMetaDatas: util.List[RecordMetaData]
   ): util.List[Record] =
-    recordMetaDatas.map(loadFromMetaData)
+    recordMetaDatas.asScala.map(loadFromMetaData).asJava
 
   private def toWritable(values: Seq[Option[Any]]): util.List[Writable] = {
     val writables = values.map { value =>
 
-      value.map(
+      val writable: Writable = value.map(
         _ match {
           case x: Int => new IntWritable(x)
           case x: jl.Integer => new IntWritable(x)
@@ -117,9 +117,11 @@ class IdSeqRecordReader[ID](
       ).getOrElse(
         new NullWritable()
       )
+
+      writable
     }
 
-    seqAsJavaList(writables)
+    writables.asJava
   }
 
   override def close(): Unit = ()

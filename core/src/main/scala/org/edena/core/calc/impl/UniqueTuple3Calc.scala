@@ -4,6 +4,7 @@ import akka.stream.scaladsl.Flow
 import org.edena.core.calc.Calculator
 import org.edena.core.calc.Calculator
 import org.edena.core.akka.AkkaStreamUtil._
+import org.edena.core.DefaultTypes.Seq
 
 private class UniqueTuple3Calc[A, B, C] extends Calculator[Tuple3CalcTypePack[A, B, C]] {
 

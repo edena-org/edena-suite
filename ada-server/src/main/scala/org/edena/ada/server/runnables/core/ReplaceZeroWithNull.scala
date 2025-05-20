@@ -10,7 +10,7 @@ import org.slf4j.LoggerFactory
 import play.api.libs.json._
 import reactivemongo.api.bson.BSONObjectID
 import org.edena.store.json.BSONObjectIDFormat
-import runnables.DsaInputFutureRunnable
+import org.edena.ada.server.runnables.DsaInputFutureRunnable
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future

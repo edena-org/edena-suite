@@ -4,6 +4,7 @@ import org.edena.ada.server.calc.{CalculatorExecutor, ToFields, WithSeqFields, W
 import org.edena.ada.server.models.Field
 
 import scala.reflect.runtime.universe._
+import org.edena.core.DefaultTypes.Seq
 
 private class XOrderedSeqAnyExec[F] extends OrderedAnyExecAdapter[F, XOrderedSeqCalcTypePack] {
 

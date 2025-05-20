@@ -1,7 +1,7 @@
 package org.edena.play
 
 import play.api.inject.guice.GuiceApplicationBuilder
-import scala.collection.JavaConversions.iterableAsScalaIterable
+import scala.jdk.CollectionConverters._
 
 /**
   * A simple app backed by Guice IOC, which runs a given runnable.
@@ -18,7 +18,7 @@ class GuiceRunnableApp[T <: Runnable](
     val config = play.api.Configuration.load(env)
 
     val availablePlayModules = config.getStringList("play.modules.enabled").fold(
-      List.empty[String])(l => iterableAsScalaIterable(l).toList)
+      List.empty[String])(l => l.asScala.toList)
 
     // if modules are specified use them, otherwise load ALL available play modules
     val initModules = if (modules.nonEmpty) modules else availablePlayModules

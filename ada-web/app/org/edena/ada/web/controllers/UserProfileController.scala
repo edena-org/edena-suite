@@ -20,6 +20,8 @@ import reactivemongo.api.bson.BSONObjectID
 import org.edena.ada.web.controllers.core.AdaBaseController
 import play.api.mvc.ControllerComponents
 
+import org.edena.core.DefaultTypes.Seq
+
 class UserProfileController @Inject() (
   userRepo: UserStore,
   val controllerComponents: ControllerComponents

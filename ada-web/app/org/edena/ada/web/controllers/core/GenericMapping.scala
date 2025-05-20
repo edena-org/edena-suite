@@ -16,8 +16,11 @@ import java.{util => ju}
 import org.edena.play.formatters._
 import reactivemongo.api.bson.BSONObjectID
 
+import scala.collection.{ Seq => BaseSeq }
+
 import java.util.UUID
 import scala.collection.Traversable
+import org.edena.core.DefaultTypes.Seq
 
 private class GenericMapping[R, A](
     apply: Traversable[A] => R,
@@ -249,23 +252,23 @@ object GenericMapping {
         optional(genericMapping(t.typeArgs.head, mirror))
 
       // string seq
-      case t if t subMatches typeOf[Seq[String]] =>
+      case t if t subMatches typeOf[BaseSeq[String]] =>
         of[Seq[String]]
 
       // int seq
-      case t if t subMatches typeOf[Seq[Int]] =>
+      case t if t subMatches typeOf[BaseSeq[Int]] =>
         of[Seq[Int]]
 
       // double seq
-      case t if t subMatches typeOf[Seq[Double]] =>
+      case t if t subMatches typeOf[BaseSeq[Double]] =>
         of[Seq[Double]]
 
       // BSON Object id seq
-      case t if t subMatches typeOf[Seq[BSONObjectID]] =>
+      case t if t subMatches typeOf[BaseSeq[BSONObjectID]] =>
         of[Seq[BSONObjectID]]
 
       // seq
-      case t if t subMatches typeOf[Seq[_]] =>
+      case t if t subMatches typeOf[BaseSeq[_]] =>
         val innerType = t.typeArgs.head
         seq(genericMapping(innerType, mirror))
 

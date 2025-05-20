@@ -4,8 +4,7 @@ import org.datavec.api.split.BaseInputSplit
 import java.io.InputStream
 import java.io.OutputStream
 import java.util.{LinkedList, List}
-import scala.collection.JavaConversions._
-
+import scala.jdk.CollectionConverters._
 /**
   * @see org.datavec.api.split.CollectionInputSplit
   */
@@ -14,7 +13,7 @@ class IndexInputSplit(
   val indeces: List[Integer]
 ) extends BaseInputSplit {
   uriStrings = new LinkedList[String]
-  for (i <- indeces) {
+  for (i <- indeces.asScala) {
     uriStrings.add(String.format(baseString, i))
   }
 

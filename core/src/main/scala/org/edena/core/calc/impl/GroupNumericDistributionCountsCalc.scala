@@ -4,6 +4,7 @@ import akka.stream.scaladsl.Flow
 import org.edena.core.calc.{Calculator, CalculatorTypePack}
 import org.edena.core.util.GroupMapList
 import org.edena.core.akka.AkkaStreamUtil._
+import org.edena.core.DefaultTypes.Seq
 
 trait GroupNumericDistributionCountsCalcTypePack[G] extends CalculatorTypePack {
   type IN = (Option[G], Option[Double])

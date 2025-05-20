@@ -5,6 +5,8 @@ import org.edena.spark_ml.models.setting.ClassificationRunSpec
 import play.api.mvc.ControllerComponents
 import reactivemongo.api.bson.BSONObjectID
 
+import org.edena.core.DefaultTypes.Seq
+
 class StandardClassificationRunDispatcher @Inject()(
   val dscf: DataSetControllerFactory,
   factory: StandardClassificationRunControllerFactory,

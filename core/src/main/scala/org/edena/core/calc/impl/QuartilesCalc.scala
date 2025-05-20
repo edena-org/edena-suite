@@ -1,6 +1,7 @@
 package org.edena.core.calc.impl
 
 import org.edena.core.calc.{Calculator, CalculatorTypePack}
+import org.edena.core.DefaultTypes.Seq
 
 trait QuartilesCalcTypePack[T] extends CalculatorTypePack {
   type IN = Option[T]

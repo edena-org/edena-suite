@@ -8,6 +8,7 @@ import org.edena.store.json.JsonHelper
 import play.api.libs.json.{JsObject, _}
 import org.slf4j.LoggerFactory
 
+import org.edena.core.DefaultTypes.Seq
 import scala.concurrent.{ExecutionContext, Future}
 
 abstract class SubordinateObjectMongoCrudStore[E: Format, ID: Format, ROOT_E: Format, ROOT_ID: Format](

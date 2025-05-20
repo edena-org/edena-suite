@@ -14,6 +14,7 @@ import reactivemongo.api.bson.BSONObjectID
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import javax.inject.Inject
+import org.edena.core.DefaultTypes.Seq
 
 private[dataaccess] class CachedMongoJsonCrudStoreFactoryImpl @Inject()(
   ignite: Ignite,

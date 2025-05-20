@@ -1,5 +1,7 @@
 package org.edena.ada.server.models.datatrans
 
+import org.edena.core.DefaultTypes.Seq
+
 trait CoreLinkMultiDataSetsTransformation {
   this: DataSetTransformation =>
 

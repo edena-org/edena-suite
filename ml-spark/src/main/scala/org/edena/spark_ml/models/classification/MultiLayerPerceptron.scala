@@ -4,9 +4,11 @@ import java.util.Date
 import org.edena.spark_ml.models.ValueOrSeq.ValueOrSeq
 import reactivemongo.api.bson.BSONObjectID
 
+import scala.collection.immutable.{ Seq => ImutSeq }
+
 case class MultiLayerPerceptron(
   _id: Option[BSONObjectID] = None,
-  hiddenLayers: Seq[Int],
+  hiddenLayers: ImutSeq[Int],
   maxIteration: ValueOrSeq[Int] = Left(None),
   tolerance: ValueOrSeq[Double] = Left(None),
   blockSize: ValueOrSeq[Int] = Left(None),

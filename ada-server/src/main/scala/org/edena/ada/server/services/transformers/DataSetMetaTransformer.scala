@@ -17,6 +17,7 @@ import org.slf4j.LoggerFactory
 import scala.reflect.runtime.universe.{TypeTag, typeOf}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
+import org.edena.core.DefaultTypes.Seq
 
 trait DataSetMetaTransformer[T <: DataSetMetaTransformation] extends InputFutureRunnable[T]
 

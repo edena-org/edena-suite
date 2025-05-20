@@ -3,6 +3,7 @@ package org.edena.core.calc.impl
 import org.edena.core.calc.{Calculator, CalculatorTypePack}
 
 import scala.collection.mutable
+import org.edena.core.DefaultTypes.Seq
 
 trait NumericDistributionCountsCalcTypePack extends CalculatorTypePack {
   type IN = Option[Double]

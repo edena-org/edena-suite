@@ -11,6 +11,7 @@ import play.api.http.{Status => HttpStatus}
 
 import scala.concurrent.Future
 import play.api.mvc.{BaseController => PlayBaseController}
+import org.edena.core.DefaultTypes.Seq
 
 trait ActionSecurity extends HasCurrentUser with HasAuthAction {
 

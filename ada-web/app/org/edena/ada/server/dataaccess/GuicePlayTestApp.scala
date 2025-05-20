@@ -2,6 +2,9 @@ package org.edena.ada.server.dataaccess
 
 import play.api.Application
 
+import scala.jdk.CollectionConverters._
+import org.edena.core.DefaultTypes.Seq
+
 trait GuicePlayTestApp {
 
   def apply(moduleNames: Seq[String], excludeModules: Seq[String]): Application
@@ -14,9 +17,8 @@ trait GuicePlayTestApp {
       if (moduleNames.nonEmpty) {
         moduleNames
       } else {
-        import scala.collection.JavaConversions.iterableAsScalaIterable
         config.getStringList("play.modules.enabled").fold(
-          List.empty[String])(l => iterableAsScalaIterable(l).toList)
+          List.empty[String])(l => l.asScala.toList)
       }
     modules.filterNot(excludeModules.contains(_))
   }

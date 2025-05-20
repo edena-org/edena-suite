@@ -7,6 +7,7 @@ import org.edena.core.runnables.FutureRunnable
 import org.edena.core.util.seqFutures
 
 import scala.concurrent.ExecutionContext.Implicits.global
+import org.edena.core.DefaultTypes.Seq
 
 class CheckIfFieldsAlphanumericForAll @Inject() (
   val fieldRepoFactory: FieldStoreFactory,

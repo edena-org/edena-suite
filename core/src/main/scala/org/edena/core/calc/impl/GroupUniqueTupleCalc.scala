@@ -4,6 +4,7 @@ import akka.stream.scaladsl.Flow
 import org.edena.core.calc.Calculator
 import org.edena.core.akka.AkkaStreamUtil._
 import org.edena.core.util.GroupMapList3
+import org.edena.core.DefaultTypes.Seq
 
 private[calc] class GroupUniqueTupleCalc[G, A, B] extends Calculator[GroupTupleCalcTypePack[G, A, B]] {
 

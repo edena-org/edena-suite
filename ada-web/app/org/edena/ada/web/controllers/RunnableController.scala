@@ -35,12 +35,14 @@ import org.edena.play.security.SecurityRole
 import play.api.data.Forms.{date, default, ignored, mapping, optional}
 import play.api.libs.json.{Format, JsArray, Json}
 import reactivemongo.api.bson.BSONObjectID
-import runnables.DsaInputFutureRunnable
+import org.edena.ada.server.runnables.DsaInputFutureRunnable
 
 import scala.reflect.ClassTag
 import scala.concurrent.Future
 import play.api.data.Forms._
 import play.twirl.api.Html
+
+import org.edena.core.DefaultTypes.Seq
 
 class RunnableController @Inject() (
   messageRepo: MessageStore,

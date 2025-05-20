@@ -2,6 +2,7 @@ package org.edena.core.calc.impl
 
 import org.edena.core.calc.{Calculator, NoOptionsCalculatorTypePack}
 import org.edena.core.akka.AkkaStreamUtil.{countFlow, seqFlow}
+import org.edena.core.DefaultTypes.Seq
 
 trait CountDistinctCalcTypePack[T] extends NoOptionsCalculatorTypePack{
   type IN = T

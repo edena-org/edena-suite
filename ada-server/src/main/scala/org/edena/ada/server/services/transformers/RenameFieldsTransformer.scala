@@ -5,6 +5,7 @@ import org.edena.ada.server.services.ServiceTypes.DataSetCentralTransformer
 import play.api.libs.json.{JsNull, JsObject}
 
 import scala.concurrent.ExecutionContext.Implicits.global
+import org.edena.core.DefaultTypes.Seq
 
 /**
   * Transformer that renames fields of a given data set specified by `fieldOldNewNames` attribute

@@ -4,6 +4,8 @@ import org.edena.ada.web.models.HeatmapWidget
 import org.edena.ada.server.models._
 import org.edena.core.calc.impl._
 
+import org.edena.core.DefaultTypes.Seq
+
 private class PearsonCorrelationWidgetGenerator(flowParallelism: Option[Int]) extends CalculatorWidgetGenerator[CorrelationWidgetSpec, HeatmapWidget, PearsonCorrelationCalcTypePack] {
 
   override protected val seqExecutor = pearsonCorrelationExec

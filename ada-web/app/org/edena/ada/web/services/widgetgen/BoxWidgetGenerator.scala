@@ -4,6 +4,8 @@ import org.edena.ada.server.models._
 import org.edena.ada.web.models.BoxWidget
 import org.edena.core.calc.impl.QuartilesCalcNoOptionsTypePack
 
+import org.edena.core.DefaultTypes.Seq
+
 object BoxWidgetGenerator extends CalculatorWidgetGenerator[BoxWidgetSpec, BoxWidget[Any], QuartilesCalcNoOptionsTypePack[Any]]
   with NoOptionsCalculatorWidgetGenerator[BoxWidgetSpec] {
 

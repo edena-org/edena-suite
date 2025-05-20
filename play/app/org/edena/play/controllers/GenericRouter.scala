@@ -2,6 +2,8 @@ package org.edena.play.controllers
 
 import play.api.mvc.Call
 
+import org.edena.core.DefaultTypes.Seq
+
 class GenericRouter[T](protected val routes: T, paramName: String, val id: String) {
 
   protected def routeFun(callFun: T => Call): Call =

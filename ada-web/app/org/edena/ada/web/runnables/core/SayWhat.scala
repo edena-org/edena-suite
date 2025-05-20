@@ -7,6 +7,7 @@ import play.api.Logger
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
+import org.edena.core.DefaultTypes.Seq
 
 // TODO: Remove... just for testing
 class SayWhat @Inject() (

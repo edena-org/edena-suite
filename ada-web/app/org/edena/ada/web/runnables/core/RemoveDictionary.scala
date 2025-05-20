@@ -7,6 +7,7 @@ import org.edena.core.store.Criterion._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
+import org.edena.core.DefaultTypes.Seq
 
 class RemoveDictionary @Inject()(
   dictionaryRootRepo: DictionaryRootStore

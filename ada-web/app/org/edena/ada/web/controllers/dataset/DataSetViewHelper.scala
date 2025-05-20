@@ -19,6 +19,7 @@ import org.edena.store.json.StoreTypes.JsonReadonlyStore
 import play.api.libs.json.JsObject
 
 import scala.concurrent.{ExecutionContext, Future}
+import org.edena.core.DefaultTypes.Seq
 
 trait DataSetViewHelper {
 

@@ -17,6 +17,8 @@ import org.edena.play.PageOrder
 import play.api.mvc.{Action, AnyContent, ControllerComponents, Request}
 import scala.concurrent.ExecutionContext.Implicits.global
 
+import org.edena.core.DefaultTypes.Seq
+
 class DataSetDispatcher @Inject() (
   dscf: DataSetControllerFactory,
   dsaf: DataSetAccessorFactory,

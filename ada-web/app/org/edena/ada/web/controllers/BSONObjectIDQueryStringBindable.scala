@@ -7,13 +7,15 @@ import play.api.data.format.Formatter
 import play.api.mvc.QueryStringBindable
 import reactivemongo.api.bson.BSONObjectID
 
+import scala.collection.immutable.{ Seq => ImutSeq }
+
 object BSONObjectIDQueryStringBindable extends QueryStringBindable[BSONObjectID] {
 
   private val stringBinder = implicitly[QueryStringBindable[String]]
 
   override def bind(
     key: String,
-    params: Map[String, Seq[String]]
+    params: Map[String, ImutSeq[String]]
   ): Option[Either[String, BSONObjectID]] = {
     for {
       leftRightString <- stringBinder.bind(key, params)

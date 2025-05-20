@@ -7,6 +7,7 @@ import org.edena.play.formatters.JsonFormatter
 import play.api.data.Form
 import play.api.data.Forms.{of, seq}
 import views.html.{datasettrans => view}
+import org.edena.core.DefaultTypes.Seq
 
 object RenameFieldsFormViews extends DataSetTransformationFormViews[RenameFieldsTransformation] {
 

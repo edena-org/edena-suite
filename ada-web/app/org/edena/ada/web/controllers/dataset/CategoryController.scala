@@ -3,6 +3,7 @@ package org.edena.ada.web.controllers.dataset
 import org.edena.play.controllers.CrudController
 import play.api.mvc.{Action, AnyContent}
 import reactivemongo.api.bson.BSONObjectID
+import org.edena.core.DefaultTypes.Seq
 
 trait CategoryController extends CrudController[BSONObjectID] {
 

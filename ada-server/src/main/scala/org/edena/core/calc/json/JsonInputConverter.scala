@@ -5,6 +5,7 @@ import org.edena.ada.server.models.Field
 import play.api.libs.json.JsObject
 
 import scala.reflect.runtime.universe._
+import org.edena.core.DefaultTypes.Seq
 
 trait JsonInputConverter[IN] {
 

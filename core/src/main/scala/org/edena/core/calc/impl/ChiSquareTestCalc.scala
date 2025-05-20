@@ -4,6 +4,7 @@ import org.apache.commons.math3.exception.MaxCountExceededException
 import org.edena.core.calc.CommonsMathUtil
 import org.edena.core.calc.{Calculator, CommonsMathUtil, NoOptionsCalculatorTypePack}
 import org.slf4j.{Logger, LoggerFactory}
+import org.edena.core.DefaultTypes.Seq
 
 trait ChiSquareTestCalcTypePack[T1, T2] extends NoOptionsCalculatorTypePack{
   type IN = (T1, T2)

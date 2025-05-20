@@ -2,6 +2,7 @@ package org.edena.core.calc.impl
 
 import akka.stream.scaladsl.Flow
 import org.edena.core.calc.{Calculator, NoOptionsCalculatorTypePack}
+import org.edena.core.DefaultTypes.Seq
 
 trait BasicStatsCalcTypePack extends NoOptionsCalculatorTypePack{
   type IN = Option[Double]

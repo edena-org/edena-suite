@@ -1,13 +1,15 @@
 package org.edena.ada.web.runnables.core
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import runnables.DsaInputFutureRunnable
+import org.edena.ada.server.runnables.DsaInputFutureRunnable
 import org.edena.core.runnables.RunnableHtmlOutput
 import org.edena.core.store.Criterion._
 import org.edena.core.store._
 import org.edena.store.json.JsObjectIdentity
 import reactivemongo.api.bson.BSONObjectID
 import play.api.libs.json.Json
+
+import org.edena.core.DefaultTypes.Seq
 
 class QueryByIds extends DsaInputFutureRunnable[QueryByIdsSpec] with RunnableHtmlOutput with IdCriterionHelper{
 

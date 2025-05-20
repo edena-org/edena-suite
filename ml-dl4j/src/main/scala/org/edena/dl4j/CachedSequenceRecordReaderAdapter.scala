@@ -11,7 +11,7 @@ import org.datavec.api.records.reader.{BaseRecordReader, SequenceRecordReader}
 import org.datavec.api.split.InputSplit
 import org.datavec.api.records.impl.{Record => RecordImpl}
 import scala.collection.mutable.ArrayBuffer
-import scala.collection.JavaConversions._
+import scala.jdk.CollectionConverters._
 
 private class CachedSequenceRecordReaderAdapter(underlying: SequenceRecordReader) extends BaseRecordReader with SequenceRecordReader {
 
@@ -61,9 +61,9 @@ private class CachedSequenceRecordReaderAdapter(underlying: SequenceRecordReader
   override def nextRecord = {
     val sequenceRecord = cachedRecordIterator.next()
 
-    val writables = sequenceRecord.getSequenceRecord.flatten
+    val writables = sequenceRecord.getSequenceRecord.asScala.flatMap(_.asScala)
     val metaData = sequenceRecord.getMetaData
-    new RecordImpl(writables, metaData)
+    new RecordImpl(writables.asJava, metaData)
   }
 
   override def next =

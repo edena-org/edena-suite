@@ -18,6 +18,7 @@ import play.api.mvc.{AnyContent, ControllerComponents}
 import reactivemongo.api.bson.BSONObjectID
 
 import views.html.{layout, htmlSnippet => view}
+import org.edena.core.DefaultTypes.Seq
 
 import scala.concurrent.Future
 
@@ -48,7 +49,9 @@ class HtmlSnippetController @Inject() (
 
   override protected def editView = { implicit ctx => view.edit(_) }
 
-  override protected def listView = { implicit ctx => (view.list(_, _)).tupled }
+  override protected def listView = { implicit ctx =>
+    (view.list(_, _)).tupled
+  }
 
   override def saveCall(
     htmlSnippet: HtmlSnippet)(

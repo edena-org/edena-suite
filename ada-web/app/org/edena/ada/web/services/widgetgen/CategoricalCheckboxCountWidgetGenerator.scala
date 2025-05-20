@@ -8,6 +8,8 @@ import org.edena.core.store._
 import org.edena.core.field.{FieldTypeId, FieldTypeSpec}
 import spire.ClassTag
 
+import org.edena.core.DefaultTypes.Seq
+
 private class CategoricalCheckboxCountWidgetGenerator(criterion: Criterion) extends CalculatorWidgetGenerator[CategoricalCheckboxWidgetSpec, CategoricalCheckboxCountWidget, UniqueDistributionCountsCalcTypePack[Any]]
   with DistributionWidgetGeneratorHelper
   with NoOptionsCalculatorWidgetGenerator[CategoricalCheckboxWidgetSpec] {

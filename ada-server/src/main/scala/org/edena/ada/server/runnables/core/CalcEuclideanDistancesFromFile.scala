@@ -7,6 +7,7 @@ import org.apache.commons.lang3.StringEscapeUtils
 import org.edena.core.runnables.{InputFutureRunnable, InputFutureRunnableExt}
 
 import scala.concurrent.ExecutionContext.Implicits.global
+import org.edena.core.DefaultTypes.Seq
 
 class CalcEuclideanDistancesFromFile extends InputFutureRunnableExt[CalcEuclideanDistancesFromFileSpec] with CalculatorExecutors {
 

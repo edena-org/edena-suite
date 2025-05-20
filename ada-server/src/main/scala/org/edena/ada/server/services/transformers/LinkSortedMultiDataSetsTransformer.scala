@@ -18,6 +18,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.math.Ordering
 import scala.math.Ordering.Boolean
+import org.edena.core.DefaultTypes.Seq
 
 class LinkSortedMultiDataSetsTransformer
   extends AbstractDataSetTransformer[LinkSortedMultiDataSetsTransformation]

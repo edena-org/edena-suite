@@ -5,7 +5,7 @@ import org.edena.ada.server.AdaException
 import org.edena.ada.server.util.ClassFinderUtil.findClasses
 import org.edena.core.calc.impl.UniqueDistributionCountsCalc.UniqueDistributionCountsCalcTypePack
 import org.edena.core.calc.impl._
-
+import org.edena.core.DefaultTypes.Seq
 import scala.reflect.runtime.universe._
 
 object JsonInputConverterFactory {

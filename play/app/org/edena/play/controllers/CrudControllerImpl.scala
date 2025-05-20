@@ -6,6 +6,7 @@ import org.edena.core.store.CrudStore
 import play.api.data.Form
 import play.api.libs.json._
 import play.api.mvc._
+import WebContext._
 
 import scala.concurrent.Future
 

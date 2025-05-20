@@ -5,6 +5,8 @@ import org.edena.core.calc.{Calculator, NoOptionsCalculatorTypePack}
 import org.edena.core.calc.CalculatorHelper._
 import org.edena.core.akka.AkkaStreamUtil.unzipNFlowsAndApply
 
+import org.edena.core.DefaultTypes.Seq
+
 trait MultiChiSquareTestCalcTypePack[G, T] extends NoOptionsCalculatorTypePack {
   type IN = (G, Seq[Option[T]])
   type OUT = Seq[Option[ChiSquareResult]]

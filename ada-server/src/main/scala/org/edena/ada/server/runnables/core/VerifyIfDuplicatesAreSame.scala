@@ -9,7 +9,7 @@ import org.edena.store.json.JsObjectIdentity
 import org.edena.ada.server.field.FieldUtil.{FieldOps, JsonFieldOps}
 import org.edena.ada.server.models.DataSetFormattersAndIds.FieldIdentity
 import org.slf4j.LoggerFactory
-import runnables.DsaInputFutureRunnable
+import org.edena.ada.server.runnables.DsaInputFutureRunnable
 
 import scala.concurrent.ExecutionContext.Implicits.global
 

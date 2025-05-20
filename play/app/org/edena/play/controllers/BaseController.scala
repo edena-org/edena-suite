@@ -21,6 +21,6 @@ trait BaseController extends PlayBaseController with ActionSecurity {
 
   protected implicit val lang = Lang.defaultLang
 
-  protected implicit def webContext(implicit request: AuthenticatedRequest[_]) =
-    WebContext(messagesApi, webJarAssets, configuration)(request, deadboltRestricts)
+  protected implicit def webContext(implicit request: AuthenticatedRequest[_]): WebContext =
+    WebContext.apply(messagesApi, webJarAssets, configuration)(request, deadboltRestricts)
 }

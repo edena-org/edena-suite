@@ -9,6 +9,7 @@ import org.edena.ada.server.models._
 import org.edena.core.runnables.InputFutureRunnableExt
 
 import scala.concurrent.ExecutionContext.Implicits.global
+import org.edena.core.DefaultTypes.Seq
 
 /**
   * Copies filters and views from one data set to another (specified in <code>CopyFiltersAndViewsSpec</code>).

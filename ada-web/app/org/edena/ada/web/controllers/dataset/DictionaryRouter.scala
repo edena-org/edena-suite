@@ -4,6 +4,8 @@ import org.edena.play.controllers.{GenericJsRouter, GenericRouter, ReadonlyRoute
 import play.api.mvc.Call
 import scalaz.Scalaz._
 
+import org.edena.core.DefaultTypes.Seq
+
 /**
   * Container for various calls from Controllers.
   * To be passed to other modules like views to simplify data access.

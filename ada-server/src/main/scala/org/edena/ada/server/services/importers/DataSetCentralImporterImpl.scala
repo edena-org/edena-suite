@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
+import org.edena.core.DefaultTypes.Seq
 
 protected[services] class DataSetCentralImporterImpl @Inject()(
   val injector: Injector,

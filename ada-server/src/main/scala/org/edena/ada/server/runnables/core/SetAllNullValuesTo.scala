@@ -7,7 +7,8 @@ import org.edena.ada.server.field.FieldUtil.FieldOps
 import org.edena.core.store.CrudStoreExtra.CrudInfixOps
 import org.edena.core.store.StreamSpec
 import org.edena.core.store.Criterion._
-import runnables.DsaInputFutureRunnable
+import org.edena.ada.server.runnables.DsaInputFutureRunnable
+import scala.language.postfixOps
 
 import javax.inject.Inject
 import scala.concurrent.ExecutionContext

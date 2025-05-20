@@ -49,8 +49,8 @@ class CacheIdContainer[Id: ClassTag](cache: SyncCacheApi) extends IdContainer[Id
   def get(token: AuthenticityToken) = cache.get[Id](token + tokenSuffix)
 
   private[play2auth] def store(token: AuthenticityToken, userId: Id, timeoutInSeconds: Int) {
-    cache.set(token + tokenSuffix, userId, timeoutInSeconds seconds)
-    cache.set(userId.toString + userIdSuffix, token, timeoutInSeconds seconds)
+    cache.set(token + tokenSuffix, userId, timeoutInSeconds.seconds)
+    cache.set(userId.toString + userIdSuffix, token, timeoutInSeconds.seconds)
   }
 
   def prolongTimeout(token: AuthenticityToken, timeoutInSeconds: Int) {

@@ -5,14 +5,20 @@ import org.webjars.play.WebJarsUtil
 import play.api.Configuration
 import play.api.i18n.{Messages, MessagesApi}
 import play.api.mvc.Flash
+import org.edena.core.DefaultTypes.Seq
 
 /**
   * Web context passed by implicits with some useful resources commonly required by Play views.
   *
   * @author Peter Banda
   */
-case class WebContext(
-  implicit val flash: Flash, val msg: Messages, val request: AuthenticatedRequest[_], val webJarAssets: WebJarsUtil, val configuration: Configuration, val deadboltRestricts: DeadboltRestricts
+case class WebContext()(
+  implicit val flash: Flash,
+  val msg: Messages,
+  val request: AuthenticatedRequest[_],
+  val webJarAssets: WebJarsUtil,
+  val configuration: Configuration,
+  val deadboltRestricts: DeadboltRestricts
 )
 
 object WebContext {

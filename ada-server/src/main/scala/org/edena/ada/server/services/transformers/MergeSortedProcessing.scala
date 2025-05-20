@@ -5,6 +5,7 @@ import akka.stream.ActorMaterializer
 import akka.stream.scaladsl.Flow
 import akka.stream.scaladsl.Source
 import akka.stream.scaladsl.Sink
+import org.edena.core.DefaultTypes.Seq
 
 object MergeSortedProcessing extends App {
 

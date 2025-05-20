@@ -8,6 +8,8 @@ import org.edena.ada.server.field.{FieldType, FieldTypeFactory}
 import org.edena.core.field.{FieldTypeId, FieldTypeSpec}
 import play.api.libs.json.JsReadable
 
+import org.edena.core.DefaultTypes.Seq
+
 private trait FieldTypeInferrerImpl[T] extends FieldTypeInferrer[T] {
 
   protected val ftf: FieldTypeFactory
@@ -74,7 +76,7 @@ private trait FieldTypeInferrerImpl[T] extends FieldTypeInferrer[T] {
   // calculator impls
   override def fun(o: Unit) = { values: Traversable[T] =>
     val fieldTypes = orderedInferrers.view.map(_.fun()(values))
-    selectFirst(fieldTypes)
+    selectFirst(fieldTypes.toSeq)
   }
 
   override def flow(o: Unit) = {

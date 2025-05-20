@@ -10,6 +10,7 @@ import play.api.mvc.ControllerComponents
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
+import org.edena.core.DefaultTypes.Seq
 
 class LdapUserController @Inject() (
   ldapUserService: LdapService,

@@ -2,6 +2,7 @@ package org.edena.core.calc.impl
 
 import org.edena.core.calc.Calculator
 import org.edena.core.calc.CalculatorHelper._
+import org.edena.core.DefaultTypes.Seq
 
 object MatrixRowColumnMeanCalc extends Calculator[MatrixRowColumnSumCalcTypePack] {
 

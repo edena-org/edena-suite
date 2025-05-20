@@ -7,6 +7,7 @@ import org.edena.core.runnables.{InputFutureRunnableExt, RunnableHtmlOutput}
 import org.edena.core.util.ReflectionUtil.{getCaseClassMemberNamesAndValues, newCurrentThreadMirror}
 
 import scala.concurrent.ExecutionContext.Implicits.global
+import org.edena.core.DefaultTypes.Seq
 
 class LockRedCapRecordAtCustomHost @Inject()(factory: RedCapServiceFactory) extends InputFutureRunnableExt[LockRedCapRecordAtCustomHostSpec] with RunnableHtmlOutput {
 

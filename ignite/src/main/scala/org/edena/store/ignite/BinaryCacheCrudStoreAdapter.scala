@@ -11,7 +11,7 @@ import org.apache.ignite.binary.{BinaryObject, BinaryType}
 import org.apache.ignite.cache.store.{CacheStore, CacheStoreAdapter}
 import org.apache.ignite.lang.IgniteBiInClosure
 import org.apache.ignite.resources.IgniteInstanceResource
-import scala.collection.JavaConversions._
+import scala.jdk.CollectionConverters._
 import play.api.libs.json._
 
 import scala.concurrent.duration._

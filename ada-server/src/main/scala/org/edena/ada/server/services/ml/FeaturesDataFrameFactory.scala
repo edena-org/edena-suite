@@ -15,6 +15,7 @@ import org.edena.spark_ml.transformers.FixedOrderStringIndexer
 import org.edena.spark_ml.SparkUtil.{prepFeaturesDataFrame, indexStringCols}
 
 import scala.util.Random
+import org.edena.core.DefaultTypes.Seq
 
 object FeaturesDataFrameFactory {
 
@@ -113,7 +114,7 @@ object FeaturesDataFrameFactory {
     val data: RDD[Row] = session.sparkContext.range(0, size).map { index =>
       if (index == 0)
         println(s"Creating Spark rows from a broadcast variable of size ${size}")
-      Row.fromSeq(valueBroadVar.value(index.toInt))
+      Row.fromSeq(valueBroadVar.value(index.toInt).toList)
     }
 
     val inputFieldNames = ioSpec.inputSeriesFieldPaths.map( fieldName =>
@@ -124,7 +125,7 @@ object FeaturesDataFrameFactory {
     val ioTypes = (inputFieldNames ++ Seq(outputFieldName)).toSet.map { name: String => StructField(name, DoubleType, true) }
     val structTypes = Seq(StructField(seriesOrderCol, IntegerType, true)) ++ ioTypes
 
-    val df = session.createDataFrame(data, StructType(structTypes))
+    val df = session.createDataFrame(data, StructType(structTypes.toList))
 
     df.cache()
 
@@ -183,7 +184,7 @@ object FeaturesDataFrameFactory {
     val data: RDD[Row] = session.sparkContext.range(0, size).map { index =>
       if (index == 0)
         println(s"Creating Spark rows from a broadcast variable of size ${size}")
-      Row.fromSeq(valueBroadVar.value(index.toInt))
+      Row.fromSeq(valueBroadVar.value(index.toInt).toList)
     }
 
     data.cache()
@@ -232,7 +233,7 @@ object FeaturesDataFrameFactory {
     val structTypes = structTypesWithEnumLabels.map(_._1)
     val stringTypesWithEnumLabels = structTypesWithEnumLabels.filter(_._1.dataType.equals(StringType))
 
-    val df = session.createDataFrame(data, StructType(structTypes))
+    val df = session.createDataFrame(data, StructType(structTypes.toList))
 
     // index string columns
     val filteredStringTypesWithEnumLabels = stringTypesWithEnumLabels.filter { case (stringType, _) => !stringFieldsNotToIndex.contains(stringType.name) }

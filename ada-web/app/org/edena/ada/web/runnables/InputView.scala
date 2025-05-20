@@ -8,6 +8,7 @@ import play.twirl.api.Html
 import org.edena.ada.web.util
 
 import scala.collection.Traversable
+import org.edena.core.DefaultTypes.Seq
 
 trait InputView[I] {
 

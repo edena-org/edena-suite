@@ -9,6 +9,7 @@ import org.edena.core.field.FieldTypeId
 import org.edena.spark_ml.models.VectorScalerType
 import org.edena.play.PageOrder
 import org.edena.play.controllers.ReadonlyController
+import org.edena.core.DefaultTypes.Seq
 
 /**
   * The most important controller trait in Ada defining functionality of each data set, in particular its "data" presentation part.

@@ -5,6 +5,7 @@ import org.edena.ada.server.models.datatrans.FilterDataSetTransformation
 import org.edena.ada.server.field.FieldUtil.toCriterion
 
 import scala.concurrent.ExecutionContext.Implicits.global
+import org.edena.core.DefaultTypes.Seq
 
 /**
   * Transformer that filters a given data set by `filterId` attribute of [[FilterDataSetTransformation]] spec.

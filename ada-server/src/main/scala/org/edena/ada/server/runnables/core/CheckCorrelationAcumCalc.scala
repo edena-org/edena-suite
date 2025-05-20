@@ -11,6 +11,9 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.util.Random
 
+import org.edena.core.DefaultTypes.Seq
+import scala.collection.parallel.CollectionConverters._
+
 object CheckCorrelationAcumCalc extends App {
 
   private def calcPearsonCorrelation1(
@@ -58,7 +61,7 @@ object CheckCorrelationAcumCalc extends App {
 
     val newPSums = parallelGroupSizes match {
       case Nil => calcAux(pSumValuePairs).toSeq
-      case _ => pSumValuePairs.grouped(parallelGroupSizes).toArray.par.flatMap(calcAux).arrayseq
+      case _ => pSumValuePairs.grouped(parallelGroupSizes).toArray.par.flatMap(calcAux).arrayseq.toSeq
     }
     PersonIterativeAccumGlobal(newSumSqSums, newPSums, accumGlobal.count + 1)
   }
@@ -229,7 +232,7 @@ object CheckCorrelationAcumCalc extends App {
   private def convertAccumGlobalToArrayType(
     accumGlobal: PersonIterativeAccumGlobal
   ) = {
-    val arrayPSums = accumGlobal.pSums.map(x => mutable.ArraySeq(x:_*)).toArray
+    val arrayPSums = accumGlobal.pSums.map(x => mutable.ArraySeq(x.toList:_*)).toArray
 
     PersonIterativeAccumGlobalArray(
       accumGlobal.sumSqSums,

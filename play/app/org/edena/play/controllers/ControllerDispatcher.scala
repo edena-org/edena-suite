@@ -3,6 +3,8 @@ package org.edena.play.controllers
 import org.edena.play.security.HasAuthAction
 import play.api.mvc.{Action, AnyContent, Request, BaseController => PlayBaseController}
 
+import scala.concurrent.ExecutionContext
+
 /**
  * Simple dispatcher using controller id lookup to find a corresponding controller to redirect a call (function) to.
  *
@@ -16,7 +18,7 @@ abstract class ControllerDispatcher[C](controllerParamId: String) extends PlayBa
 
   protected def getController(controllerId: String): C
 
-  private implicit val ec = controllerComponents.executionContext
+  private implicit val ec: ExecutionContext = controllerComponents.executionContext
 
   protected def dispatch: DispatchActionTransformation = { cAction =>
     val resultAction = AuthAction { implicit request =>

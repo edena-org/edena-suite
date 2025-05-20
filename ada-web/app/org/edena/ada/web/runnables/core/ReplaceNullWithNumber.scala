@@ -2,7 +2,7 @@ package org.edena.ada.web.runnables.core
 
 import org.edena.ada.server.AdaException
 import play.api.libs.json._
-import runnables.DsaInputFutureRunnable
+import org.edena.ada.server.runnables.DsaInputFutureRunnable
 import org.edena.ada.server.field.FieldUtil.FieldOps
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
@@ -13,6 +13,7 @@ import org.edena.core.store.EqualsNullCriterion
 import org.edena.store.json.StoreTypes.JsonCrudStore
 
 import scala.concurrent.ExecutionContext.Implicits.global
+import org.edena.core.DefaultTypes.Seq
 
 /**
   * Replaces null values with a given number. Works only for numeric (int, double, and date) and enum fields.

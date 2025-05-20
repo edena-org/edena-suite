@@ -7,6 +7,7 @@ import org.edena.core.store.ValueMapAux.ValueMap
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
+import org.edena.core.DefaultTypes.Seq
 
 /**
   * Generic asynchronous trait for a readonly store.

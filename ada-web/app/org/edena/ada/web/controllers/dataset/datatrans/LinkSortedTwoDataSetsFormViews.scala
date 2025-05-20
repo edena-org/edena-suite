@@ -6,6 +6,7 @@ import org.edena.play.controllers.WebContext
 import org.edena.play.formatters.JsonFormatter
 import play.api.data.Forms.{of, seq}
 import views.html.{datasettrans => view}
+import org.edena.core.DefaultTypes.Seq
 
 object LinkSortedTwoDataSetsFormViews extends DataSetTransformationFormViews[LinkSortedTwoDataSetsTransformation] {
 

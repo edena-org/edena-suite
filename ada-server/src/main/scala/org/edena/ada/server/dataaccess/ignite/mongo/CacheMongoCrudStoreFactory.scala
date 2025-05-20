@@ -14,6 +14,7 @@ import javax.inject.Inject
 import scala.concurrent.ExecutionContext
 import scala.reflect.ClassTag
 import scala.reflect.runtime.universe.TypeTag
+import org.edena.core.DefaultTypes.Seq
 
 trait CacheMongoCrudStoreFactory {
 

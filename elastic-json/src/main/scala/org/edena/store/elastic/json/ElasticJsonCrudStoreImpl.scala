@@ -65,7 +65,7 @@ private[elastic] final class ElasticJsonCrudStoreImpl @Inject()(
     id: BSONObjectID
   ) = {
     val stringSource = Json.stringify(elasticIdFormat.writes(entity))
-    indexInto(index) source stringSource id stringId(id)
+    ElasticDsl.indexInto(index) source stringSource id stringId(id)
   }
 
   override def createUpdateDef(

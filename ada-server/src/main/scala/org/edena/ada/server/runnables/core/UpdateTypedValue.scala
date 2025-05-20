@@ -5,7 +5,7 @@ import org.edena.ada.server.field.FieldUtil.FieldOps
 import reactivemongo.api.bson.BSONObjectID
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import runnables.DsaInputFutureRunnable
+import org.edena.ada.server.runnables.DsaInputFutureRunnable
 
 class UpdateTypedValue extends DsaInputFutureRunnable[UpdateTypedValueSpec] {
 

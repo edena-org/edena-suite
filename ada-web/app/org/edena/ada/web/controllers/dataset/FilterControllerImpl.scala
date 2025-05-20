@@ -30,6 +30,7 @@ import org.edena.ada.web.services.DataSpaceService
 import views.html.{dataview, filters => view}
 
 import scala.concurrent.Future
+import org.edena.core.DefaultTypes.Seq
 
 trait FilterControllerFactory {
   def apply(dataSetId: String): FilterController

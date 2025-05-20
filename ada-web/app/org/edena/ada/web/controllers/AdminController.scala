@@ -11,6 +11,7 @@ import play.api.mvc.ControllerComponents
 import org.edena.ada.server.dataaccess.dataset.FilterRepoExtra._
 
 import scala.concurrent.ExecutionContext.Implicits.global
+import org.edena.core.DefaultTypes.Seq
 
 class AdminController @Inject() (
   userManager: UserManager,

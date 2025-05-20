@@ -19,6 +19,8 @@ import play.api.libs.crypto.CookieSigner
 import play.api.libs.mailer.MailerClient
 import org.edena.ada.web.util.md5HashPassword
 
+import org.edena.core.DefaultTypes.Seq
+
 class AuthController @Inject() (
   val ldapUserManager: UserManager,
   mailerClient: MailerClient,

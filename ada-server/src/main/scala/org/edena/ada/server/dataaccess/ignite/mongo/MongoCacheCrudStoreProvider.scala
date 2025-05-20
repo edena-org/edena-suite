@@ -7,6 +7,7 @@ import play.api.libs.json.Format
 
 import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
+import org.edena.core.DefaultTypes.Seq
 
 class MongoCacheCrudStoreProvider[E: TypeTag, ID: ClassTag](
   val mongoCollectionName: String,

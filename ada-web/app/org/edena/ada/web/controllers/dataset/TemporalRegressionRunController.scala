@@ -3,6 +3,8 @@ package org.edena.ada.web.controllers.dataset
 import org.edena.spark_ml.models.setting.{RegressionRunSpec, TemporalRegressionRunSpec}
 import play.api.mvc.{Action, AnyContent}
 
+import org.edena.core.DefaultTypes.Seq
+
 trait TemporalRegressionRunController extends MLRunController {
 
   def launch(

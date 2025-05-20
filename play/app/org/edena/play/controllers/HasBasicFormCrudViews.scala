@@ -2,6 +2,8 @@ package org.edena.play.controllers
 
 import play.api.data.Form
 
+import org.edena.core.DefaultTypes.Seq
+
 /**
   * @author Peter Banda
   */

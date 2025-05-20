@@ -4,6 +4,8 @@ import org.edena.spark_ml.models.setting.ClassificationRunSpec
 import play.api.mvc.{Action, AnyContent}
 import reactivemongo.api.bson.BSONObjectID
 
+import org.edena.core.DefaultTypes.Seq
+
 trait StandardClassificationRunController extends MLRunController {
 
   def launch(

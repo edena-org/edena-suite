@@ -12,6 +12,7 @@ import play.api.libs.json.{JsNumber, JsObject}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
+import org.edena.core.DefaultTypes.Seq
 
 private class MergeMultiDataSetsTransformer extends AbstractDataSetTransformer[MergeMultiDataSetsTransformation] {
 

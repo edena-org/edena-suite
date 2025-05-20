@@ -9,6 +9,8 @@ import org.edena.ada.web.util.{fieldLabel, shorten}
 import org.edena.core.calc.impl.{CumulativeOrderedCountsCalcTypePack, GroupCumulativeOrderedCountsCalcTypePack, NumericDistributionCountsCalcTypePack}
 import org.edena.core.field.FieldTypeId
 
+import org.edena.core.DefaultTypes.Seq
+
 /**
   * Generator of a cumulative count widget for numeric field types.
   */

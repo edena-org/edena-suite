@@ -1,7 +1,7 @@
 package org.edena.ada.server.runnables.core
 
 import org.edena.ada.server.models.DataSetFormattersAndIds.FieldIdentity
-import runnables.DsaInputFutureRunnable
+import org.edena.ada.server.runnables.DsaInputFutureRunnable
 import org.edena.core.store.Criterion._
 import org.edena.ada.server.field.FieldUtil.{FieldOps, JsonFieldOps}
 import org.edena.core.runnables.RunnableHtmlOutput
@@ -23,7 +23,7 @@ class CountDistinct extends DsaInputFutureRunnable[CountDistinctSpec] with Runna
       // get the fields
       fields <- dsa.fieldStore.find(FieldIdentity.name #-> input.fieldNames)
     } yield {
-      val fieldNameTypes = fields.map(_.toNamedType).toSeq
+      val fieldNameTypes = fields.map(_.toNamedTypeAny).toSeq
       val values = jsons.map(_.toValues(fieldNameTypes))
 
       val distinctValues = values.groupBy(identity)

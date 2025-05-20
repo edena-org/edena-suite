@@ -16,7 +16,7 @@
 
 @scaleTypeElement(_scalerType: Option[VectorScalerType.Value]) = {
     <select id="transformType" name="transformType">
-        @VectorScalerType.values.map { transformType =>
+        @VectorScalerType.values.toSeq.map { transformType =>
             <option value="@{transformType}" @if(_scalerType.isDefined && _scalerType.get == transformType) {selected="selected"}>@{transformType}</option>
         }
     </select>

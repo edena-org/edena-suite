@@ -21,6 +21,9 @@ import play.api.libs.json.{JsArray, Json}
 import play.api.libs.mailer.{Email, MailerClient}
 import org.edena.ada.web.util.md5HashPassword
 import scala.concurrent.Future
+import org.edena.ada.web.controllers.routes
+
+import org.edena.core.DefaultTypes.Seq
 
 class UserController @Inject() (
   userRepo: UserStore,

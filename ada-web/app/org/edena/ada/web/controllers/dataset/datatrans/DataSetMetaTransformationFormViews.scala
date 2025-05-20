@@ -19,6 +19,7 @@ import views.html.{layout, datasettrans => view}
 
 import scala.collection.Traversable
 import scala.reflect.runtime.universe.{TypeTag, typeOf}
+import org.edena.core.DefaultTypes.Seq
 
 abstract protected[controllers] class DataSetMetaTransformationFormViews[E <: DataSetMetaTransformation: TypeTag](
   implicit manifest: Manifest[E]

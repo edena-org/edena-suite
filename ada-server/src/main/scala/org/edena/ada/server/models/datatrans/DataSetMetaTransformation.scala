@@ -10,6 +10,7 @@ import org.edena.core.store.StreamSpec
 import play.api.libs.json.{Format, Json}
 import reactivemongo.api.bson.BSONObjectID
 import org.edena.store.json.BSONObjectIDFormat
+import org.edena.core.DefaultTypes.Seq
 
 trait DataSetMetaTransformation extends Schedulable {
   val _id: Option[BSONObjectID]

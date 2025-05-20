@@ -2,7 +2,7 @@ package org.edena.ada.server.runnables.core
 
 import org.edena.ada.server.AdaException
 import reactivemongo.api.bson.BSONObjectID
-import runnables.DsaInputFutureRunnable
+import org.edena.ada.server.runnables.DsaInputFutureRunnable
 import org.edena.store.json.JsObjectIdentity
 
 import scala.concurrent.ExecutionContext.Implicits.global

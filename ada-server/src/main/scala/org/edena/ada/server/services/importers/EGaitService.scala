@@ -24,6 +24,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.concurrent.duration._
 import scala.xml.{Node, XML}
+import org.edena.core.DefaultTypes.Seq
 
 trait EGaitServiceFactory {
   def apply(
@@ -323,7 +324,7 @@ protected[services] class EGaitServiceWSImpl @Inject() (
       val sessionXML = XML.loadString(sessionXmlString)
 
       // collect the kinetic data files (should be exactly two - left and right)
-      val sensorKineticDataMap = fileMap.filterKeys(!_.equals("session.xml")).map { case (name, file) =>
+      val sensorKineticDataMap = fileMap.filter { case (key, _) => !key.equals("session.xml") }.map { case (name, file) =>
         (name, extractKineticData(file).toSeq)
       }
 

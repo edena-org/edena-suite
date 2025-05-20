@@ -12,6 +12,7 @@ import org.edena.core.calc.NoOptionsCalculatorTypePack
 import scala.reflect.runtime.universe._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
+import org.edena.core.DefaultTypes.Seq
 
 trait GroupQuartilesCalcNoOptionsTypePack[G, T] extends NoOptionsCalculatorTypePack {
   type IN = (Option[G], Option[T])

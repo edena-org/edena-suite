@@ -26,6 +26,7 @@ import org.edena.core.calc.CalculatorTypePack
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.concurrent.Future.sequence
+import scala.collection.parallel.CollectionConverters._
 
 @ImplementedBy(classOf[WidgetGenerationServiceImpl])
 trait WidgetGenerationService {
@@ -336,7 +337,7 @@ class WidgetGenerationServiceImpl @Inject() (
     )
 
     // zip the flows
-    val zippedFlow = AkkaStreamUtil.zipNFlows(flows)
+    val zippedFlow = AkkaStreamUtil.zipNFlows[JsObject, Any](flows)
 
     // zip the post flows
 //    val zippedPostFlow =

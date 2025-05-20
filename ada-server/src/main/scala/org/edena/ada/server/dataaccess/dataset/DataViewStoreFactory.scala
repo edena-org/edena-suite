@@ -7,6 +7,7 @@ import org.edena.core.store.Criterion.Infix
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
+import org.edena.core.DefaultTypes.Seq
 
 trait DataViewStoreFactory {
   def apply(dataSetId: String): DataViewStore

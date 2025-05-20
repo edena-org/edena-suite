@@ -3,6 +3,7 @@
 @import views.html.attributeLabel
 @import views.html.elements.bootstrapInput
 @import play.api.data.Form
+@import scala.collection.Seq
 
 @(
     domainName: String,
@@ -20,7 +21,7 @@
 
 @helper.select(
     form(fieldName),
-    options(values :_*),
+    options(values.toList :_*),
     List(
         '_label -> attributeLabel(domainName, fieldName),
         'class -> "form-control"

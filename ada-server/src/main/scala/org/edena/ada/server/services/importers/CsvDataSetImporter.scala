@@ -9,6 +9,7 @@ import org.edena.ada.server.field.inference.FieldTypeInferrerFactory
 
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
+import org.edena.core.DefaultTypes.Seq
 
 private class CsvDataSetImporter extends AbstractDataSetImporter[CsvDataSetImport] {
 

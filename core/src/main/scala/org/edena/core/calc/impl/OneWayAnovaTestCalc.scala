@@ -5,6 +5,7 @@ import org.edena.core.calc.{Calculator, NoOptionsCalculatorTypePack}
 import org.edena.core.calc.CommonsMathUtil._
 import org.edena.core.calc.CalculatorHelper._
 import org.slf4j.LoggerFactory
+import org.edena.core.DefaultTypes.Seq
 
 trait OneWayAnovaTestCalcTypePack[G] extends NoOptionsCalculatorTypePack{
   type IN = (G, Option[Double])
@@ -106,7 +107,7 @@ trait OneWayAnovaHelper {
       Some(result(1d))
     else {
       val beta = regularizedBeta((dfbg * FValue) / (resultAux.dfwg + dfbg * FValue), 0.5 * dfbg, 0.5 * resultAux.dfwg, epsilon, Integer.MAX_VALUE)
-      beta.map(beta => result((1d - beta).doubleValue()))
+      beta.map(beta => result((1d - beta).doubleValue))
     }
   }
 

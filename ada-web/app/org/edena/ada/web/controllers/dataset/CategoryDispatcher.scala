@@ -5,6 +5,8 @@ import org.edena.core.FilterCondition
 import play.api.mvc.ControllerComponents
 import reactivemongo.api.bson.BSONObjectID
 
+import org.edena.core.DefaultTypes.Seq
+
 class CategoryDispatcher @Inject()(
   val dscf: DataSetControllerFactory,
   factory: CategoryControllerFactory,

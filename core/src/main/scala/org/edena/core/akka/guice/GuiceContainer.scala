@@ -20,7 +20,7 @@ trait GuiceContainer {
   protected def instance[T: Manifest] = injector.instance[T]
 
   protected def result[T](future: Future[T]) =
-    Await.result(future, 100 minutes)
+    Await.result(future, 100.minutes)
 
   protected def terminate: Unit = {
     val system = instance[ActorSystem]

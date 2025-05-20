@@ -15,6 +15,7 @@ import play.api.libs.json.Format
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.reflect.runtime.universe.{TypeTag, typeOf}
 import scala.reflect.ClassTag
+import org.edena.core.DefaultTypes.Seq
 
 class CacheCrudStore[ID, E: TypeTag](
     cache: IgniteCache[ID, E],
@@ -61,7 +62,7 @@ class CacheCrudStore[ID, E: TypeTag](
   }
 
   private def constructorOrException(fieldNames: Seq[String]) =
-    constructorFinder(fieldNames).getOrElse{
+    constructorFinder(fieldNames.toSeq).getOrElse{
       throw new EdenaDataStoreException(s"No constructor of the class '${constructorFinder.classSymbol.fullName}' matches the query result fields '${fieldNames.mkString(", ")}'. Adjust your query or introduce an appropriate constructor.")
     }
 }

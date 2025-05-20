@@ -10,6 +10,7 @@ import json2bson.{toDocumentReader, toDocumentWriter}
 import reactivemongo.api.bson.{BSONDocument, BSONValue}
 
 import scala.concurrent.Future
+import org.edena.core.DefaultTypes.Seq
 
 class MongoCrudStore[E: Format, ID: Format](
   collectionName : String)(
@@ -79,10 +80,8 @@ class MongoCrudStore[E: Format, ID: Format](
 
     def toAggregateSort(sorts: Seq[store.Sort]) =
       sorts.map {
-        _ match {
-          case AscSort(fieldName) => Ascending(fieldName)
-          case DescSort(fieldName) => Descending(fieldName)
-        }
+        case AscSort(fieldName) => Ascending(fieldName)
+        case DescSort(fieldName) => Descending(fieldName)
       }
 
     def toGroupFunction(functionName: String, values: Seq[Any]): GroupFunction =
@@ -104,13 +103,15 @@ class MongoCrudStore[E: Format, ID: Format](
       jsonRootCriteria.map(Match(_)),                                 // $match
       unwindFieldName.map(Unwind(_)),                                 // $unwind
       jsonSubCriteria.map(Match(_)),                                  // $match
-      sort.headOption.map(_ => AggSort(toAggregateSort(sort): _ *)),  // $sort
+      sort.headOption.map(_ => AggSort(
+        toAggregateSort(sort).toList: _ *
+      )),  // $sort
       skip.map(Skip(_)),                                              // $skip
       limit.map(Limit(_)),                                            // $limit
       idGroup.map(id => Group(id.as[BSONValue])(                      // $group
         groups.map { case (name, functionName, values) =>
           name -> toGroupFunction(functionName, values)
-        }: _*
+        }.toList: _*
       ))
     ).flatten
 

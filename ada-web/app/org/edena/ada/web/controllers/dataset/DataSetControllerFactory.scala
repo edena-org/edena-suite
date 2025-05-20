@@ -14,7 +14,7 @@ import play.api.{Configuration, Logger}
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 
 import scala.concurrent.{Await, duration}
-import scala.reflect.ClassTag
+import org.edena.core.DefaultTypes.Seq
 
 @ImplementedBy(classOf[DataSetControllerFactoryImpl])
 trait DataSetControllerFactory {

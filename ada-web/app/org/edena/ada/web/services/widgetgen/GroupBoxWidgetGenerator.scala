@@ -6,6 +6,8 @@ import org.edena.ada.server.models.{BoxWidgetSpec, Field}
 import org.edena.core.calc.impl.GroupQuartilesCalcNoOptionsTypePack
 import org.edena.core.calc.impl._
 
+import org.edena.core.DefaultTypes.Seq
+
 object GroupBoxWidgetGenerator extends CalculatorWidgetGenerator[BoxWidgetSpec, BoxWidget[Any], GroupQuartilesCalcNoOptionsTypePack[Any, Any]]
   with NoOptionsCalculatorWidgetGenerator[BoxWidgetSpec] {
 

@@ -9,6 +9,8 @@ import reactivemongo.api.bson.BSONDocument
 import reactivemongo.play.json.compat._
 import reactivemongo.play.json.compat.json2bson.toDocumentWriter
 
+import org.edena.core.DefaultTypes.Seq
+
 protected[mongo] class MongoSaveStore[E: Format, ID: Format](
   collectionName : String)(
   implicit identity: Identity[E, ID]

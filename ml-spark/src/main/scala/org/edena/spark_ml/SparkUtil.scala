@@ -13,10 +13,11 @@ import org.edena.spark_ml.transformers.{FixedOrderStringIndexer, SchemaUnchanged
 import scala.collection.mutable.ArrayBuilder
 import scala.io.BufferedSource
 import scala.util.Random
+import org.edena.core.DefaultTypes.Seq
 
 object SparkUtil {
 
-  import scala.collection.JavaConversions._
+  import scala.jdk.CollectionConverters._
   import java.util.stream.Collectors.toList
 
   def transposeVectors(
@@ -47,7 +48,7 @@ object SparkUtil {
     }
 
     val columnTypes = columnNames.map(columnName => df.schema(columnName))
-    session.createDataFrame(rows, StructType(columnTypes.toSeq))
+    session.createDataFrame(rows.asJava, StructType(columnTypes.toSeq))
   }
 
   // adapted from org.apache.spark.ml.feature.VectorAssembler.assemble
@@ -204,7 +205,7 @@ object SparkUtil {
     import session.sqlContext.implicits._
 
     val lines = src.mkString.stripMargin.lines.collect(toList())
-    val csvData: Dataset[String] = session.sparkContext.parallelize(lines).toDS()
+    val csvData: Dataset[String] = session.sparkContext.parallelize(lines.asScala.toSeq).toDS()
     session.read.option("header", header).option("inferSchema", true).csv(csvData)
   }
 }

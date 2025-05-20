@@ -9,6 +9,8 @@ import org.edena.play.formatters.JsonFormatter
 import play.api.data.Forms._
 import views.html.{datasettrans => view}
 
+import scala.collection.immutable.{Seq => ImutSeq}
+
 object ChangeFieldTypesFormViews extends DataSetTransformationFormViews[ChangeFieldTypesDataSetTransformation] {
 
   private implicit val fieldTypeFormat = EnumFormat(FieldTypeId)
@@ -18,7 +20,7 @@ object ChangeFieldTypesFormViews extends DataSetTransformationFormViews[ChangeFi
   override protected val extraMappings =
     Seq(
       // TODO: ugly.. map directly to Field
-      "newFields" -> seq(of[(String, String, FieldTypeId.Value)]).transform[Seq[Field]](
+      "newFields" -> seq(of[(String, String, FieldTypeId.Value)]).transform[ImutSeq[Field]](
         _.map { case (name, label, fieldType) => Field(name, Some(label), fieldType)},
         _.map { field: Field => (field.name, field.label.getOrElse(""), field.fieldType) }
       )

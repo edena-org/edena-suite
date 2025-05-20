@@ -6,6 +6,7 @@ import org.edena.ada.server.models.datatrans.ChangeFieldTypesDataSetTransformati
 import play.api.libs.json.{JsObject, JsReadable, JsValue}
 
 import scala.concurrent.ExecutionContext.Implicits.global
+import org.edena.core.DefaultTypes.Seq
 
 /**
   * Transformer that changes field types of a given data set defined by an attribute `newFields` of [[ChangeFieldTypesDataSetTransformation]] spec.

@@ -17,6 +17,7 @@ import reactivemongo.api.bson.BSONObjectID
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
+import org.edena.core.DefaultTypes.Seq
 
 trait DataSetAccessorFactory extends InitializableCache[String, DataSetAccessor] {
 

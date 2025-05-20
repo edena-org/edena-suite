@@ -4,6 +4,7 @@ import org.edena.ada.server.models.datatrans.MergeFullyMultiDataSetsTransformati
 import org.edena.play.controllers.WebContext
 import play.api.data.Forms.{nonEmptyText, seq}
 import views.html.{datasettrans => view}
+import org.edena.core.DefaultTypes.Seq
 
 object MergeFullyMultiDataSetsFormViews extends DataSetTransformationFormViews[MergeFullyMultiDataSetsTransformation] {
 

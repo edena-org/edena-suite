@@ -55,7 +55,7 @@ protected[services] abstract class SchedulerImpl[IN <: Schedulable, ID] (
   protected val logger = LoggerFactory getLogger getClass.getName
 
   // schedule initial execs after five seconds
-  system.scheduler.scheduleOnce(5 seconds) {
+  system.scheduler.scheduleOnce(5.seconds) {
     init.recover {
       case e: Exception => logger.error(s"Initial $execName scheduling failed due to: ${e.getMessage}.")
     }
@@ -111,7 +111,7 @@ protected[services] abstract class SchedulerImpl[IN <: Schedulable, ID] (
   ) = {
     val delayAndInterval = scheduledTime.periodicityInMinutes.map { periodicityInMinutes =>
       val initDelay = scheduledTime.periodicityOffsetInMinutes.getOrElse(0)
-      (initDelay minutes, periodicityInMinutes minutes)
+      (initDelay.minutes, periodicityInMinutes.minutes)
     }.getOrElse(
       toDelayAndInterval(
         scheduledTime.weekDay,
@@ -177,6 +177,6 @@ protected[services] abstract class SchedulerImpl[IN <: Schedulable, ID] (
       } else
         timeDiffMs
 
-    (initialDelayMs millis, interval)
+    (initialDelayMs.millis, interval)
   }
 }

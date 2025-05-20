@@ -110,7 +110,7 @@ object GenericJson {
 //        new OptionFormat[Any]
 
       // seq
-      case t if t subMatches typeOf[Seq[_]] =>
+      case t if t subMatches typeOf[scala.collection.Seq[_]] =>
         val typeArgs = t.typeArgs
         val innerFormat = genericFormat(typeArgs(0), mirror)
         val writesSeq = Writes.seq[Any](innerFormat)

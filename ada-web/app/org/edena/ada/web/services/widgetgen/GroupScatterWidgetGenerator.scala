@@ -7,6 +7,7 @@ import org.edena.ada.web.util.{fieldLabel, shorten}
 import org.edena.core.calc.impl._
 
 import scala.reflect.runtime.universe._
+import org.edena.core.DefaultTypes.Seq
 
 private class GroupScatterWidgetGenerator[T1, T2](
     implicit inputTypeTag: TypeTag[GroupTupleCalcTypePack[String, T1, T2]#IN]

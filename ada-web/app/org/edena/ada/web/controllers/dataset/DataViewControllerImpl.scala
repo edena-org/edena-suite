@@ -38,6 +38,7 @@ import views.html.{dataview => view}
 
 import scala.concurrent.Future
 import scala.reflect.ClassTag
+import org.edena.core.DefaultTypes.Seq
 
 trait DataViewControllerFactory {
   def apply(dataSetId: String): DataViewController

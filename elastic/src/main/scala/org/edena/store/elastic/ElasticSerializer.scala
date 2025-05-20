@@ -28,7 +28,7 @@ trait ElasticSerializer[E] {
   ): Traversable[E] = {
     val hits = response.hits.hits
 
-    hits.flatMap { searchHit =>
+    hits.toSeq.flatMap { searchHit =>
       if (searchHit.exists) {
         Some(serializeSearchHit(searchHit))
       } else {
@@ -48,7 +48,7 @@ trait ElasticSerializer[E] {
     projection: Seq[String],
     results: Array[SearchHit]
   ): Traversable[E] =
-    results.flatMap { searchHit =>
+    results.toSeq.flatMap { searchHit =>
       if (searchHit.exists) {
         Some(serializeProjectionSearchHit(projection, searchHit))
       } else {

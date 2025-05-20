@@ -7,6 +7,7 @@ import org.edena.core.store.Criterion._
 import reactivemongo.api.bson.BSONObjectID
 
 import scala.concurrent.ExecutionContext.Implicits.global
+import org.edena.core.DefaultTypes.Seq
 
 /**
   * Adds permissions to access all data sets with full rights under a given data space (only level children only)

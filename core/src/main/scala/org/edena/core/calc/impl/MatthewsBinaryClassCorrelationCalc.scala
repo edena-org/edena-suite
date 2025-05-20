@@ -4,6 +4,8 @@ import akka.stream.scaladsl.{Flow, Sink}
 import org.edena.core.calc.{Calculator, CalculatorTypePack}
 import org.edena.core.util.GrouppedVariousSize
 import org.slf4j.LoggerFactory
+import scala.collection.parallel.CollectionConverters._
+import org.edena.core.DefaultTypes.Seq
 
 trait MatthewsBinaryClassCorrelationCalcTypePack extends CalculatorTypePack {
   type IN = Seq[Option[Boolean]]

@@ -6,6 +6,7 @@ import org.edena.ada.server.models.Field
 import org.edena.core.field.FieldTypeId
 import play.api.libs.json.{JsObject, JsReadable, Json}
 
+import org.edena.core.DefaultTypes.Seq
 import scala.reflect.ClassTag
 
 object JsonFieldUtil {

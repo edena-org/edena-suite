@@ -2,11 +2,14 @@ package org.edena.play.formatters
 
 import play.api.data.FormError
 import play.api.data.format.Formatter
+import org.edena.core.DefaultTypes.Seq
 
-trait AbstractSeqFormatter[T] extends Formatter[Seq[T]] {
+import scala.collection.immutable.{ Seq => ImutSeq }
+
+trait AbstractSeqFormatter[T] extends Formatter[ImutSeq[T]] {
 
   protected val delimiter: String = ","
-  protected val fromStrings: Seq[String] => Seq[T]
+  protected val fromStrings: ImutSeq[String] => ImutSeq[T]
   protected val valToString: T => String
 
   def bind(key: String, data: Map[String, String]) =
@@ -24,6 +27,6 @@ trait AbstractSeqFormatter[T] extends Formatter[Seq[T]] {
       case e: Exception => Left(List(FormError(key, e.getMessage)))
     }
 
-  def unbind(key: String, list: Seq[T]) =
+  def unbind(key: String, list: ImutSeq[T]) =
     Map(key -> list.map(valToString).mkString(s"$delimiter "))
 }

@@ -4,6 +4,7 @@ import akka.stream.scaladsl.Flow
 import org.edena.core.calc.impl.UniqueDistributionCountsCalc.UniqueDistributionCountsCalcTypePack
 import org.edena.core.calc.{Calculator, NoOptionsCalculatorTypePack}
 import org.edena.core.akka.AkkaStreamUtil.{countFlow, seqFlow}
+import org.edena.core.DefaultTypes.Seq
 
 trait CumulativeOrderedCountsCalcTypePack[T] extends NoOptionsCalculatorTypePack {
   type IN = Option[T]

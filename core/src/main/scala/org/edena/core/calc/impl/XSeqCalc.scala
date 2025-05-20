@@ -4,6 +4,7 @@ import akka.stream.scaladsl.Flow
 import org.edena.core.calc.NoOptionsCalculatorTypePack
 import org.edena.core.calc.{Calculator, NoOptionsCalculatorTypePack}
 import org.edena.core.akka.AkkaStreamUtil._
+import org.edena.core.DefaultTypes.Seq
 
 trait XSeqCalcTypePack[T] extends NoOptionsCalculatorTypePack {
   type IN = Seq[Option[T]]

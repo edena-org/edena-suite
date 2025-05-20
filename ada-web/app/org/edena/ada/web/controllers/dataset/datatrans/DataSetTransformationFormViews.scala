@@ -14,6 +14,7 @@ import reactivemongo.api.bson.BSONObjectID
 import views.html.{datasettrans => view}
 
 import scala.reflect.runtime.universe.{TypeTag, typeOf}
+import org.edena.core.DefaultTypes.Seq
 
 abstract protected[controllers] class DataSetTransformationFormViews[E <: DataSetTransformation: TypeTag](
   implicit manifest: Manifest[E]

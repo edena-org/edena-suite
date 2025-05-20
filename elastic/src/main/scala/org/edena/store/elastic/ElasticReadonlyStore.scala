@@ -13,6 +13,7 @@ import akka.NotUsed
 import akka.actor.ActorSystem
 import akka.stream.Materializer
 import akka.stream.scaladsl.Source
+import com.sksamuel.elastic4s.requests.TypesApi
 import com.sksamuel.elastic4s.requests.searches.SearchRequest
 import com.sksamuel.elastic4s.requests.searches.queries.term.{TermQuery, TermsQuery}
 import com.sksamuel.elastic4s.requests.searches.sort.{FieldSort, SortOrder}
@@ -25,6 +26,7 @@ import com.sksamuel.elastic4s.{ElasticDsl, HttpClient}
 import com.sksamuel.elastic4s.requests.common.{RefreshPolicy => ElasticRefreshPolicy}
 import org.edena.core.store.ValueMapAux.ValueMap
 import org.reactivestreams.Publisher
+import org.edena.core.DefaultTypes.Seq
 
 /**
   * Basic (abstract) ready-only repo for searching and counting of documents in Elastic Search.
@@ -45,7 +47,8 @@ abstract class ElasticReadonlyStore[E, ID](
   val setting: ElasticSetting
 ) extends ReadonlyStore[E, ID]
   with ElasticSerializer[E]
-  with ElasticDsl {
+  with ElasticHandlers
+  with TypesApi {
 
   protected val index = Index(indexName)
   protected val unboundLimit = Integer.MAX_VALUE
@@ -266,7 +269,7 @@ abstract class ElasticReadonlyStore[E, ID](
         // criteria
         (
           query.isDefined || additionalQueryDef.isDefined,
-          (_: SearchRequest) bool must (query ++ additionalQueryDef)
+          (_: SearchRequest) bool ElasticDsl.must (query ++ additionalQueryDef)
         ),
 
         // projection
@@ -298,7 +301,7 @@ abstract class ElasticReadonlyStore[E, ID](
         )
       )
 
-    searchDefs.foldLeft(search(index)) {
+    searchDefs.foldLeft(ElasticDsl.search(index)) {
       case (sd, (cond, createNewDef)) =>
         if (cond) createNewDef(sd) else sd
     }
@@ -317,13 +320,13 @@ abstract class ElasticReadonlyStore[E, ID](
       case c: And =>
         c.criteria.flatMap(toQuery) match {
           case Nil => None
-          case queries => Some(must(queries))
+          case queries => Some(ElasticDsl.must(queries))
         }
 
       case c: Or =>
         c.criteria.flatMap(toQuery) match {
           case Nil => None
-          case queries => Some(should(queries))
+          case queries => Some(ElasticDsl.should(queries))
         }
 
       case NoCriterion => None
@@ -415,7 +418,7 @@ abstract class ElasticReadonlyStore[E, ID](
       ElasticDsl.createIndex(indexName)
         .shards(setting.shards)
         .replicas(setting.replicas)
-        .mapping(properties(fieldDefs.toSeq))
+        .mapping(ElasticDsl.properties(fieldDefs.toSeq))
         .indexSetting("max_result_window", unboundLimit)
         .indexSetting("mapping.total_fields.limit", setting.indexFieldsLimit)
 //        .indexSetting("mapping.single_type", setting.indexSingleTypeMapping) // indexSetting("_all", false)
@@ -429,7 +432,7 @@ abstract class ElasticReadonlyStore[E, ID](
 
   protected def existsIndex: Future[Boolean] =
     client execute {
-      indexExists(indexName)
+      ElasticDsl.indexExists(indexName)
     } map { response =>
       val result = getResultOrError(response, "existsIndex")
 
@@ -445,7 +448,7 @@ abstract class ElasticReadonlyStore[E, ID](
         } yield
           ()
       },
-      30 seconds
+      30.seconds
     )
 
   protected def handleExceptions[A]: PartialFunction[Throwable, A] = {

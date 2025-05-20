@@ -9,6 +9,8 @@ import org.edena.core.calc.CalculatorHelperExt._
 import org.edena.core.calc.CalculatorHelper._
 import org.edena.core.calc.NoOptionsCalculatorTypePack
 
+import org.edena.core.DefaultTypes.Seq
+
 trait FieldTypeInferrerTypePack[T] extends NoOptionsCalculatorTypePack {
   type IN = T
   type OUT = FieldType[_]

@@ -10,6 +10,8 @@ import play.api.libs.functional.syntax._
 import reactivemongo.api.bson.BSONObjectID
 import org.edena.store.json.BSONObjectIDFormat
 
+import org.edena.core.DefaultTypes.Seq
+
 case class Filter(
   _id: Option[BSONObjectID] = None,
   name: Option[String] = None,

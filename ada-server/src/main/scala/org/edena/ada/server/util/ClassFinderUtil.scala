@@ -4,7 +4,7 @@ import java.lang.reflect.Modifier
 import org.reflections.Reflections
 
 import scala.reflect.ClassTag
-import scala.collection.JavaConversions.asScalaSet
+import scala.jdk.CollectionConverters._
 
 object ClassFinderUtil {
 
@@ -16,7 +16,7 @@ object ClassFinderUtil {
     val reflections = packageName.map(new Reflections(_)).getOrElse(new Reflections())
     val clazz = m.runtimeClass
 
-    val classes = reflections.getSubTypesOf(clazz).filter(currentClazz =>
+    val classes = reflections.getSubTypesOf(clazz).asScala.filter(currentClazz =>
       !currentClazz.isPrimitive && !Modifier.isAbstract(currentClazz.getModifiers) && !currentClazz.isInterface
     ).map(_.asInstanceOf[Class[T]])
 

@@ -156,11 +156,12 @@ private class DynamicConstructorImpl[E](
       None
     else {
       val newValues: scala.collection.mutable.Seq[Any] = scala.collection.mutable.ArraySeq(constructorValues:_*)
+
       (fieldConstructorIndeces, valuesInOrder).zipped.map{ (index, value) =>
         newValues.update(index, value)
       }
       Some(
-        constructor(newValues: _*).asInstanceOf[E]
+        constructor(newValues.toSeq: _*).asInstanceOf[E]
       )
     }
 }

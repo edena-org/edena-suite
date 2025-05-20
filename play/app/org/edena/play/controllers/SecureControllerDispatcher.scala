@@ -7,6 +7,7 @@ import play.api.routing.Router.Attrs._
 import org.edena.play.security.SecurityUtil.toAuthenticatedAction
 
 import scala.collection.mutable.{Map => MMap}
+import org.edena.core.DefaultTypes.Seq
 
 /**
   * Controller dispatcher secured by the Deadbolt.

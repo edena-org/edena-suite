@@ -19,6 +19,7 @@ import views.html.{datasetimport => view}
 
 import scala.collection.Traversable
 import scala.reflect.runtime.universe.{TypeTag, typeOf}
+import org.edena.core.DefaultTypes.Seq
 
 abstract protected[controllers] class DataSetImportFormViews[E <: DataSetImport: TypeTag](
   implicit manifest: Manifest[E]

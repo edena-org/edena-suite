@@ -9,6 +9,7 @@ import org.edena.core.field.FieldTypeId
 import org.edena.core.calc.impl._
 
 import scala.reflect.runtime.universe._
+import org.edena.core.DefaultTypes.Seq
 
 private class GroupLineWidgetGenerator[G: TypeTag]
   extends CalculatorWidgetGenerator[XLineWidgetSpec, LineWidget[Any, Any], GroupXOrderedSeqCalcTypePack[G, Any]]

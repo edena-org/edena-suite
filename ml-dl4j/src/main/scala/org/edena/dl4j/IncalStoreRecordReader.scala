@@ -26,8 +26,8 @@ import org.edena.core.store.{ReadonlyStore, Criterion, Sort}
 import org.edena.core.field.{FieldTypeId, FieldTypeSpec}
 import org.nd4j.linalg.factory.Nd4j
 
-import scala.collection.JavaConversions._
 import scala.collection.Traversable
+import scala.jdk.CollectionConverters._
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 
@@ -43,7 +43,7 @@ class IncalStoreRecordReader[ID](
 ) extends BaseRecordReader {
 
   protected implicit val ec = materializer.executionContext
-  protected val waitTime = 10 minutes
+  protected val waitTime = 10.minutes
 
   private var stream: Stream[ValueMap] = initStream
 
@@ -143,7 +143,7 @@ class IncalStoreRecordReader[ID](
   override def loadFromMetaData(
     recordMetaDatas: util.List[RecordMetaData]
   ): util.List[Record] = {
-    val idRecordMetaDatas = recordMetaDatas.map { recordMetaData =>
+    val idRecordMetaDatas = recordMetaDatas.asScala.map { recordMetaData =>
       recordMetaData match {
         case e: IncalStoreRecordMetaData[ID] => (e.id, e)
         case _ =>
@@ -159,27 +159,25 @@ class IncalStoreRecordReader[ID](
       println("Load from meta data called: " + ids.mkString(", "))
 
     val recordsFuture = repo.findAsValueMap(
-      idFieldName #-> ids,
+      idFieldName #-> ids.toSeq,
       projection = Seq(idFieldName)
     ).map { results =>
       results.toSeq.map { valueMap =>
         val id = getId(valueMap)
         val metaData = idRecordMetaDataMap.get(id).getOrElse(throw new EdenaException(s"Meta data for id '${id}' not found."))
-        new RecordImpl(toWritable(valueMap), metaData)
+        new RecordImpl(toWritable(valueMap), metaData): Record
       }
     }
 
     val records = Await.result(recordsFuture, waitTime)
-    seqAsJavaList(records)
+    records.asJava
   }
 
   private def toWritable(valueMap: ValueMap): util.List[Writable] = {
     val writables = fieldsInOrder.toSeq.map { case (fieldName, fieldTypeSpec) =>
-      val value = valueMap.get(fieldName).getOrElse(
-        throw new EdenaException(s"Field '${fieldName}' unknown. Available fields: ${valueMap.keySet.mkString(", ")}.")
-      )
+      val value = valueMap.getOrElse(fieldName, throw new EdenaException(s"Field '${fieldName}' unknown. Available fields: ${valueMap.keySet.mkString(", ")}."))
 
-      value.map { value =>
+      val writable: Writable = value.map { value =>
         import FieldTypeId._
 
         //        println(s"${fieldName} (${fieldTypeSpec}) : ${value} (${value.getClass.getName})" )
@@ -249,9 +247,11 @@ class IncalStoreRecordReader[ID](
       }.getOrElse(
         new NullWritable
       )
+
+      writable
     }
 
-    seqAsJavaList(writables)
+    writables.asJava
   }
 
   protected def getId(valueMap: ValueMap) =

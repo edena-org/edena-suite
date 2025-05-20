@@ -19,6 +19,8 @@ import org.edena.core.util.ConfigImplicits._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
+import org.edena.core.DefaultTypes.Seq
+import scala.collection.parallel.CollectionConverters._
 
 private class SynapseDataSetImporter @Inject() (
     synapseServiceFactory: SynapseServiceFactory,
@@ -315,11 +317,11 @@ private class SynapseDataSetImporter @Inject() (
     val newTypeSpec = newType.spec
 
     if (oldTypeSpec.fieldType == FieldTypeId.Enum && newTypeSpec.fieldType == FieldTypeId.Enum) {
-        val newValues = newTypeSpec.enumValues.map(_._2).toBuffer
-        val oldValues = oldTypeSpec.enumValues.map(_._2)
+        val newValues = newTypeSpec.enumValues.values.toBuffer
+        val oldValues = oldTypeSpec.enumValues.values.toSeq
 
-        val extraValues = newValues.--(oldValues).sorted
-        val maxKey = oldTypeSpec.enumValues.map(_._1).max
+        val extraValues = newValues.diff(oldValues).sorted
+        val maxKey = oldTypeSpec.enumValues.keys.max
         val extraEnumMap = extraValues.zipWithIndex.map { case (value, index) => (maxKey + index + 1, value)}
 
         val mergedFieldTypeSpec = oldTypeSpec.copy(enumValues = oldTypeSpec.enumValues ++ extraEnumMap)

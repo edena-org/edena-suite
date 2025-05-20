@@ -30,6 +30,9 @@ import org.edena.spark_ml.models.TreeCore
 import org.edena.spark_ml.models.classification._
 import play.api.mvc.ControllerComponents
 
+import org.edena.core.DefaultTypes.Seq
+import scala.collection.immutable.{ Seq => ImutSeq }
+
 class ClassifierController @Inject()(
   repo: ClassifierStore,
   dataSpaceService: DataSpaceService,
@@ -72,7 +75,7 @@ class ClassifierController @Inject()(
       "standardization" -> optional(boolean),
       "aggregationDepth" -> of[ValueOrSeq[Int]],
       "threshold" -> of[ValueOrSeq[Double]],
-      "thresholds" -> optional(of[Seq[Double]]),
+      "thresholds" -> optional(of[ImutSeq[Double]]),
       "name" -> optional(nonEmptyText),
       "createdById" -> ignored(Option.empty[BSONObjectID]),
       "timeCreated" -> ignored(new Date())

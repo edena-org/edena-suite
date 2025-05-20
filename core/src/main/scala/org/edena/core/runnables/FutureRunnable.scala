@@ -10,7 +10,7 @@ import scala.concurrent.{Await, Future}
   */
 trait FutureRunnable extends Runnable {
 
-  protected val timeout = 100 hours
+  protected val timeout = 100.hours
 
   def runAsFuture: Future[Unit]
 

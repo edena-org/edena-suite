@@ -13,6 +13,7 @@ import play.api.libs.json.JsObject
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.reflect.runtime.universe._
+import org.edena.core.DefaultTypes.Seq
 
 protected trait OrderedAnyExecAdapter[F, X[T] <: CalculatorTypePack] extends CalculatorExecutor[X[Any], F] {
 

@@ -10,7 +10,8 @@ import org.edena.ada.server.models.{LdapUser, UserGroup}
 import org.edena.ada.server.services.ldap.LDAPInterfaceFactory.{getClass, _}
 import org.slf4j.LoggerFactory
 
-import scala.collection.JavaConversions._
+import org.edena.core.DefaultTypes.Seq
+import scala.jdk.CollectionConverters._
 
 @ImplementedBy(classOf[LdapServiceImpl])
 trait LdapService {
@@ -42,7 +43,10 @@ protected class LdapServiceImpl @Inject()(
       val memberFilter: Seq[Filter] = settings.groups.map{ groupname =>
         Filter.createEqualityFilter("memberof", groupname)
       }
-      Filter.createANDFilter(Filter.createORFilter(memberFilter), personFilter)
+      Filter.createANDFilter(
+        Filter.createORFilter(memberFilter.asJava),
+        personFilter
+      )
     } else
       personFilter
 
@@ -226,7 +230,7 @@ protected class LdapServiceImpl @Inject()(
     request: SearchRequest
   ): Traversable[Entry] =
     try {
-      interface.search(request).getSearchEntries
+      interface.search(request).getSearchEntries.asScala
     } catch {
       case e: Throwable => Nil
     }

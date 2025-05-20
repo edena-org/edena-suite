@@ -4,6 +4,8 @@ import org.edena.core.FilterCondition
 import org.edena.play.controllers.CrudController
 import play.api.mvc.{Action, AnyContent}
 
+import org.edena.core.DefaultTypes.Seq
+
 trait DictionaryController extends CrudController[String] {
 
   def updateLabel(id: String, label: String): Action[AnyContent]

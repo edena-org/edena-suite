@@ -6,6 +6,7 @@ import org.edena.core.util.GroupMapList3
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
+import org.edena.core.DefaultTypes.Seq
 
 /**
   * Transformer that changes values of given enum fields defined by triples `fieldNameOldNewEnums` of [[ChangeFieldEnumsTransformation]] -

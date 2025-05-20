@@ -1,5 +1,7 @@
 package org.edena.core.store
 
+import org.edena.core.DefaultTypes.Seq
+
 /**
   * Criterion to search by, such as "equals", "in", "<", and ">".
   */

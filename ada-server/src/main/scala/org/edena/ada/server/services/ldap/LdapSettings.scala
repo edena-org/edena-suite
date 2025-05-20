@@ -47,7 +47,7 @@ class LdapSettings @Inject()(configuration: Config) {
 
   val recursiveDitAuthenticationSearch = conf(_.optionalBoolean(_),"recursiveDitAuthenticationSearch", false)
 
-  def listAll: Seq[(String, Any)] = settings.map { case (path, value) => ("ldap." + path, value) }
+  def listAll: Seq[(String, Any)] = settings.map { case (path, value) => ("ldap." + path, value) }.toSeq
 
   private def conf[T](fun: (Config, String) => Option[T], path: String, default: T): T = {
     val value = fun(configuration, "ldap." + path).getOrElse(default)

@@ -7,7 +7,7 @@ description := "Spark ML library extension primarily for the temporal domain wit
 
 isSnapshot := false
 
-scalaVersion := "2.12.15" // "2.11.12"
+// scalaVersion := "2.12.15" // "2.11.12"
 
 resolvers ++= Seq(
   Resolver.mavenLocal

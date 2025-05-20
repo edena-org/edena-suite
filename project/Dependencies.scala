@@ -22,8 +22,9 @@ object Dependencies {
     val akkaHttp = "10.1.10" // originally "10.0.14"
 
     // SPARK
-    val spark = "2.4.7" // Spark 3 is JDK 11 compatible, should upgrade (the latest version is 3.2.1)
-    val bnd = "0.7.3" // "0.7.3.RC.1"
+    val spark = "3.2.1"// "2.4.7"
+//    val spark = "2.4.7" // Spark 3 is JDK 11 compatible, should upgrade (the latest version is 3.2.1)
+    val bnd = "0.7.3.RC.1" // "0.7.3" //
 
     // IGNITE
     val ignite = "2.4.0" //  "2.14.0" - uses JDK 17
@@ -36,9 +37,11 @@ object Dependencies {
     // ADA-WEB
     val playMongo = "1.1.0.play27-RC12"
     val play = "2.7.9"
-    val playMailer = "6.0.1"
+    val playMailer = "7.0.2" // "6.0.1"
     val playPac4j = "9.0.2"
     val pac4jOidc = "4.1.0"
     val jackson = "2.9.9"
+    val scalazCore = "7.2.36" // originally "7.2.24"
+    val scalatestplusPlay = "4.0.3" // originally "3.1.2"
   }
 }

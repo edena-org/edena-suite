@@ -5,6 +5,7 @@ import org.edena.core.calc.{Calculator, CalculatorTypePack}
 
 import scala.collection.mutable
 import scala.math.BigDecimal.RoundingMode
+import org.edena.core.DefaultTypes.Seq
 
 trait AllDefinedNumericDistributionCountsCalcTypePack extends CalculatorTypePack {
   type IN = Double
@@ -53,7 +54,7 @@ private class AllDefinedNumericDistributionCountsCalc extends Calculator[AllDefi
     val max = options.max
 
     Flow[IN].fold[INTER](
-      mutable.ArraySeq(Seq.fill(options.binCount)(0) :_*)
+      mutable.ArraySeq.fill(options.binCount)(0)
     ) { case (array, value) =>
       val index = calcBucketIndex(
         stepSize, options.binCount, minBg, max)(value)

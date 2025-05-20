@@ -69,6 +69,8 @@ import play.api.mvc.{AnyContent, Call, ControllerComponents, Request, Result}
 
 import scala.math.Ordering.Implicits._
 import scala.concurrent.{Future, TimeoutException}
+import scala.language.postfixOps
+import org.edena.core.DefaultTypes.Seq
 
 trait GenericDataSetControllerFactory {
   def apply(dataSetId: String): DataSetController

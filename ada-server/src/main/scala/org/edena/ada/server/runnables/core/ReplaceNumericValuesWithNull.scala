@@ -4,7 +4,7 @@ import akka.stream.{ActorMaterializer, OverflowStrategy}
 import akka.stream.scaladsl.Sink
 import org.edena.core.field.FieldTypeId
 import play.api.libs.json.{JsObject, _}
-import runnables.DsaInputFutureRunnable
+import org.edena.ada.server.runnables.DsaInputFutureRunnable
 import org.edena.core.store.Criterion.Infix
 import org.edena.ada.server.field.FieldUtil.{FieldOps, JsonFieldOps, NamedFieldType}
 import akka.actor.ActorSystem

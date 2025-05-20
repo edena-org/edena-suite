@@ -14,6 +14,7 @@ import play.api.libs.json.{JsObject, JsReadable, JsValue}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
+import org.edena.core.DefaultTypes.Seq
 
 /**
   * Transformer that infers field types (e.g., Integer, Double, and String) from a given data set, re-parse all the values using the inferred types,

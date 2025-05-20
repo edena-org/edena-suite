@@ -3,6 +3,8 @@ package org.edena.ada.web.controllers
 import play.api.mvc.PathBindable
 import reactivemongo.api.bson._
 
+import org.edena.core.DefaultTypes.Seq
+
 /** Instances of [[https://www.playframework.com/documentation/2.4.0/api/scala/index.html#play.api.mvc.PathBindable Play PathBindable]] for the ReactiveMongo types. */
 object PathBindables {
   implicit object BSONBooleanPathBindable extends PathBindable[BSONBoolean] {

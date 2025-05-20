@@ -21,7 +21,9 @@ import org.edena.store.json.BSONObjectIDFormat
 
 import javax.inject.Inject
 import scala.collection.Set
+import org.edena.core.DefaultTypes.Seq
 import scala.concurrent.Future
+import scala.collection.parallel.CollectionConverters._
 
 @Deprecated
 trait TransformationService {
@@ -222,7 +224,7 @@ class TransformationServiceImpl @Inject()(
       newValues <- Future.sequence(transformationSpecs.map(transform))
     } yield {
       val preservedValues: Seq[(String, JsValue)] =
-        json.fields.filter { case (fieldName, jsValue) => preserveFieldNames.contains(fieldName) }
+        json.fields.toSeq.filter { case (fieldName, jsValue) => preserveFieldNames.contains(fieldName) }
 
       JsObject(preservedValues ++ newValues)
     }
@@ -250,7 +252,7 @@ class TransformationServiceImpl @Inject()(
     }.toList
 
     val preservedValues: Seq[(String, JsValue)] =
-      json.fields.filter { case (fieldName, jsValue) => preserveFieldNames.contains(fieldName)}
+      json.fields.toSeq.filter { case (fieldName, jsValue) => preserveFieldNames.contains(fieldName)}
 
     JsObject(preservedValues ++ newValues)
   }

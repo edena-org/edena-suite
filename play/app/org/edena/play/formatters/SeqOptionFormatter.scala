@@ -2,6 +2,8 @@ package org.edena.play.formatters
 
 import play.api.data.FormError
 import play.api.data.format.Formatter
+import org.edena.core.DefaultTypes.Seq
+import scala.collection.immutable.{ Seq => ImutSeq }
 
 /**
   * Formatter for URL params of 'seq' type with optional values.
@@ -22,7 +24,7 @@ final class SeqOptionFormatter[T](
     value.map(toString).getOrElse("")
   }
 
-  override protected val fromStrings = { strings: Seq[String] =>
+  override protected val fromStrings = { strings: ImutSeq[String] =>
     strings.map(x =>
       asOption(x.trim).flatMap(fromString)
     )
@@ -31,15 +33,15 @@ final class SeqOptionFormatter[T](
 
 object SeqOptionFormatter {
 
-  def apply: Formatter[Seq[Option[String]]] = new SeqOptionFormatter[String](x => Some(x))
+  def apply: Formatter[ImutSeq[Option[String]]] = new SeqOptionFormatter[String](x => Some(x))
 
-  def asInt: Formatter[Seq[Option[Int]]] = new SeqOptionFormatter[Int](x => try {
+  def asInt: Formatter[ImutSeq[Option[Int]]] = new SeqOptionFormatter[Int](x => try {
     Some(x.toInt)
   } catch {
     case e: NumberFormatException => None
   })
 
-  def asDouble: Formatter[Seq[Option[Double]]] = new SeqOptionFormatter[Double](x => try {
+  def asDouble: Formatter[ImutSeq[Option[Double]]] = new SeqOptionFormatter[Double](x => try {
     Some(x.toDouble)
   } catch {
     case e: NumberFormatException => None

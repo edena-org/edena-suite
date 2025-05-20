@@ -4,7 +4,9 @@ import akka.stream.scaladsl.{Flow, Sink}
 import org.edena.core.calc.{Calculator, CalculatorTypePack}
 import org.slf4j.LoggerFactory
 
+import scala.collection.parallel.CollectionConverters._
 import scala.collection.mutable
+import org.edena.core.DefaultTypes.Seq
 
 trait DistanceCalcTypePack[T] extends CalculatorTypePack {
   type IN = Seq[T]
@@ -59,7 +61,7 @@ protected abstract class DistanceCalc[T, C <: DistanceCalcTypePack[T]] extends C
         // if the accumulator is empty, initialized it with zero counts/sums
         val initializedAccumGlobal =
           if (accumGlobal.length == 0) {
-            (for (i <- 0 to n - 1) yield mutable.ArraySeq(Seq.fill(i)(0d): _*)).toArray
+            (for (i <- 0 to n - 1) yield mutable.ArraySeq.fill(i)(0d)).toArray
           } else
             accumGlobal
 

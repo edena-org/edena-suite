@@ -4,6 +4,8 @@ import org.edena.play.controllers.{CrudRouter, GenericJsRouter, GenericRouter}
 import reactivemongo.api.bson.BSONObjectID
 import scalaz.Scalaz._
 
+import org.edena.core.DefaultTypes.Seq
+
 final class CategoryRouter(dataSetId: String) extends GenericRouter(routes.CategoryDispatcher, "dataSet", dataSetId) with CrudRouter[BSONObjectID] {
   val list = routes.find _ map route
   val plainList = routeFun(_.find())

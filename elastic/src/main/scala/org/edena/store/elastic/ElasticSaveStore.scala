@@ -1,5 +1,6 @@
 package org.edena.store.elastic
 
+import com.sksamuel.elastic4s.ElasticDsl
 import com.sksamuel.elastic4s.requests.indexes.IndexRequest
 import org.edena.core.Identity
 import org.edena.core.store._
@@ -43,7 +44,7 @@ abstract class ElasticSaveStore[E, ID](
 
     if (saveDefAndIds.nonEmpty) {
       client execute {
-        bulk {
+        ElasticDsl.bulk {
           saveDefAndIds.toSeq map (_._1)
         } refresh asNative(setting.saveBulkRefresh)
       } map { response =>
@@ -72,13 +73,13 @@ abstract class ElasticSaveStore[E, ID](
     }
 
   override def flushOps = {
-    client execute flushIndex(indexName) map (_ => ())
+    client execute ElasticDsl.flushIndex(indexName) map (_ => ())
   }.recover(
     handleExceptions
   )
 
   protected def refreshAux = {
-    client execute refreshIndex(indexName) map (_ => ())
+    client execute ElasticDsl.refreshIndex(indexName) map (_ => ())
   }.recover(
     handleExceptions
   )

@@ -2,6 +2,7 @@ package org.edena.ada.server.services.transformers
 
 import org.edena.ada.server.models.datatrans.CopyDataSetTransformation
 import scala.concurrent.ExecutionContext.Implicits.global
+import org.edena.core.DefaultTypes.Seq
 
 /**
   * Transformer that simply copies a given data set to a new one with all the categories, views, and filters defined by [[CopyDataSetTransformation]] spec.

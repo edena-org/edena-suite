@@ -193,7 +193,7 @@ private case class ArrayFieldType[T](
   override protected def displayJsonToValueWoString(json: JsReadable) =
     json match {
       case JsArray(seq) => {
-        val values: Seq[Option[T]] = seq.map(elementFieldType.displayJsonToValue)
+        val values: Seq[Option[T]] = seq.toSeq.map(elementFieldType.displayJsonToValue)
         values.toArray
       }
       case _ => throw new AdaConversionException(s"JSON $json is not an array.")

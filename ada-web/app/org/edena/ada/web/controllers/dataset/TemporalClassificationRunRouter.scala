@@ -3,6 +3,8 @@ package org.edena.ada.web.controllers.dataset
 import org.edena.play.controllers.{GenericJsRouter, GenericRouter}
 import scalaz.Scalaz._
 
+import org.edena.core.DefaultTypes.Seq
+
 class TemporalClassificationRunRouter(dataSetId: String) extends GenericRouter(routes.TemporalClassificationRunDispatcher, "dataSet", dataSetId) with MLRunRouter {
   val list = routes.find _ map route
   val plainList = routeFun(_.find())

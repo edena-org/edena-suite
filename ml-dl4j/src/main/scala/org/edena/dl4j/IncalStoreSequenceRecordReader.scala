@@ -11,7 +11,7 @@ import java.net.URI
 import java.util
 import java.{lang => jl}
 
-import scala.collection.JavaConversions._
+import scala.jdk.CollectionConverters._
 import akka.actor.ActorSystem
 import akka.stream.Materializer
 import org.edena.core.EdenaException
@@ -96,7 +96,7 @@ class IncalStoreSequenceRecordReader[ID](
   override def loadSequenceFromMetaData(
     recordMetaDatas: util.List[RecordMetaData]
   ): util.List[SequenceRecord] = {
-    val idRecordMetaDatas = recordMetaDatas.map { recordMetaData =>
+    val idRecordMetaDatas = recordMetaDatas.asScala.map { recordMetaData =>
       recordMetaData match {
         case e: IncalStoreRecordMetaData[ID] => (e.id, e)
         case _ =>
@@ -112,18 +112,18 @@ class IncalStoreSequenceRecordReader[ID](
       println("Load from meta data called: " + ids.mkString(", "))
 
     val recordsFuture = repo.findAsValueMap(
-      idFieldName #-> ids,
+      idFieldName #-> ids.toList,
       projection = Seq(idFieldName)
     ).map { results =>
       results.toSeq.map { valueMap =>
         val id = getId(valueMap)
         val metaData = idRecordMetaDataMap.get(id).getOrElse(throw new EdenaException(s"Meta data for id '${id}' not found."))
-        new SequenceRecordImpl(toWritableSeq(valueMap), metaData)
+        new SequenceRecordImpl(toWritableSeq(valueMap), metaData): SequenceRecord
       }
     }
 
     val records = Await.result(recordsFuture, waitTime)
-    seqAsJavaList(records)
+    records.asJava
   }
 
   private def toWritableSeq(valueMap: ValueMap): util.List[util.List[Writable]] = {
@@ -195,9 +195,8 @@ class IncalStoreSequenceRecordReader[ID](
       }
     }
 
-    val flattenedWritables = writables.transpose.map { features => seqAsJavaList(features.flatten) }
-
-    seqAsJavaList(flattenedWritables)
+    val flattenedWritables = writables.transpose.map { features => features.flatten.asJava }
+    flattenedWritables.asJava
   }
 
   private def failoverWrite(value: Any): Writable =

@@ -15,7 +15,7 @@ import org.apache.ignite.{Ignite, IgniteCache}
 import org.edena.core.util.ReflectionUtil
 
 import java.util.UUID
-import scala.collection.JavaConversions._
+import scala.jdk.CollectionConverters._
 import scala.reflect.ClassTag
 
 class CacheFactory @Inject()(ignite: Ignite) extends Serializable {
@@ -54,13 +54,13 @@ class CacheFactory @Inject()(ignite: Ignite) extends Serializable {
     val queryEntity = new QueryEntity() {
       setKeyType(tagId.runtimeClass.getName)
       setValueType(typeOf[E].typeSymbol.fullName)
-      setFields(new java.util.LinkedHashMap[String, String](fieldNamesAndTypes.toMap))
-      setIndexes(indeces)
+      setFields(new java.util.LinkedHashMap[String, String](fieldNamesAndTypes.toMap.asJava))
+      setIndexes(indeces.asJava)
     }
 
     cacheConfig.setSqlFunctionClasses(classOf[CustomSqlFunctions])
     cacheConfig.setName(cacheName)
-    cacheConfig.setQueryEntities(Seq(queryEntity))
+    cacheConfig.setQueryEntities(Seq(queryEntity).asJava)
     cacheConfig.setCacheMode(CacheMode.LOCAL) // REPLICATED
     cacheConfig.setAtomicityMode(CacheAtomicityMode.ATOMIC)
 //    cacheConfig.setAtomicWriteOrderMode(CacheAtomicWriteOrderMode.PRIMARY) was available in the version 1.6

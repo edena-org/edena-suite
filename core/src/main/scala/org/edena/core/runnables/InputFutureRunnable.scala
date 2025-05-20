@@ -6,7 +6,7 @@ import scala.reflect.runtime.universe.TypeTag
 
 trait InputFutureRunnable[I] extends InputRunnable[I] {
 
-  protected val timeout = 100 hours
+  protected val timeout = 100.hours
 
   def runAsFuture(input: I): Future[Unit]
 

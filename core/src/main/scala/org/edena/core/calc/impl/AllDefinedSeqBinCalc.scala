@@ -5,11 +5,12 @@ import org.edena.core.calc.{Calculator, CalculatorTypePack}
 
 import scala.collection.mutable
 import org.edena.core.util.{GroupMapList, crossProduct}
+import org.edena.core.DefaultTypes.Seq
 
 trait AllDefinedSeqBinCalcTypePack[ACCUM, AGG] extends CalculatorTypePack {
   type IN = Seq[Double]
   type OUT = Traversable[(Seq[BigDecimal], AGG)]
-  type INTER = mutable.ArraySeq[ACCUM]
+  type INTER = mutable.ArrayBuffer[ACCUM]
   type OPT = Seq[NumericDistributionOptions]
   type FLOW_OPT = Seq[NumericDistributionFlowOptions]
   type SINK_OPT = FLOW_OPT
@@ -92,7 +93,8 @@ private[impl] trait AllDefinedSeqBinCalc[ACCUM, VAL, AGG] extends Calculator[All
     val gridSize = options.map(_.binCount).fold(1){_*_}
 
     Flow[IN].fold[INTER](
-      mutable.ArraySeq(Seq.fill(gridSize)(initAccum) :_*)
+      mutable.ArrayBuffer.fill(gridSize)(initAccum)
+//      mutable.ArraySeq(Seq.fill(gridSize)(initAccum) :_*)
     ) { case (acums, values) =>
 
       val combinedIndex = infos.zip(values).foldLeft(0) { case (cumIndex, (info, value)) =>

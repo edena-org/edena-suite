@@ -2,6 +2,8 @@ package org.edena.core.calc.impl
 
 import akka.stream.scaladsl.{Flow, Sink}
 import org.edena.core.calc.{Calculator, NoOptionsCalculatorTypePack}
+import scala.collection.parallel.CollectionConverters._
+import org.edena.core.DefaultTypes.Seq
 
 trait MultiBasicStatsCalcTypePack extends NoOptionsCalculatorTypePack {
   type IN = Seq[Option[Double]]

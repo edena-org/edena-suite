@@ -7,6 +7,7 @@ import org.edena.core.store.{And, Criterion}
 import org.edena.core.store.Criterion._
 
 import scala.concurrent.ExecutionContext.Implicits.global
+import org.edena.core.DefaultTypes.Seq
 
 /**
   * Transformer that drops certain fields from data set (and creates a new one)

@@ -7,6 +7,7 @@ import akka.stream.scaladsl.{Broadcast, Flow, GraphDSL, Sink, Source, Unzip, Zip
 
 import scala.collection.mutable
 import scala.collection.mutable.Buffer
+import org.edena.core.DefaultTypes.Seq
 import scala.concurrent.{Await, Future}
 import scala.concurrent.duration._
 
@@ -44,7 +45,7 @@ object AkkaStreamUtil {
   ): Flow[(A, B), (A, Seq[B]), NotUsed] =
     Flow[(A,B)]
       .groupBy(maxSubstreams, _._1)
-      .map { case (a, b) => a -> Buffer(b)}
+      .map { case (a, b) => a -> mutable.Buffer(b)}
       .reduce((l, r) ⇒ (l._1, {l._2.appendAll(r._2); l._2}))
       .map { case (l, r) => (l, r.toSeq) }
       .mergeSubstreams
@@ -163,6 +164,7 @@ object AkkaStreamUtil {
 }
 
 object AkkaTest extends App {
+
   private implicit val system = ActorSystem()
   private implicit val materializer = ActorMaterializer()
 
@@ -171,7 +173,7 @@ object AkkaTest extends App {
   val sumFlow = Flow[Int].fold(0)(_+_)
   val minFlow = Flow[Int].fold(Integer.MAX_VALUE)(Math.min)
   val maxFlow = Flow[Int].fold(Integer.MIN_VALUE)(Math.max)
-  val combinedFlow = AkkaStreamUtil.zipNFlows(Seq(sumFlow, minFlow, maxFlow))
+  val combinedFlow = AkkaStreamUtil.zipNFlows[Int, Int](Seq(sumFlow, minFlow, maxFlow))
 
   val resultsFuture = source.via(combinedFlow).runWith(Sink.head)
   val results = Await.result(resultsFuture, 1.minute)

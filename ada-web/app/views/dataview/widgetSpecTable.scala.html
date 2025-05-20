@@ -31,7 +31,7 @@
 @editableChartType(chartType: Option[ChartType.Value]) = {
     <select id="chartType" name="chartType">
         <option value="" @if(chartType.isEmpty) {selected="selected"}></option>
-        @ChartType.values.map { _chartType =>
+        @ChartType.values.toSeq.map { _chartType =>
             <option value="@{_chartType}" @if(chartType.isDefined && chartType.get == _chartType) {selected="selected"}>@{_chartType}</option>
         }
     </select>

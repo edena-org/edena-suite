@@ -6,6 +6,8 @@ import org.edena.ada.server.field.FieldUtil.FieldOps
 import org.edena.core.calc.NoOptionsCalculatorTypePack
 import org.edena.core.calc.impl._
 
+import org.edena.core.DefaultTypes.Seq
+
 trait AbstractOneWayAnovaTestWidgetGenerator[C <: NoOptionsCalculatorTypePack] extends CalculatorWidgetGenerator[IndependenceTestWidgetSpec, IndependenceTestWidget, C]
   with NoOptionsCalculatorWidgetGenerator[IndependenceTestWidgetSpec] {
 

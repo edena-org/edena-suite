@@ -3,6 +3,7 @@ package org.edena.core.calc.impl
 import akka.stream.scaladsl.{Flow, Keep, Sink}
 import org.edena.core.calc.{Calculator, CalculatorTypePack}
 import org.edena.core.akka.AkkaStreamUtil.seqFlow
+import org.edena.core.DefaultTypes.Seq
 
 trait StandardizationCalcTypePack extends CalculatorTypePack {
   type IN = Seq[Option[Double]]

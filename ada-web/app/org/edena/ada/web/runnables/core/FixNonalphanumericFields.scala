@@ -24,6 +24,8 @@ import scala.concurrent.Future
 import scala.reflect.runtime.universe.typeOf
 import scala.util.Random
 
+import org.edena.core.DefaultTypes.Seq
+
 class FixNonalphanumericFields @Inject() (
   dsaf: DataSetAccessorFactory,
   dataSetService: DataSetService,

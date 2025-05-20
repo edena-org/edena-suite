@@ -6,6 +6,8 @@ import akka.stream.scaladsl.Source
 import akka.util.ByteString
 import org.edena.ada.server.AdaException
 
+import org.edena.core.DefaultTypes.Seq
+
 trait RunnableFileOutput {
 
   var fileName = "ada-output"

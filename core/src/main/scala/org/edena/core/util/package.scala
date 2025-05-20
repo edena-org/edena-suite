@@ -13,6 +13,8 @@ import scala.concurrent.{ExecutionContext, Future}
 import _root_.akka.stream.scaladsl.{Flow, Sink, Source}
 import _root_.akka.stream.Materializer
 
+import org.edena.core.DefaultTypes.Seq
+
 package object util {
 
   private val nonAlphanumericUnderscorePattern = "[^A-Za-z0-9_]".r

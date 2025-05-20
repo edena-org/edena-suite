@@ -9,6 +9,7 @@ import play.api.routing.Router.Attrs.HandlerDef
 import reactivemongo.api.bson.BSONObjectID
 
 import scala.concurrent.Future
+import org.edena.core.DefaultTypes.Seq
 
 trait AdminOrOwnerControllerDispatcherExt[C] {
 

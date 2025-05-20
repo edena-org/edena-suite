@@ -19,6 +19,7 @@ import play.api.libs.json.{Format, JsObject, Json}
 
 import scala.reflect.runtime.universe.{TypeTag, typeOf}
 import scala.concurrent.{ExecutionContext, Future}
+import org.edena.core.DefaultTypes.Seq
 
 trait DataSetPersistenceHelper {
 

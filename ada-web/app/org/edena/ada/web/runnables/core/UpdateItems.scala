@@ -1,10 +1,12 @@
 package org.edena.ada.web.runnables.core
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import runnables.DsaInputFutureRunnable
+import org.edena.ada.server.runnables.DsaInputFutureRunnable
 import org.edena.core.runnables.RunnableHtmlOutput
 import reactivemongo.api.bson.BSONObjectID
 import play.api.libs.json._
+
+import org.edena.core.DefaultTypes.Seq
 
 class UpdateItems extends DsaInputFutureRunnable[UpdateItemsSpec] with RunnableHtmlOutput with IdCriterionHelper {
 

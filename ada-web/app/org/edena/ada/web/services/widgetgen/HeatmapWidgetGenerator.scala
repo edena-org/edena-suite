@@ -6,6 +6,8 @@ import org.edena.ada.server.models._
 import org.edena.ada.web.util.shorten
 import org.edena.core.calc.impl._
 
+import org.edena.core.DefaultTypes.Seq
+
 private trait HeatmapWidgetGenerator[S <: WidgetSpec, ACCUM, AGG] extends CalculatorWidgetGenerator[S, HeatmapWidget, SeqBinCalcTypePack[ACCUM, AGG]] {
 
   protected val xFlowMin: Double

@@ -7,6 +7,8 @@ import org.edena.ada.web.util.shorten
 import org.edena.core.field.FieldTypeId
 import org.edena.core.calc.impl._
 
+import org.edena.core.DefaultTypes.Seq
+
 private class LineWidgetGenerator
   extends CalculatorWidgetGenerator[XLineWidgetSpec, LineWidget[Any, Any], XOrderedSeqCalcTypePack[Any]]
     with NoOptionsCalculatorWidgetGenerator[XLineWidgetSpec] {

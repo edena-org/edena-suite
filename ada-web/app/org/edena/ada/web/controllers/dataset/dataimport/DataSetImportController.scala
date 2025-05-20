@@ -32,6 +32,7 @@ import org.edena.store.json.BSONObjectIDFormat
 import views.html.{datasetimport => view}
 
 import scala.concurrent.Future
+import org.edena.core.DefaultTypes.Seq
 
 class DataSetImportController @Inject()(
   repo: DataSetImportStore,
@@ -272,8 +273,8 @@ class DataSetImportController @Inject()(
     if (!destFolder.exists()) {
       destFolder.mkdirs()
     }
-    new FileOutputStream(dest) getChannel() transferFrom(
-      new FileInputStream(src) getChannel, 0, Long.MaxValue
+    new FileOutputStream(dest).getChannel.transferFrom(
+      new FileInputStream(src).getChannel, 0, Long.MaxValue
     )
   }
 }

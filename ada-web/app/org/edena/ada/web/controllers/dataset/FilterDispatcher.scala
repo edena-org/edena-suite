@@ -11,6 +11,7 @@ import reactivemongo.api.bson.BSONObjectID
 import org.edena.core.FilterCondition
 
 import scala.concurrent.ExecutionContext.Implicits.global
+import org.edena.core.DefaultTypes.Seq
 
 class FilterDispatcher @Inject()(
   val dscf: DataSetControllerFactory,

@@ -11,6 +11,8 @@ import views.html.elements._
 import org.edena.play.controllers.WebContext._
 import org.edena.core.util.toHumanReadableCamel
 
+import org.edena.core.DefaultTypes.Seq
+
 class SendEmail @Inject()(mailerClient: MailerClient, configuration: Configuration) extends InputRunnableExt[SendEmailSpec] with InputView[SendEmailSpec] {
 
   override def run(input: SendEmailSpec) = {

@@ -2,10 +2,13 @@ package org.edena.play.formatters
 
 import play.api.data.format.Formatter
 
+import org.edena.core.DefaultTypes.Seq
+import scala.collection.immutable.{ Seq => ImutSeq }
+
 /**
   * @author Peter Banda
   */
-private class EitherSeqFormatter[T](val seqFormatter: Formatter[Seq[T]]) extends Formatter[Either[Option[T], Seq[T]]] {
+private class EitherSeqFormatter[T](val seqFormatter: Formatter[ImutSeq[T]]) extends Formatter[Either[Option[T], ImutSeq[T]]] {
 
   def bind(key: String, data: Map[String, String]) = {
     seqFormatter.bind(key, data) match {
@@ -14,17 +17,17 @@ private class EitherSeqFormatter[T](val seqFormatter: Formatter[Seq[T]]) extends
     }
   }
 
-  def unbind(key: String, value: Either[Option[T], Seq[T]]) =
+  def unbind(key: String, value: Either[Option[T], ImutSeq[T]]) =
     seqFormatter.unbind(key, toSeq(value))
 
-  def toEither[T](values: Seq[T]): Either[Option[T], Seq[T]] =
+  def toEither[T](values: ImutSeq[T]): Either[Option[T], ImutSeq[T]] =
     values match {
       case Nil => Left(None)
       case Seq(head) => Left(Some(head))
       case _ => Right(values)
     }
 
-  def toSeq[T](values: Either[Option[T], Seq[T]]): Seq[T] =
+  def toSeq[T](values: Either[Option[T], ImutSeq[T]]): ImutSeq[T] =
     values match {
       case Left(None) => Nil
       case Left(Some(item)) => Seq(item)
@@ -33,5 +36,5 @@ private class EitherSeqFormatter[T](val seqFormatter: Formatter[Seq[T]]) extends
 }
 
 object EitherSeqFormatter {
-  def apply[T](implicit seqFormatter: Formatter[Seq[T]]): Formatter[Either[Option[T], Seq[T]]] = new EitherSeqFormatter[T](seqFormatter)
+  def apply[T](implicit seqFormatter: Formatter[ImutSeq[T]]): Formatter[Either[Option[T], ImutSeq[T]]] = new EitherSeqFormatter[T](seqFormatter)
 }

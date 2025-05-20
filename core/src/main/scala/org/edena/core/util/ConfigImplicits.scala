@@ -1,7 +1,7 @@
 package org.edena.core.util
 
 import com.typesafe.config.Config
-import scala.collection.JavaConversions._
+import scala.jdk.CollectionConverters._
 
 object ConfigImplicits {
   implicit class ConfigExt(config: Config) {
@@ -21,6 +21,6 @@ object ConfigImplicits {
       if (config.hasPath(configPath)) Some(config.getBoolean(configPath)) else None
 
     def optionalStringSeq(configPath: String) =
-      if (config.hasPath(configPath)) Some(config.getStringList(configPath).toSeq) else None
+      if (config.hasPath(configPath)) Some(config.getStringList(configPath).asScala.toSeq) else None
   }
 }

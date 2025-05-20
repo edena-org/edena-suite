@@ -1,6 +1,7 @@
 package org.edena.core.calc.impl
 
 import org.edena.core.calc.Calculator
+import org.edena.core.DefaultTypes.Seq
 
 trait GroupXOrderedSeqCalcTypePack[G, T] extends GroupXSeqCalcTypePack[G, T]
 

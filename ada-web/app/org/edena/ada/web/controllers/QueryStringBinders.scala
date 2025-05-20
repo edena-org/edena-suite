@@ -16,6 +16,10 @@ import org.edena.spark_ml.models.regression.RegressionEvalMetric
 import org.edena.spark_ml.models.setting._
 import org.edena.spark_ml.models.VectorScalerType
 
+import org.edena.core.DefaultTypes.Seq
+
+import org.edena.core.DefaultTypes.Seq
+
 object QueryStringBinders {
 
   implicit val filterConditionQueryStringBinder = new JsonQueryStringBindable[Seq[FilterCondition]]

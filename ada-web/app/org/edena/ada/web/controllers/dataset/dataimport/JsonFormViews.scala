@@ -9,6 +9,8 @@ import play.api.data.Forms._
 import play.api.data.format.Formats._
 import views.html.{datasetimport => view}
 
+import org.edena.core.DefaultTypes.Seq
+
 object JsonFormViews extends DataSetImportFormViews[JsonDataSetImport] {
 
   override protected val imagePath = Some("images/logos/json_100.png")

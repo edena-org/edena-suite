@@ -5,7 +5,7 @@ import play.api.libs.json.{JsObject, _}
 import akka.actor.ActorSystem
 import org.edena.core.store.CrudStoreExtra.CrudInfixOps
 import org.edena.core.store.StreamSpec
-import runnables.DsaInputFutureRunnable
+import org.edena.ada.server.runnables.DsaInputFutureRunnable
 
 import javax.inject.Inject
 import scala.concurrent.ExecutionContext

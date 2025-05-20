@@ -1,5 +1,7 @@
 package org.edena.core.calc.impl
 
+import org.edena.core.DefaultTypes.Seq
+
 trait MatrixCalcHelper {
 
   def calcGroupSizes(n: Int, parallelism: Option[Int]) =

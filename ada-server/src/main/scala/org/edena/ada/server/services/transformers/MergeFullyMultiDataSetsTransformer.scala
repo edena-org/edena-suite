@@ -6,6 +6,7 @@ import org.edena.ada.server.models.datatrans.{MergeFullyMultiDataSetsTransformat
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import org.edena.core.util.seqFutures
+import org.edena.core.DefaultTypes.Seq
 
 private class MergeFullyMultiDataSetsTransformer @Inject()(multiTransformer: MergeMultiDataSetsTransformer) extends AbstractDataSetTransformer[MergeFullyMultiDataSetsTransformation] {
 

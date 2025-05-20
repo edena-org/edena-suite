@@ -16,6 +16,7 @@ import reactivemongo.play.json.compat._
 import reactivemongo.play.json.compat.json2bson.{toDocumentReader, toDocumentWriter, toReader, toWriter}
 
 import scala.concurrent.Future
+import org.edena.core.DefaultTypes.Seq
 
 class MongoStreamStore[E: Format, ID: Format](
   collectionName : String,
@@ -61,10 +62,12 @@ class MongoStreamStore[E: Format, ID: Format](
         collection.createCapped(maxSize, Some(maxDocsSize))
     }.flatMap( _ =>
       if (timestampFieldName.isDefined) {
-        collection.indexesManager.ensure(Index(
-          key = Seq(timestampFieldName.get -> IndexType.Ascending),
-          unique = false
-        )).map(_ => collection)
+        collection.indexesManager.ensure(
+          Index(
+            key = List(timestampFieldName.get -> IndexType.Ascending),
+            unique = false
+          )
+        ).map(_ => collection)
       } else
         Future(collection)
     )

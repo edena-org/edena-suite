@@ -4,6 +4,8 @@ import javax.inject.Inject
 import org.edena.spark_ml.models.setting.TemporalRegressionRunSpec
 import play.api.mvc.ControllerComponents
 
+import org.edena.core.DefaultTypes.Seq
+
 class TemporalRegressionRunDispatcher @Inject()(
   val dscf: DataSetControllerFactory,
   factory: TemporalRegressionRunControllerFactory,

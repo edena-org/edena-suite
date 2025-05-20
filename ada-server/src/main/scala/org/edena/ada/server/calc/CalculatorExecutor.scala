@@ -15,6 +15,7 @@ import org.edena.core.calc.{Calculator, CalculatorTypePack}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.reflect.runtime.universe._
 import scala.concurrent.Future
+import org.edena.core.DefaultTypes.Seq
 
 trait CalculatorExecutor[C <: CalculatorTypePack, F] {
 

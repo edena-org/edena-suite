@@ -5,6 +5,9 @@ import org.edena.core.calc.{Calculator, CalculatorTypePack, NoOptionsCalculatorT
 import org.edena.core.akka.AkkaStreamUtil.unzipNFlowsAndApply
 import org.edena.core.calc.CalculatorHelper._
 
+import scala.collection.parallel.CollectionConverters._
+import org.edena.core.DefaultTypes.Seq
+
 trait MultiCalcTypePack[C <: CalculatorTypePack] extends CalculatorTypePack {
   type IN = Seq[C#IN]
   type OUT = Seq[C#OUT]

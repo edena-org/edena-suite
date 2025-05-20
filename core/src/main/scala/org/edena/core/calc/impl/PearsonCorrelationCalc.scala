@@ -4,8 +4,10 @@ import akka.stream.scaladsl.{Flow, Sink}
 import org.edena.core.calc.{Calculator, CalculatorTypePack}
 import org.edena.core.util.GrouppedVariousSize
 import org.slf4j.LoggerFactory
+import scala.collection.parallel.CollectionConverters._
 
 import scala.collection.mutable
+import org.edena.core.DefaultTypes.Seq
 
 trait PearsonCorrelationCalcTypePack extends CalculatorTypePack {
   type IN = Seq[Option[Double]]
@@ -133,7 +135,7 @@ object PearsonCorrelationCalc extends Calculator[PearsonCorrelationCalcTypePack]
     val startEnds = parallelGroupSizes.zip(starts).map{ case (size, start) => (start, Math.min(start + size, n) - 1)}
 
     Flow[Seq[Option[Double]]].fold[Seq[mutable.ArraySeq[PersonIterativeAccum]]](
-      for (i <- 0 to n - 1) yield mutable.ArraySeq(Seq.fill(i)(PersonIterativeAccum(0, 0, 0, 0, 0, 0)): _*)
+      for (i <- 0 to n - 1) yield mutable.ArraySeq.fill(i)(PersonIterativeAccum(0, 0, 0, 0, 0, 0))
     ) {
       case (accums, featureValues) =>
 

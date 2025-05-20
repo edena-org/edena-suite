@@ -10,6 +10,7 @@ import org.edena.core.util.writeByteArrayStream
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
+import org.edena.core.DefaultTypes.Seq
 
 object FeatureMatrixIO {
 

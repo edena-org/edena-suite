@@ -4,7 +4,7 @@ import com.sksamuel.elastic4s.Indexable
 import org.edena.store.elastic.ElasticSerializer
 import org.edena.core.util.ReflectionUtil._
 
-import scala.collection.JavaConversions._
+import scala.jdk.CollectionConverters._
 import scala.reflect.ClassTag
 import java.util.{Date, TimeZone, UUID}
 import com.sksamuel.elastic4s.requests.get.GetResponse

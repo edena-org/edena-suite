@@ -6,7 +6,7 @@ import org.edena.json.util.JsonHelper
 
 import play.api.libs.json._
 
-import scala.collection.JavaConversions._
+import scala.jdk.CollectionConverters._
 
 trait BinaryJsonHelper extends JsonHelper {
 
@@ -18,7 +18,7 @@ trait BinaryJsonHelper extends JsonHelper {
 
   def toJsObject(binaryObject: BinaryObject, fieldNames: Option[Traversable[String]] = None): JsObject = {
     val binaryType: BinaryType = binaryObject.`type`()
-    val fields = fieldNames.getOrElse(binaryType.fieldNames: Iterable[String])
+    val fields = fieldNames.getOrElse(binaryType.fieldNames.asScala)
 
     JsObject(
       fields.map { fieldName =>

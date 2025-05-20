@@ -4,6 +4,8 @@ import java.util.Date
 import org.edena.spark_ml.models.ValueOrSeq.ValueOrSeq
 import reactivemongo.api.bson.BSONObjectID
 
+import scala.collection.immutable.{ Seq => ImutSeq }
+
 case class LogisticRegression(
   _id: Option[BSONObjectID] = None,
   regularization: ValueOrSeq[Double] = Left(None),
@@ -15,7 +17,7 @@ case class LogisticRegression(
   standardization: Option[Boolean] = None,
   aggregationDepth: ValueOrSeq[Int] = Left(None),
   threshold: ValueOrSeq[Double] = Left(None),
-  thresholds: Option[Seq[Double]] = None,  // used for multinomial logistic regression
+  thresholds: Option[ImutSeq[Double]] = None,  // used for multinomial logistic regression
   name: Option[String] = None,
   createdById: Option[BSONObjectID] = None,
   timeCreated: Date = new Date()
