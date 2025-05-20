@@ -3,10 +3,11 @@ object Dependencies {
   object Versions {
     val akka = "2.5.32"
     val scalaTest = "3.0.8" // originally "3.0.0"
-    val playJson = "2.7.4"
+    val playJson = "2.7.4" // JDK 17 is supported by Play 2.8 https://github.com/playframework/playframework/releases/tag/2.8.15
 
-    // val playVersion = "2.6.20" // JDK 17 is supported by Play 2.8 https://github.com/playframework/playframework/releases/tag/2.8.15
-    // val guiceVersion = "5.1.0" // needed for JDK 17
+    val scalaGuice = "4.2.11"
+    val googleGuice = "4.2.3" // needed for JDK 17 - 5.1.0
+    val guiceAssistedinject = "4.2.3"
 
     // ES
     val elastic4s = "7.2.0"
@@ -24,7 +25,7 @@ object Dependencies {
     // SPARK
     val spark = "3.2.1"// "2.4.7"
 //    val spark = "2.4.7" // Spark 3 is JDK 11 compatible, should upgrade (the latest version is 3.2.1)
-    val bnd = "0.7.3.RC.1" // "0.7.3" //
+    val bnd = "0.7.3"
 
     // IGNITE
     val ignite = "2.4.0" //  "2.14.0" - uses JDK 17

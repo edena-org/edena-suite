@@ -14,9 +14,9 @@ libraryDependencies ++= Seq(
   "org.scala-lang.modules" %% "scala-parallel-collections" % "1.0.4", // to be able to call par for Scala 2.13
 
   // Guice
-  "net.codingwell" %% "scala-guice" % "4.2.11",   // uses guice 4.2.3 (bellow)
-  "com.google.inject" % "guice" % "4.2.3" classifier "no_aop",  // no_aop is set due to https://github.com/google/guice/issues/1133 // 4.0.1
-  "com.google.inject.extensions" % "guice-assistedinject" % "4.2.3",
+  "net.codingwell" %% "scala-guice" % Versions.scalaGuice,   // uses guice 4.2.3 (bellow)
+  "com.google.inject" % "guice" % Versions.googleGuice classifier "no_aop",  // no_aop is set due to https://github.com/google/guice/issues/1133 // 4.0.1
+  "com.google.inject.extensions" % "guice-assistedinject" % Versions.guiceAssistedinject,
 
   // Akka
   "com.typesafe.akka" %% "akka-stream" % Versions.akka,
