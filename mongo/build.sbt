@@ -1,5 +1,6 @@
-name := "edena-store-mongo"
 import Dependencies.Versions
+
+name := "edena-store-mongo"
 
 description := "Provides a convenient access layer for Mongo based on ReactiveMongo library."
 

@@ -1,4 +1,5 @@
 import com.typesafe.sbt.license.{DepModuleInfo, LicenseInfo}
+import Dependencies.Versions
 
 name := "edena-play"
 
@@ -8,20 +9,12 @@ resolvers ++= Seq(
   Resolver.mavenLocal
 )
 
-//val playVersion = "2.6.20"  // "com.typesafe.play" %% "play" % "2.7.9" - akka 2.5.31
-//val deadboltVersion = "2.6.1"  // compatible with play 2.6.0  //"be.objectify" %% "deadbolt-scala" % "2.7.1" - use play 2.7.3
-//val webjarsVersion = "2.6.3"   // compatible with play 2.6.10  // org.webjars" %% "webjars-play" % "2.7.3"
-
-val playVersion = "2.7.9"  // "com.typesafe.play" %% "play" % "2.7.9" - akka 2.5.31
-val deadboltVersion = "2.7.1"  // compatible with play 2.6.0  //"be.objectify" %% "deadbolt-scala" % "2.7.1" - use play 2.7.3
-val webjarsVersion = "2.7.3"   // compatible with play 2.6.10  // org.webjars" %% "webjars-play" % "2.7.3"
-
 libraryDependencies += guice
 
 libraryDependencies ++= Seq(
-  "com.typesafe.play" %% "play" % playVersion,
-  "be.objectify" %% "deadbolt-scala" % deadboltVersion, // Deadbolt (authentication)
-  "org.webjars" %% "webjars-play" % webjarsVersion,
+  "com.typesafe.play" %% "play" % Versions.play,
+  "be.objectify" %% "deadbolt-scala" % Versions.deadbolt, // Deadbolt (authentication)
+  "org.webjars" %% "webjars-play" % Versions.webjars,
   "org.webjars" % "bootstrap" % "3.3.7",                // Bootstrap
   "org.webjars" % "bootswatch-united" % "3.3.4+1"       // Bootstrap
 )

@@ -35,9 +35,14 @@ object Dependencies {
     val playWs = "2.0.8" // originally "1.1.10" for WS
     val breeze = "2.1.0" // originally "0.13.2"
 
+    // PLAY
+    val play = "2.7.9"  // "com.typesafe.play" %% "play" % "2.7.9" - akka 2.5.31
+    val deadbolt = "2.7.1"  // uses play 2.7.3
+    val webjars = "2.7.3"
+
     // ADA-WEB
     val playMongo = "1.1.0.play27-RC12"
-    val play = "2.7.9"
+//    val play = "2.7.9"
     val playMailer = "7.0.2" // "6.0.1"
     val playPac4j = "9.0.2"
     val pac4jOidc = "4.1.0"
