@@ -10,23 +10,23 @@ import org.pac4j.oidc.config.OidcConfiguration
 import org.pac4j.oidc.profile.OidcProfile
 import org.pac4j.play.http.PlayHttpActionAdapter
 import org.pac4j.play.scala.{DefaultSecurityComponents, SecurityComponents}
-import org.pac4j.play.store.{PlayCacheSessionStore, PlaySessionStore}
+import org.pac4j.play.store.PlayCacheSessionStore
+import org.pac4j.core.context.session.SessionStore
 import org.pac4j.play.{CallbackController, LogoutController}
-import play.api.{Configuration, Environment, Logger}
+import play.api.{Configuration, Environment, Logging}
 
 /**
   * Security module powered by PAC4J library providing an authentication client for OIDC.
   */
-class PacSecurityModule(environment: Environment, configuration: Configuration) extends AbstractModule {
+class PacSecurityModule(environment: Environment, configuration: Configuration) extends AbstractModule with Logging {
 
   override def configure(): Unit = {
 
-    bind(classOf[PlaySessionStore]).to(classOf[PlayCacheSessionStore])
+    bind(classOf[SessionStore]).to(classOf[PlayCacheSessionStore])
     bind(classOf[SecurityComponents]).to(classOf[DefaultSecurityComponents]).asEagerSingleton()
 
     // callback
     val callbackController = new CallbackController()
-    callbackController.setMultiProfile(true)
     bind(classOf[CallbackController]).toInstance(callbackController)
 
     // logout
@@ -42,7 +42,7 @@ class PacSecurityModule(environment: Environment, configuration: Configuration) 
     bind(classOf[LogoutController]).toInstance(logoutController)
   }
 
-  private def oidcClient: OidcClient[OidcConfiguration] = {
+  private def oidcClient: OidcClient = {
     val config = new OidcConfiguration()
 
     def setConf(
@@ -96,26 +96,26 @@ class PacSecurityModule(environment: Environment, configuration: Configuration) 
       mandatory = false
     )
 
-    val oidcClient = new OidcClient[OidcConfiguration](config)
+    val oidcClient = new OidcClient(config)
     oidcClient
   }
 
-  private def getOidcConf(key: String) = configuration.getString(s"oidc.$key")
-  private def getOidcConfBool(key: String) = configuration.getBoolean(s"oidc.$key")
+  private def getOidcConf(key: String) = configuration.getOptional[String](s"oidc.$key")
+  private def getOidcConfBool(key: String) = configuration.getOptional[Boolean](s"oidc.$key")
 
   @Provides
   @Singleton
   def provideConfig: Config = {
     val config = getOidcConf("adaBaseUrl").map { baseUrl =>
-      val suffix = org.pac4j.play.routes.CallbackController.callback().url
+      val suffix = org.pac4j.play.routes.CallbackController.callback.url
 
       val callbackUrl = baseUrl.replaceAll("/$", "") + suffix
 
-      Logger.info(s"Creating PAC config with an OIDC client for '${getOidcConf("clientId").getOrElse("")}'.")
+      logger.info(s"Creating PAC config with an OIDC client for '${getOidcConf("clientId").getOrElse("")}'.")
       val clients = new Clients(callbackUrl, oidcClient)
       new Config(clients)
     }.getOrElse {
-      Logger.info(s"Creating PAC config with no clients.")
+      logger.info(s"Creating PAC config with no clients.")
       new Config()
     }
 

@@ -19,6 +19,7 @@ libraryDependencies ++= Seq(
   "com.google.inject.extensions" % "guice-assistedinject" % Versions.guiceAssistedinject,
 
   // Akka
+  "com.typesafe.akka" %% "akka-actor" % Versions.akka,
   "com.typesafe.akka" %% "akka-stream" % Versions.akka,
 
   // Commons

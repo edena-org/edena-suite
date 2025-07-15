@@ -29,7 +29,7 @@
 		@* <link rel="stylesheet" media="screen" href="@routes.WebJarAssets.at(context.webJarAssets.locate("bootstrap", "bootstrap-theme.min.css"))"> *@
         
         <link rel="shortcut icon" type="image/png" href="@CustomDirAssets.versioned("images/favicon.png")">
-        @context.webJarAssets.locate("jquery.min.js").script()
+        @context.webJarAssets.locate("jquery", "jquery.min.js").script()
         <script type="text/javascript" src="@CustomDirAssets.versioned("javascripts/main.js")"></script>
         <script type="text/javascript" src="@CustomDirAssets.versioned("javascripts/typeahead.js")"></script>
 
@@ -37,8 +37,8 @@
 
         <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
 	    <!--[if lt IE 9]>
-	      @context.webJarAssets.locate("html5shiv.js").script()
-	      @context.webJarAssets.locate("respond.min.js").script()
+	      @context.webJarAssets.locate("html5shiv", "html5shiv.js").script()
+	      @context.webJarAssets.locate("respond", "dest/respond.min.js").script()
 	    <![endif]-->
     </head>
     <body>

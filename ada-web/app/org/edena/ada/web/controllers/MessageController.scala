@@ -6,7 +6,7 @@ import org.edena.ada.server.models.Message._
 import org.edena.ada.server.dataaccess.StoreTypes.MessageStore
 import play.api.libs.EventSource.EventIdExtractor
 import play.api.libs.json.{JsObject, JsValue, Json}
-import play.api.mvc.{Action, Controller, ControllerComponents, Results}
+import play.api.mvc.{Action, ControllerComponents, Results}
 import org.edena.ada.server.models.Message.MessageFormat
 import org.edena.ada.web.controllers.core.AdaBaseController
 import play.api.libs.EventSource

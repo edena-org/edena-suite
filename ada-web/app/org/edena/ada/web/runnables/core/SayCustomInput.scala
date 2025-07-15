@@ -5,7 +5,7 @@ import org.edena.ada.server.dataaccess.dataset.DataSetAccessorFactory
 import org.edena.ada.web.runnables.InputView
 import org.edena.core.runnables.{FutureRunnable, InputFutureRunnableExt, RunnableHtmlOutput}
 import org.edena.play.controllers.WebContext
-import play.api.Logger
+import play.api.Logging
 import play.api.libs.functional.syntax._
 import WebContext._
 import org.edena.ada.server.runnables.InputFormat
@@ -20,9 +20,8 @@ class SayCustomInput @Inject() (
   dsaf: DataSetAccessorFactory
 ) extends InputFutureRunnableExt[SayCustomInputSpec]
   with RunnableHtmlOutput
-  with InputFormat[SayCustomInputSpec] {
-
-  private val logger = Logger
+  with InputFormat[SayCustomInputSpec]
+  with Logging {
 
   override def runAsFuture(spec: SayCustomInputSpec): Future[Unit] = {
     for {

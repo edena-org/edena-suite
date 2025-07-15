@@ -3,7 +3,7 @@ package org.edena.ada.web.controllers
 import javax.inject.Inject
 import org.edena.ada.server.models.{DataSpaceMetaInfo, HtmlSnippet, HtmlSnippetId, User}
 import org.edena.core.store.Criterion._
-import play.api.Logger
+import play.api.Logging
 import org.edena.ada.web.services.DataSpaceService
 import org.edena.ada.server.dataaccess.StoreTypes.HtmlSnippetStore
 import org.edena.ada.web.controllers.core.{AdaBaseController, BSONObjectIDSeqFormatter}
@@ -21,8 +21,6 @@ class AppController @Inject() (
   cached: Cached,
   val controllerComponents: ControllerComponents
   ) extends AdaBaseController {
-
-  private val logger = Logger
 
   private implicit val ec = defaultExecutionContext
 

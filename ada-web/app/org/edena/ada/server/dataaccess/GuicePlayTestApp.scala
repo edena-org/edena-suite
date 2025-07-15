@@ -17,8 +17,7 @@ trait GuicePlayTestApp {
       if (moduleNames.nonEmpty) {
         moduleNames
       } else {
-        config.getStringList("play.modules.enabled").fold(
-          List.empty[String])(l => l.asScala.toList)
+        config.getOptional[Seq[String]]("play.modules.enabled").getOrElse(Nil)
       }
     modules.filterNot(excludeModules.contains(_))
   }

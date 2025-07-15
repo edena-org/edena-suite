@@ -11,6 +11,6 @@
 <!-- need to import css and js first -->
 @typeaheadJsImport()
 
-@webJarAssets.locate("jquery-ui.min.js").script()
+@webJarAssets.locate("jquery-ui", "jquery-ui.min.js").script()
 <script type="text/javascript" src="@CustomDirAssets.versioned("javascripts/multiFilter.js")"></script>
 <script type="text/javascript" src="@CustomDirAssets.versioned("javascripts/multiCategoryFilter.js")"></script>

@@ -1,15 +1,14 @@
 package org.edena.play.controllers
 
 import java.util.concurrent.TimeoutException
-
 import org.edena.play.util.WebUtil.redirectToRefererOrElse
-import play.api.Logger
+import play.api.Logging
 import play.api.mvc.{Call, Request, Result}
 import play.api.mvc.Results.{InternalServerError, Redirect}
-
 import org.edena.core.DefaultTypes.Seq
+import org.edena.core.util.LoggingSupport
 
-trait ExceptionHandler {
+trait ExceptionHandler extends LoggingSupport {
 
   protected def homeCall: Call
 
@@ -38,7 +37,7 @@ trait ExceptionHandler {
     implicit request: Request[_]
   ): Result = {
     val message = s"The request timed out while executing $functionName function${extraMessage.getOrElse("")}."
-    Logger.error(message)
+    logger.error(message)
     referrerOrHome(useReferrer).flashing("errors" -> message)
   }
 
@@ -48,7 +47,7 @@ trait ExceptionHandler {
     useReferrer: Boolean = true)(
     implicit request: Request[_]
   ): Result = {
-    Logger.error(message, e)
+    logger.error(message, e)
     referrerOrHome(useReferrer).flashing("errors" -> message)
   }
 
@@ -58,7 +57,7 @@ trait ExceptionHandler {
     e: Throwable
   ): Result = {
     val message = s"Fatal error detected while executing $functionName function${extraMessage.getOrElse("")}."
-    Logger.error(message, e)
+    logger.error(message, e)
     InternalServerError(e.getMessage)
   }
 }

@@ -8,7 +8,7 @@ import org.edena.ada.server.dataaccess.StoreTypes.UserStore
 import org.edena.ada.server.models._
 import org.edena.ada.server.models.Filter.{FilterIdentity, filterConditionFormat, filterFormat}
 import org.edena.ada.server.dataaccess.dataset.{DataSetAccessor, DataSetAccessorFactory}
-import play.api.Logger
+import play.api.Logging
 import play.api.data.Form
 import play.api.data.Forms._
 import play.api.libs.json.{JsArray, Json}
@@ -194,13 +194,13 @@ protected[controllers] class FilterControllerImpl @Inject() (
       Ok(s"Item ${id} has been created")
     }.recover {
       case e: AdaException =>
-        Logger.error("Problem found while executing the save function")
+        logger.error("Problem found while executing the save function")
         BadRequest(e.getMessage)
       case t: TimeoutException =>
-        Logger.error("Problem found while executing the save function")
+        logger.error("Problem found while executing the save function")
         InternalServerError(t.getMessage)
       case i: EdenaDataStoreException =>
-        Logger.error("Problem found while executing the save function")
+        logger.error("Problem found while executing the save function")
         InternalServerError(i.getMessage)
     }
   }

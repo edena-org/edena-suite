@@ -8,7 +8,6 @@ import org.edena.ada.server.models.ml.classification.Classifier.ClassifierIdenti
 import org.edena.ada.server.models.BasicDisplayOptions
 import org.edena.spark_ml.models.classification.{ClassificationEvalMetric, Classifier}
 import org.edena.spark_ml.models.result._
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.libs.json._
 import org.edena.ada.server.services.StatsService
 import org.edena.core.field.{FieldTypeId, FieldTypeSpec}

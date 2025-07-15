@@ -33,7 +33,7 @@
                     prependTrollboxJsonMessage(json, false);
                 });
                 $("#trollmessagebox").scrollTop($(document).height());
-                @if(conf.getBoolean("messages.listener.enabled").getOrElse(true)) {
+                @if(conf.getOptional[Boolean]("messages.listener.enabled").getOrElse(true)) {
                     registerMessageEventSource('@org.edena.ada.web.controllers.routes.MessageController.eventStream.url');
                 }
             },

@@ -8,7 +8,7 @@ import org.edena.ada.server.dataaccess.StoreTypes.{BaseRunnableSpecStore, Messag
 import org.edena.ada.server.util.MessageLogger
 import org.edena.ada.server.util.ClassFinderUtil.findClasses
 import org.edena.play.controllers.{AdminRestrictedCrudController, BaseController, HasBasicFormCreateView, HasBasicFormCrudViews, HasBasicFormEditView, HasBasicListView, HasFormShowEqualEditView, WebContext, WithNoCaching}
-import play.api.{Configuration, Logger}
+import play.api.{Configuration, Logging}
 import play.api.data.{Form, Mapping}
 import play.api.mvc.{AnyContent, ControllerComponents, Request, Result, WrappedRequest}
 import views.html.{runnable => runnableViews}
@@ -60,8 +60,7 @@ class RunnableController @Inject() (
   with HasFormShowEqualEditView[BaseRunnableSpec, BSONObjectID]
   with MappingHelper {
 
-  private val logger = Logger
-  private val messageLogger = MessageLogger(logger.underlyingLogger, messageRepo)
+  private val messageLogger = MessageLogger(logger.underlying, messageRepo)
 
   // we scan only the jars starting with this prefix to speed up the class search
   private val basePackages = Seq(
@@ -73,10 +72,10 @@ class RunnableController @Inject() (
     "runnables.core"
   )
 
-  private val packages = basePackages ++ configuration.getStringSeq("runnables.extra_packages").getOrElse(Nil)
-  private val searchRunnableSubpackages = configuration.getBoolean("runnables.subpackages.enabled").getOrElse(false)
+  private val packages = basePackages ++ configuration.getOptional[Seq[String]]("runnables.extra_packages").getOrElse(Nil)
+  private val searchRunnableSubpackages = configuration.getOptional[Boolean]("runnables.subpackages.enabled").getOrElse(false)
 
-  private lazy val appHomeRedirect = Redirect(routes.AppController.index())
+  private lazy val appHomeRedirect = Redirect(routes.AppController.index)
   override protected lazy val homeCall = routes.RunnableController.find()
 
   protected[controllers] lazy val form: Form[BaseRunnableSpec] = formWithNoInput.asInstanceOf[Form[BaseRunnableSpec]]

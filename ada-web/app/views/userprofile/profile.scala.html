@@ -6,7 +6,7 @@
 
 @(user: User)(implicit webContext: WebContext)
 
-@main(webContext.configuration.getString("project.name").getOrElse("") + " Home") {
+@main(webContext.configuration.getOptional[String]("project.name").getOrElse("") + " Home") {
     <!-- Begin page content -->
     <div class="container" style="padding-bottom: 190px;" xmlns="http://www.w3.org/1999/html">
         @userprofile.profileHeader(1)

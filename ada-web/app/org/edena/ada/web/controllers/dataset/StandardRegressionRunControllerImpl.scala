@@ -11,7 +11,7 @@ import org.edena.ada.server.models.ml.regression.RegressionResult.standardRegres
 import org.edena.ada.web.models.Widget.writes
 import org.edena.ada.server.dataaccess.StoreTypes.{ClassifierStore, RegressorStore}
 import org.edena.ada.server.dataaccess.dataset.{DataSetAccessor, DataSetAccessorFactory}
-import play.api.Logger
+import play.api.Logging
 import play.api.data.Forms._
 import play.api.libs.json._
 import play.api.mvc.{Action, ControllerComponents, Request}

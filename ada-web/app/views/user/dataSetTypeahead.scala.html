@@ -30,7 +30,7 @@
         populateFieldTypeaheadFromUrl({
             typeaheadElement: $('#@{parentId} #permission-dataSetTypeahead'),
             fieldNameElement: $('#@{parentId} #permission-dataSetId'),
-            url: '@Html(org.edena.ada.web.controllers.routes.AdminController.dataSetIds().url)',
+            url: '@Html(org.edena.ada.web.controllers.routes.AdminController.dataSetIds.url)',
             showOption: @FilterShowFieldStyle.LabelsOnly.id
         })
     })

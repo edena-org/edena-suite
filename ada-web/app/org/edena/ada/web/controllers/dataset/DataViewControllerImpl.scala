@@ -14,7 +14,7 @@ import org.edena.json.EitherFormat
 import org.edena.ada.server.models.Filter.{FilterIdentity, filterConditionFormat, filterFormat}
 import org.edena.core.store.Criterion._
 import org.edena.ada.server.dataaccess.dataset.{DataSetAccessor, DataSetAccessorFactory}
-import play.api.Logger
+import play.api.Logging
 import play.api.data.Form
 import play.api.data.Forms._
 import play.api.libs.json.{JsArray, Json}
@@ -356,7 +356,7 @@ protected[controllers] class DataViewControllerImpl @Inject() (
           )
       }).recover {
         case t: TimeoutException =>
-          Logger.error("Problem found in the edit process")
+          logger.error("Problem found in the edit process")
           InternalServerError(t.getMessage)
       }
     }

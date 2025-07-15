@@ -8,13 +8,13 @@ import org.edena.ada.web.security.AdaAuthConfig
 import org.pac4j.core.profile._
 import org.pac4j.play.scala._
 import play.api.mvc._
-import play.api.{Configuration, Logger}
+import play.api.{Configuration, Environment, Logging}
 
 import javax.inject.Inject
 import play.api.cache.SyncCacheApi
 import play.api.libs.crypto.CookieSigner
-import scala.concurrent.duration._
 
+import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 import org.edena.core.DefaultTypes.Seq
 
@@ -24,21 +24,21 @@ class OidcAuthController @Inject() (
   userRepo: UserStore,
   configuration: Configuration,
   val cache: SyncCacheApi,
-  val cookieSigner: CookieSigner
+  val cookieSigner: CookieSigner,
+  val environment: Environment
 ) extends Security[CommonProfile]            // PAC4J
     with Login                              // Play2 Auth
-    with AdaAuthConfig {                    // Play2 Auth
+    with AdaAuthConfig                      // Play2 Auth
+    with Logging {
 
-  private val logger = Logger
-
-  private val subAttribute = configuration.getString("oidc.returnAttributeIdName")
+  private val subAttribute = configuration.getOptional[String]("oidc.returnAttributeIdName")
 
   private implicit val ec = controllerComponents.executionContext
 
   def oidcLogin = Secure("OidcClient") { implicit request: AuthenticatedRequest[AnyContent] =>
 
       def successfulResult(user: User, extraMessage: String = "") = {
-        Logger.info(s"Successful authentication for the user '${user.userId}', id '${user.oidcUserName}' using the associated OIDC provider.$extraMessage")
+        logger.info(s"Successful authentication for the user '${user.userId}', id '${user.oidcUserName}' using the associated OIDC provider.$extraMessage")
         gotoLoginSucceeded(user.userId)
       }
 
@@ -101,7 +101,7 @@ class OidcAuthController @Inject() (
       val futureResult = if (oidcIdOpt.isEmpty) {
         val errorMessage = s"OIDC login cannot be fully completed. The user '${userName} doesn't have attribute ${subAttribute} in Jwt token."
         logger.warn(errorMessage)
-        Future(Redirect(routes.AppController.index()).flashing("errors" -> errorMessage))
+        Future(Redirect(routes.AppController.index).flashing("errors" -> errorMessage))
       } else {
         val oidcUser = User(
           userId = oidcIdOpt.get,

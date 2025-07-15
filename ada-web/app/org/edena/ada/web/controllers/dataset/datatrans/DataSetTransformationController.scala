@@ -19,7 +19,6 @@ import org.edena.core.util.{nonAlphanumericToUnderscore, retry}
 import org.edena.play.Page
 import org.edena.play.controllers._
 import org.edena.ada.server.services.ServiceTypes._
-import play.api.Logger
 import play.api.data.Form
 import play.api.libs.json.{JsArray, Json}
 import play.api.mvc._
@@ -30,6 +29,7 @@ import views.html.{datasettrans => view}
 import scala.concurrent.Future
 import scala.util.Random
 import org.edena.core.DefaultTypes.Seq
+import play.api.Logging
 
 class DataSetTransformationController @Inject()(
   repo: DataSetTransformationStore,
@@ -47,12 +47,11 @@ class DataSetTransformationController @Inject()(
     with HasCreateEditSubTypeFormViews[DataSetMetaTransformation, BSONObjectID]
     with HasFormShowEqualEditView[DataSetMetaTransformation, BSONObjectID] {
 
-  private val logger = Logger
   override protected val entityNameKey = "dataSetTransformation"
   override protected def formatId(id: BSONObjectID) = id.stringify
   private val random = new Random()
 
-  private lazy val importRetryNum = configuration.getInt("datasetimport.retrynum").getOrElse(3)
+  private lazy val importRetryNum = configuration.getOptional[Int]("datasetimport.retrynum").getOrElse(3)
 
   override protected val createEditFormViews = dataSetTransformationFormViewsCentral()
   private val transformationClassNameMap: Map[Class[_], String] = createEditFormViews.map(x => (x.man.runtimeClass, x.displayName)).toMap

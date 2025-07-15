@@ -1,6 +1,5 @@
 package org.edena.ada.server.dataaccess
 
-import play.api.Logger
 import play.api.inject.ApplicationLifecycle
 
 import java.util.concurrent.ConcurrentLinkedDeque
@@ -30,7 +29,7 @@ class SerializableApplicationLifecycle extends ApplicationLifecycle with Seriali
           case Failure(e) => Future.failed(e)
         }
         hookFuture.recover {
-          case e => Logger.error("Error executing stop hook", e)
+          case e => System.err.println(s"Error executing stop hook: ${e.getMessage}")
         }
       })
       else previous

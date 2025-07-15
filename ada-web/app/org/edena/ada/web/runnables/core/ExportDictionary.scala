@@ -2,7 +2,7 @@ package org.edena.ada.web.runnables.core
 
 import java.io.{File, PrintWriter}
 
-import play.api.Logger
+import play.api.Logging
 import org.edena.ada.server.runnables.DsaInputFutureRunnable
 import org.edena.json.util
 import org.edena.ada.web.runnables.RunnableFileOutput
@@ -13,7 +13,7 @@ import play.api.libs.json.{JsObject, JsString, Json}
 import scala.concurrent.ExecutionContext.Implicits.global
 import org.edena.core.DefaultTypes.Seq
 
-class ExportDictionary extends DsaInputFutureRunnable[ExportDictionarySpec] with RunnableFileOutput {
+class ExportDictionary extends DsaInputFutureRunnable[ExportDictionarySpec] with RunnableFileOutput with Logging {
 
   override def runAsFuture(input: ExportDictionarySpec) = {
     val unescapedDelimiter = StringEscapeUtils.unescapeJava(input.delimiter)

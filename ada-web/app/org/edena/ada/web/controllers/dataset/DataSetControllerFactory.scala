@@ -3,17 +3,15 @@ package org.edena.ada.web.controllers.dataset
 import com.google.inject.ImplementedBy
 import org.edena.ada.server.dataaccess.dataset.{DataSetAccessor, DataSetAccessorFactory}
 import org.edena.ada.server.util.ClassFinderUtil.findClasses
-import org.edena.core.util.toHumanReadableCamel
+import org.edena.core.util.{LoggingSupport, toHumanReadableCamel}
 import play.api.inject.Injector
+
 import javax.inject.{Inject, Singleton}
-import org.edena.ada.server.AdaException
 import scala.concurrent.duration._
-
 import collection.mutable.{Map => MMap}
-import play.api.{Configuration, Logger}
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
+import play.api.{Configuration, Logging}
 
-import scala.concurrent.{Await, duration}
+import scala.concurrent.{Await, ExecutionContext, duration}
 import org.edena.core.DefaultTypes.Seq
 
 @ImplementedBy(classOf[DataSetControllerFactoryImpl])
@@ -22,14 +20,15 @@ trait DataSetControllerFactory {
 }
 
 @Singleton
-protected class DataSetControllerFactoryImpl @Inject()(
-    dsaf: DataSetAccessorFactory,
-    genericFactory: GenericDataSetControllerFactory,
-    injector : Injector,
-    configuration: Configuration
-  ) extends DataSetControllerFactory {
+protected class DataSetControllerFactoryImpl @Inject() (
+  dsaf: DataSetAccessorFactory,
+  genericFactory: GenericDataSetControllerFactory,
+  injector: Injector,
+  configuration: Configuration
+)(
+  implicit ec: ExecutionContext
+) extends DataSetControllerFactory with LoggingSupport {
 
-  private val logger = Logger  // (this.getClass())
   protected val cache = MMap[String, DataSetController]()
 
   // TODO: locking and concurrency
@@ -49,7 +48,9 @@ protected class DataSetControllerFactoryImpl @Inject()(
   }
 
   private def createController(dsa: DataSetAccessor) =
-    dsa.setting.map(setting => createControllerAux(dsa.dataSetId, setting.customControllerClassName))
+    dsa.setting.map(setting =>
+      createControllerAux(dsa.dataSetId, setting.customControllerClassName)
+    )
 
   private def createControllerAux(
     dataSetId: String,
@@ -59,7 +60,9 @@ protected class DataSetControllerFactoryImpl @Inject()(
       findControllerClass(className).map { controllerClass =>
         injector.instanceOf(controllerClass)
       }.getOrElse {
-        logger.warn(s"Controller class '$className' for the data set '$dataSetId' not found or doesn't implement DataSetController trait. Creating a generic one instead...")
+        logger.warn(
+          s"Controller class '$className' for the data set '$dataSetId' not found or doesn't implement DataSetController trait. Creating a generic one instead..."
+        )
         genericFactory(dataSetId)
       }
     }.getOrElse {
@@ -67,6 +70,8 @@ protected class DataSetControllerFactoryImpl @Inject()(
       genericFactory(dataSetId)
     }
 
-  private def findControllerClass(controllerClassName: String): Option[Class[DataSetController]] =
-    findClasses[DataSetController](Some("org.edena.ada.web.controllers")).find(_.getName.equals(controllerClassName))
+  private def findControllerClass(controllerClassName: String)
+    : Option[Class[DataSetController]] =
+    findClasses[DataSetController](Some("org.edena.ada.web.controllers"))
+      .find(_.getName.equals(controllerClassName))
 }

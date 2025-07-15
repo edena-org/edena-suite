@@ -1,19 +1,18 @@
 package org.edena.ada.web.controllers.core
 
 import java.util.concurrent.TimeoutException
-
 import org.edena.ada.web.controllers.routes
 import org.edena.ada.server.dataaccess.AdaConversionException
 import org.edena.ada.server.AdaException
 import org.edena.core.store.EdenaDataStoreException
 import org.edena.play.controllers.ExceptionHandler
-import play.api.Logger
+import play.api.Logging
 import play.api.mvc.{Request, Result}
 import play.api.mvc.Results.{BadRequest, InternalServerError, Ok, Redirect}
-
 import org.edena.core.DefaultTypes.Seq
+import org.edena.core.util.LoggingSupport
 
-trait AdaExceptionHandler extends ExceptionHandler {
+trait AdaExceptionHandler extends ExceptionHandler with LoggingSupport {
 
   override protected def handleExceptions(
     functionName: String,
@@ -26,8 +25,8 @@ trait AdaExceptionHandler extends ExceptionHandler {
 
     case e: EdenaDataStoreException =>
       val message = s"Repo/db problem found while executing '$functionName' function${extraMessage.getOrElse("")}."
-      Logger.error(message, e)
-      Redirect(routes.AppController.index()).flashing("errors" -> message)
+      logger.error(message, e)
+      Redirect(routes.AppController.index).flashing("errors" -> message)
 
     case e: AdaConversionException =>
       val message = s"Conversion problem found while executing '$functionName' function${extraMessage.getOrElse("")}. Cause: ${e.getMessage}"
@@ -49,27 +48,27 @@ trait AdaExceptionHandler extends ExceptionHandler {
 
     case e: TimeoutException =>
       val message = s"The request timed out while executing '$functionName' function${extraMessage.getOrElse("")}."
-      Logger.error(message, e)
+      logger.error(message, e)
       InternalServerError(message)
 
     case e: EdenaDataStoreException =>
       val message = s"Repo/db problem found while executing '$functionName' function${extraMessage.getOrElse("")}."
-      Logger.error(message, e)
+      logger.error(message, e)
       InternalServerError(message)
 
     case e: AdaConversionException =>
       val message = s"Conversion problem found while executing '$functionName' function${extraMessage.getOrElse("")}. Cause: ${e.getMessage}"
-      Logger.warn(message, e)
+      logger.warn(message, e)
       BadRequest(message)
 
     case e: AdaException =>
       val message = s"General problem found while executing '$functionName' function${extraMessage.getOrElse("")}. Cause: ${e.getMessage}"
-      Logger.warn(message, e)
+      logger.warn(message, e)
       BadRequest(message)
 
     case e: Throwable =>
       val message = s"Fatal problem found while executing '$functionName' function${extraMessage.getOrElse("")}. Contact your admin."
-      Logger.error(message, e)
+      logger.error(message, e)
       e.printStackTrace()
       InternalServerError(message)
   }

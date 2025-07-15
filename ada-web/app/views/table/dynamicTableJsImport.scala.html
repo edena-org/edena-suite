@@ -4,5 +4,5 @@
 
 @()(implicit webJarAssets: WebJarsUtil)
 
-@webJarAssets.locate("jquery-ui.min.js").script()
+@webJarAssets.locate("jquery-ui", "jquery-ui.min.js").script()
 <script type="text/javascript" src="@CustomDirAssets.versioned("javascripts/dynamicTable.js")"></script>

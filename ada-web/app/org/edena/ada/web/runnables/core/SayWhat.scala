@@ -3,7 +3,7 @@ package org.edena.ada.web.runnables.core
 import javax.inject.Inject
 import org.edena.ada.server.dataaccess.dataset.DataSetAccessorFactory
 import org.edena.core.runnables.{FutureRunnable, InputFutureRunnableExt, RunnableHtmlOutput}
-import play.api.Logger
+import play.api.Logging
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -12,8 +12,7 @@ import org.edena.core.DefaultTypes.Seq
 // TODO: Remove... just for testing
 class SayWhat @Inject() (
   dsaf: DataSetAccessorFactory
-) extends InputFutureRunnableExt[SayWhatSpec] with RunnableHtmlOutput {
-  private val logger = Logger
+) extends InputFutureRunnableExt[SayWhatSpec] with RunnableHtmlOutput with Logging {
 
   override def runAsFuture(spec: SayWhatSpec): Future[Unit] = {
     for {

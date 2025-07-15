@@ -2,7 +2,7 @@ package org.edena.ada.web.security
 
 import org.edena.ada.web.controllers.routes
 import play.api.mvc._
-import play.api.Logger
+import play.api.Logging
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -10,6 +10,7 @@ import Results._
 import be.objectify.deadbolt.scala.{AuthenticatedRequest, DeadboltHandler, DynamicResourceHandler}
 import be.objectify.deadbolt.scala.models.Subject
 import io.netty.handler.codec.http.HttpHeaders.Names
+import org.edena.core.util.LoggingSupport
 import org.edena.play.util.WebUtil.redirectToRefererOrElse
 
 /**
@@ -35,8 +36,8 @@ class AdaOnFailureRedirectDeadboltHandler(
           println("Accepted encodings: " + getAcceptedEncodings(request).mkString(","))
 
           val username = subject.identifier
-          Logger.error(s"Unauthorized access by '$username' to '${request.uri}'.")
-          val result = redirectToRefererOrElse(routes.AppController.index())(request)
+          logger.error(s"Unauthorized access by '$username' to '${request.uri}'")
+          val result = redirectToRefererOrElse(routes.AppController.index)(request)
           result.flashing("errors" -> "Access denied! We're sorry, but you are not authorized to perform the requested operation.")
         }
 
@@ -61,7 +62,7 @@ class AdaOnFailureUnauthorizedStatusDeadboltHandler(
 protected abstract class AdaDeadboltHandler(
     getCurrentUser: Request[_] => Future[Option[Subject]],
     dynamicResourceHandler: Option[DynamicResourceHandler] = None
-  ) extends DeadboltHandler {
+  ) extends DeadboltHandler with LoggingSupport {
 
   /**
     * Pre-authorization task. May block further execution.

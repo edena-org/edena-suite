@@ -23,7 +23,7 @@ import org.edena.play.Page
 import org.edena.play.controllers._
 import org.edena.play.formatters._
 import org.edena.play.util.WebUtil.getRequestParamValueOptional
-import play.api.Logger
+import play.api.Logging
 import play.api.data.{Form, FormError}
 import play.api.libs.json.{JsArray, Json}
 import play.api.mvc._
@@ -48,12 +48,11 @@ class DataSetImportController @Inject()(
     with HasCreateEditSubTypeFormViews[DataSetImport, BSONObjectID]
     with HasFormShowEqualEditView[DataSetImport, BSONObjectID] {
 
-  private val logger = Logger
 
   override protected val entityNameKey = "dataSetImport"
   override protected def formatId(id: BSONObjectID) = id.stringify
 
-  private lazy val importFolder = configuration.getString("datasetimport.import.folder").getOrElse {
+  private lazy val importFolder = configuration.getOptional[String]("datasetimport.import.folder").getOrElse {
     val folder = new java.io.File("dataImports/").getAbsolutePath
     val path = Paths.get(folder)
     // create if doesn't exist
@@ -61,7 +60,7 @@ class DataSetImportController @Inject()(
     folder
   }
 
-  private lazy val importRetryNum = configuration.getInt("datasetimport.retrynum").getOrElse(3)
+  private lazy val importRetryNum = configuration.getOptional[Int]("datasetimport.retrynum").getOrElse(3)
 
   override protected val createEditFormViews = dataSetImportFormViewsCentral()
   private val importClassNameMap: Map[Class[_], String] = createEditFormViews.map(x => (x.man.runtimeClass, x.displayName)).toMap

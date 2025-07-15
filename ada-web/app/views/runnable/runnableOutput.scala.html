@@ -43,7 +43,7 @@
                     @deadboltRestricts.restrictOr(roles = List(Array(SecurityRole.admin))) {
                         <a href="@cancelLink.getOrElse(routes.RunnableController.find().url)" class="btn btn-default">Back</a>
                     } {
-                        <a href="@cancelLink.getOrElse(routes.AppController.index().url)" class="btn btn-default">Cancel</a>
+                        <a href="@cancelLink.getOrElse(routes.AppController.index.url)" class="btn btn-default">Cancel</a>
                     }
                 </div>
             }

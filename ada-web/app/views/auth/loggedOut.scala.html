@@ -4,7 +4,7 @@
 
 @()(implicit context: WebContext)
 
-@layout.main(context.configuration.getString("project.name").getOrElse("") + " Home") {
+@layout.main(context.configuration.getOptional[String]("project.name").getOrElse("") + " Home") {
 
     <div class="page-header">
         <h1>Logout Succeeded</h1>

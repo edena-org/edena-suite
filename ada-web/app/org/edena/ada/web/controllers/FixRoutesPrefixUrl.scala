@@ -19,7 +19,7 @@ class FixRoutesPrefixUrl extends Module {
     environment: Environment,
     configuration: Configuration
   ): Seq[Binding[_]] = {
-    configuration.getString("play.http.context").foreach(_root_.core.RoutesPrefix.setPrefix)
+    configuration.getOptional[String]("play.http.context").foreach(_root_.core.RoutesPrefix.setPrefix)
     Nil
   }
 }

@@ -2,6 +2,7 @@ package org.edena.play.controllers
 
 import javax.inject.Inject
 import be.objectify.deadbolt.scala.AuthenticatedRequest
+import org.edena.core.util.LoggingSupport
 import org.edena.play.security.ActionSecurity
 import org.webjars.play.WebJarsUtil
 import play.api.Configuration
@@ -13,7 +14,7 @@ import play.api.mvc.{BaseController => PlayBaseController}
   *
   * @author Peter Banda
   */
-trait BaseController extends PlayBaseController with ActionSecurity {
+trait BaseController extends PlayBaseController with ActionSecurity with LoggingSupport {
 
   @Inject protected var webJarAssets: WebJarsUtil = _
   @Inject protected var configuration: Configuration = _

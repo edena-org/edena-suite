@@ -5,7 +5,7 @@ import be.objectify.deadbolt.scala.{AuthenticatedRequest, DeadboltHandler, Dynam
 
 import collection.immutable.Map
 import play.api.mvc.Request
-import play.api.Logger
+import play.api.Logging
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -13,7 +13,7 @@ import scala.concurrent.Future
 /**
  * @author Steve Chaloner (steve@objectify.be)
  */
-class AdaDynamicResourceHandler extends DynamicResourceHandler {
+class AdaDynamicResourceHandler extends DynamicResourceHandler with Logging {
 
   override def isAllowed[A](
     name: String,
@@ -25,7 +25,7 @@ class AdaDynamicResourceHandler extends DynamicResourceHandler {
       success <- AdaDynamicResourceHandler.handlers(name).isAllowed(name, meta, deadboltHandler, request)
     } yield {
       if (!success)
-        Logger.error(s"Unallowed access by [$name].")
+        logger.error(s"Unallowed access by [$name].")
       success
     }
 
@@ -39,11 +39,11 @@ class AdaDynamicResourceHandler extends DynamicResourceHandler {
       val success = subject.permissions.contains(permissionValue)
       if (!success) {
         val username = subject.identifier
-        Logger.error(s"Unauthorized access; user [$username] is missing permission [$permissionValue].")
+        logger.error(s"Unauthorized access; user [$username] is missing permission [$permissionValue].")
       }
       success
     }.getOrElse {
-      Logger.error("Unauthorized access by unregistered user.")
+      logger.error("Unauthorized access by unregistered user.")
       false
     }
   }

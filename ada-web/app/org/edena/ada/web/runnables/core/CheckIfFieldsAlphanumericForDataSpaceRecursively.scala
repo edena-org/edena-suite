@@ -8,7 +8,7 @@ import org.edena.ada.server.models.DataSpaceMetaInfo
 import org.edena.ada.web.services.DataSpaceService
 import org.edena.core.runnables.{InputFutureRunnableExt, RunnableHtmlOutput}
 import org.edena.core.util.{hasNonAlphanumericUnderscore, seqFutures}
-import play.api.Logger
+import play.api.Logging
 import reactivemongo.api.bson.BSONObjectID
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -19,7 +19,8 @@ class CheckIfFieldsAlphanumericForDataSpaceRecursively @Inject() (
   val fieldRepoFactory: FieldStoreFactory,
   dataSpaceMetaInfoRepo: DataSpaceMetaInfoStore,
   dataSpaceService: DataSpaceService
-) extends InputFutureRunnableExt[CheckIfFieldsAlphanumericForDataSpaceRecursivelySpec] with CheckIfFieldsAlphanumericHelper{
+) extends InputFutureRunnableExt[CheckIfFieldsAlphanumericForDataSpaceRecursivelySpec]
+  with CheckIfFieldsAlphanumericHelper with Logging {
 
   override def runAsFuture(input: CheckIfFieldsAlphanumericForDataSpaceRecursivelySpec) =
     for {
@@ -57,9 +58,7 @@ case class CheckIfFieldsAlphanumericForDataSpaceRecursivelySpec(
   dataSpaceId: BSONObjectID
 )
 
-trait CheckIfFieldsAlphanumericHelper extends RunnableHtmlOutput {
-
-  protected val logger = Logger
+trait CheckIfFieldsAlphanumericHelper extends RunnableHtmlOutput with Logging {
   protected val escapedDotString = "u002e"
   val fieldRepoFactory: FieldStoreFactory
 

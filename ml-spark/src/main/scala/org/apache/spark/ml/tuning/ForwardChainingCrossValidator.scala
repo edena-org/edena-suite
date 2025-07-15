@@ -2,7 +2,6 @@ package org.apache.spark.ml.tuning
 
 import java.util.{List => JList}
 
-import com.github.fommil.netlib.F2jBLAS
 import org.apache.hadoop.fs.Path
 import org.apache.spark.annotation.Since
 import org.apache.spark.internal.Logging
@@ -24,14 +23,17 @@ import org.slf4j.LoggerFactory
 class ForwardChainingCrossValidator(override val uid: String)
   extends Estimator[ForwardChainingCrossValidatorModel]
     with MLBase
-    with CrossValidatorParams with MLWritable with Logging {
+    with CrossValidatorParams
+    with MLWritable {
 
   private val logger = LoggerFactory.getLogger("spark_ml")
+
+  // TODO
+//  private val f2jBLAS = new F2jBLAS
 
   @Since("1.2.0")
   def this() = this(Identifiable.randomUID("forward_cv"))
 
-  private val f2jBLAS = new F2jBLAS
 
   def setEstimator(value: Estimator[_]): this.type = set(estimator, value)
 
@@ -131,7 +133,14 @@ class ForwardChainingCrossValidator(override val uid: String)
     }
 
     // choosing best model (params)
-    f2jBLAS.dscal(numModels, 1.0 / $(numFolds), metrics, 1)
+    // Scale metrics by 1/numFolds to get average (replaces F2jBLAS.dscal)
+
+    // TODO: originally f2jBLAS.dscal(numModels, 1.0 / $(numFolds), metrics, 1)
+
+    val avgFactor = 1.0 / $(numFolds)
+    for (i <- metrics.indices) {
+      metrics(i) = metrics(i) * avgFactor
+    }
     logInfo(s"Average cross-validation metrics: ${metrics.toSeq}")
     val (bestMetric, bestIndex) =
       if (eval.isLargerBetter) metrics.zipWithIndex.maxBy(_._1)

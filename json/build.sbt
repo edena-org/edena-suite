@@ -11,7 +11,6 @@ resolvers ++= Seq(
 
 libraryDependencies ++= Seq(
   "com.typesafe.play" %% "play-json" % Versions.playJson,
-
   // Test
   "org.scalatest" %% "scalatest" % Versions.scalaTest % "test",
 )

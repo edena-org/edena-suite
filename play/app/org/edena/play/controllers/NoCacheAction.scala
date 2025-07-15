@@ -2,6 +2,7 @@ package org.edena.play.controllers
 
 import play.api.http.HeaderNames
 import play.api.mvc._
+import javax.inject.Inject
 
 import scala.concurrent.{ExecutionContext, Future}
 import org.edena.core.DefaultTypes.Seq
@@ -9,15 +10,15 @@ import org.edena.core.DefaultTypes.Seq
 /**
   * @author Peter Banda
   */
-class NoCacheAction(implicit val executionContext: ExecutionContext) extends DefaultActionBuilder with NoCacheSetting {
+class NoCacheAction @Inject() (val controllerComponents: ControllerComponents)(implicit override val executionContext: ExecutionContext) extends ActionBuilderImpl(controllerComponents.parsers.default) with NoCacheSetting {
 
-  def invokeBlock[A](
+  override def invokeBlock[A](
     request: Request[A],
     block: (Request[A]) => Future[Result]
   ) =
     block(request).map(_.withHeaders(HeaderNames.CACHE_CONTROL -> noCacheSetting))
 
-  override def parser: BodyParser[AnyContent] = BodyParsers.parse.default
+  override val parser: BodyParser[AnyContent] = controllerComponents.parsers.default
 }
 
 case class WithNoCaching[A](action: Action[A])(implicit val executionContext: ExecutionContext) extends Action[A] with NoCacheSetting {

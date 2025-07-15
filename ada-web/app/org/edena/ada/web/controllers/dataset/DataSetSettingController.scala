@@ -12,7 +12,7 @@ import org.edena.ada.server.models.DataSetFormattersAndIds.{DataSetSettingIdenti
 import org.edena.ada.server.models.NavigationItem.navigationItemFormat
 import org.edena.ada.server.models._
 import org.edena.ada.server.dataaccess.dataset.DataSetAccessorFactory
-import play.api.Logger
+import play.api.Logging
 import play.api.data.{Form, FormError, Mapping}
 import play.api.data.Forms._
 import play.api.mvc._
@@ -158,7 +158,7 @@ class DataSetSettingController @Inject() (
       }
     }.recover {
       case t: TimeoutException =>
-        Logger.error("Problem found in the edit process")
+        logger.error("Problem found in the edit process")
         InternalServerError(t.getMessage)
     }
   }

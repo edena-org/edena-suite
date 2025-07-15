@@ -1,7 +1,8 @@
-package reactivemongo.api.commands
+package org.edena.store.mongo.commands
 
 import reactivemongo.api.bson.BSONDocument
 import reactivemongo.api.bson.collection.BSONSerializationPack
+import reactivemongo.api.commands.{Command, CommandKind, CommandWithResult}
 
 import scala.util.Try
 
@@ -9,7 +10,7 @@ case class FSyncCommand(
   async: Boolean = true,
   lock: Boolean = false
 ) extends Command with CommandWithResult[Unit] {
-  override protected[reactivemongo] def commandKind = new CommandKind("fsync")
+  val commandKind = new CommandKind("fsync")
 }
 
 object FSyncCommand {

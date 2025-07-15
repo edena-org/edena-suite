@@ -7,6 +7,7 @@ import org.edena.ada.web.models.security.DeadboltUser
 import org.edena.play.security.DeadboltHandlerKeys
 import play.api.mvc.Request
 import org.edena.ada.server.services.UserManager
+import play.api.Environment
 import play.api.cache.SyncCacheApi
 import play.api.libs.crypto.CookieSigner
 
@@ -16,7 +17,8 @@ import scala.concurrent.ExecutionContext.Implicits.global
 class CustomHandlerCacheImpl @Inject() (
   val ldapUserManager: UserManager,
   val cache: SyncCacheApi,
-  val cookieSigner: CookieSigner
+  val cookieSigner: CookieSigner,
+  val environment: Environment
 ) extends HandlerCache with AdaAuthConfig {
 
   private val dynamicResourceHandler = new AdaDynamicResourceHandler

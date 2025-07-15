@@ -54,7 +54,7 @@ protected[mongo] class MongoSaveStore[E: Format, ID: Format](
     }
   }
 
-  import reactivemongo.api.commands.FSyncCommand._
+  import org.edena.store.mongo.commands.FSyncCommand._
 
   override def flushOps = withCollection {
     val async = true

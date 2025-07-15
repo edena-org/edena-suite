@@ -122,7 +122,7 @@
             populateFieldTypeaheadFromUrl({
                 typeaheadElement: $('#runnableClassTypeahead'),
                 fieldNameElement: $('#runnableClassName'),
-                url: '@Html(routes.RunnableController.getRunnableNames().url)',
+                url: '@Html(routes.RunnableController.getRunnableNames.url)',
                 showOption: @FilterShowFieldStyle.LabelsOnly.id,
                 postFunction: function(){ setTimeout(function(){ $('#runnableClassTypeahead').focus();}, 250)}
             })
@@ -146,7 +146,7 @@
 
                 if (className) {
                     const params = {'runnableClassName': className}
-                    submit('get', '@routes.RunnableController.create().url', params)
+                    submit('get', '@routes.RunnableController.create.url', params)
                 }
             };
 

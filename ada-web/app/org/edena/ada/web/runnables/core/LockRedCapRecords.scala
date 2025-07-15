@@ -7,7 +7,7 @@ import org.edena.ada.server.services.importers.{RedCapLockAction, RedCapServiceF
 import org.edena.ada.web.runnables.InputView
 import org.edena.core.runnables.{InputFutureRunnableExt, RunnableHtmlOutput}
 import org.edena.core.util.{GroupMapList, seqFutures, toHumanReadableCamel}
-import play.api.{Configuration, Logger}
+import play.api.{Configuration, Logging}
 import org.edena.play.controllers.WebContext
 import org.edena.play.controllers.WebContext._
 import views.html.elements.{inputText, select, textarea}
@@ -17,24 +17,24 @@ import scala.jdk.CollectionConverters._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future.sequence
 import org.edena.core.DefaultTypes.Seq
+import org.edena.core.util.ConfigImplicits.ConfigExt
 
 class LockRedCapRecords @Inject()(
   configuration: Configuration,
   factory: RedCapServiceFactory
-) extends InputFutureRunnableExt[LockRedCapRecordsSpec] with RunnableHtmlOutput with InputView[LockRedCapRecordsSpec] {
+) extends InputFutureRunnableExt[LockRedCapRecordsSpec] with RunnableHtmlOutput with InputView[LockRedCapRecordsSpec] with Logging {
 
-  private val logger = Logger("LockRedCapRecords")
 
   private val confPrefix = "runnables.lock_redcap_records."
-  private val host = configuration.getString(confPrefix + "host").getOrElse(throwConfigMissing("host"))
-  private val token = configuration.getString(confPrefix + "token").getOrElse(throwConfigMissing("token"))
-  private val visits = configuration.getObjectList(confPrefix + "visits").getOrElse(throwConfigMissing("visits")).asScala.map(
+  private val host = configuration.getOptional[String](confPrefix + "host").getOrElse(throwConfigMissing("host"))
+  private val token = configuration.getOptional[String](confPrefix + "token").getOrElse(throwConfigMissing("token"))
+  private val visits = configuration.underlying.optionalObjectList(confPrefix + "visits").getOrElse(throwConfigMissing("visits")).map(
     item => (
       item.get("value").unwrapped().toString,
       item.get("label").unwrapped().toString
     )
   )
-  private val excludedInstruments = configuration.getStringSeq(confPrefix + "excluded_instruments").map(_.toSet).getOrElse(Set())
+  private val excludedInstruments = configuration.underlying.optionalStringSeq(confPrefix + "excluded_instruments").map(_.toSet).getOrElse(Set())
 
   private def throwConfigMissing(entryName: String) =
     throw new AdaException(s"No REDCap $entryName defined. Please set 'runnables.lock_redcap_records.$entryName' in your config file (custom.conf).")

@@ -10,12 +10,13 @@ import org.edena.ada.server.AdaException
 import play.api.Configuration
 import play.api.i18n.Messages
 import play.api.mvc.Flash
+
 import scala.collection.mutable
 import scala.jdk.CollectionConverters._
-
 import org.edena.play.routes.CustomDirAssets
 import play.twirl.api.Html
 import org.edena.core.DefaultTypes.Seq
+import org.edena.core.util.ConfigImplicits.ConfigExt
 
 class DataSetWebContext(
   val dataSetId: String)(
@@ -168,7 +169,7 @@ object DataSetWebContext {
     dataSetSetting: Option[DataSetSetting]
   ): String = {
     val engineClassName = dataSetSetting.flatMap(_.widgetEngineClassName).getOrElse(
-      getEntrySafe(configuration.getString(_, None), "widget_engine.defaultClassName")
+      getEntrySafe(configuration.getOptional[String], "widget_engine.defaultClassName")
     )
 
     s"new $engineClassName()"
@@ -180,7 +181,7 @@ object DataSetWebContext {
     dataSetSetting: Option[DataSetSetting]
   ): Html = {
     val engineClassName = dataSetSetting.flatMap(_.widgetEngineClassName).getOrElse(
-      getEntrySafe(configuration.getString(_, None), "widget_engine.defaultClassName")
+      getEntrySafe(configuration.getOptional[String], "widget_engine.defaultClassName")
     )
 
     jsWidgetEngineProvidersMap(configuration, webJarAssets).getOrElse(
@@ -193,9 +194,9 @@ object DataSetWebContext {
     configuration: Configuration,
     webJarAssets: WebJarsUtil
   ): Map[String, Html] = {
-    val providerConfigs = getEntrySafe(configuration.getObjectList, "widget_engine.providers")
+    val providerConfigs = getEntrySafe(configuration.underlying.optionalObjectList, "widget_engine.providers")
 
-    providerConfigs.asScala.map { providerConfig =>
+    providerConfigs.map { providerConfig =>
       val className = configValue[String](providerConfig, "className")
       val jsImportConfigs = configValue[ju.ArrayList[ju.HashMap[String, String]]](providerConfig, "jsImports")
       val importsHtml = jsWidgetEngineImports(jsImportConfigs.asScala.toSeq, webJarAssets)
@@ -206,9 +207,9 @@ object DataSetWebContext {
   def widgetEngineNames(
     configuration: Configuration
   ): Seq[(String, String)] = {
-    val providerConfigs = getEntrySafe(configuration.getObjectList, "widget_engine.providers")
+    val providerConfigs = getEntrySafe(configuration.underlying.optionalObjectList, "widget_engine.providers")
 
-    providerConfigs.asScala.map { providerConfig =>
+    providerConfigs.map { providerConfig =>
       val name = configValue[String](providerConfig, "name")
       val className = configValue[String](providerConfig, "className")
       (className, name)

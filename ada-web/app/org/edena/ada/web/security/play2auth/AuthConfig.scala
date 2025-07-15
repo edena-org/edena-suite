@@ -3,6 +3,7 @@ package org.edena.ada.web.security.play2auth
 import play.api.cache.SyncCacheApi
 import play.api.libs.crypto.CookieSigner
 import play.api.mvc._
+import play.api.{Configuration, Environment}
 
 import scala.reflect.ClassTag
 import scala.concurrent.{ExecutionContext, Future}
@@ -20,6 +21,8 @@ trait AuthConfig {
   def cache: SyncCacheApi
 
   def cookieSigner: CookieSigner
+
+  def environment: Environment
 
   def sessionTimeoutInSeconds: Int
 
@@ -57,7 +60,7 @@ trait AuthConfig {
 
   lazy val tokenAccessor: TokenAccessor = new CookieTokenAccessor(
     cookieName = "PLAY2AUTH_SESS_ID",
-    cookieSecureOption = play.api.Play.maybeApplication.exists(app => app.mode == play.Mode.PROD.asScala()),
+    cookieSecureOption = environment.mode == play.api.Mode.Prod,
     cookieHttpOnlyOption = true,
     cookieDomainOption = None,
     cookiePathOption = "/",

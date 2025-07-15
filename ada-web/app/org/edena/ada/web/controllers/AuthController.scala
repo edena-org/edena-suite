@@ -1,8 +1,7 @@
 package org.edena.ada.web.controllers
 
 import javax.inject.Inject
-import play.api.{Configuration, Logger}
-import play.api.i18n.Messages.Implicits._
+import play.api.{Configuration, Environment, Logging}
 import play.api.libs.json._
 import play.api.mvc._
 import play.api.data.Forms._
@@ -18,7 +17,6 @@ import play.api.cache.SyncCacheApi
 import play.api.libs.crypto.CookieSigner
 import play.api.libs.mailer.MailerClient
 import org.edena.ada.web.util.md5HashPassword
-
 import org.edena.core.DefaultTypes.Seq
 
 class AuthController @Inject() (
@@ -26,10 +24,10 @@ class AuthController @Inject() (
   mailerClient: MailerClient,
   val controllerComponents: ControllerComponents,
   val cache: SyncCacheApi,
-  val cookieSigner: CookieSigner
+  val cookieSigner: CookieSigner,
+  val environment: Environment
   ) extends AdaBaseController with LoginLogout with AdaAuthConfig {
 
-  private val logger = Logger
 
   /**
     * Login form definition.
@@ -58,10 +56,10 @@ class AuthController @Inject() (
     * Login switch - if OIDC available use it, otherwise redirect to a standard form login (LDAP)
     */
   def login = Action { implicit request =>
-    if (configuration.getString(s"oidc.discoveryUrl").isDefined)
-      Redirect(org.edena.ada.web.controllers.routes.OidcAuthController.oidcLogin())
+    if (configuration.getOptional[String](s"oidc.discoveryUrl").isDefined)
+      Redirect(org.edena.ada.web.controllers.routes.OidcAuthController.oidcLogin)
     else
-      Redirect(org.edena.ada.web.controllers.routes.AuthController.loginWithForm())
+      Redirect(org.edena.ada.web.controllers.routes.AuthController.loginWithForm)
   }
 
   /**
@@ -82,10 +80,10 @@ class AuthController @Inject() (
         "success" -> "Logged out"
       ).removingFromSession("rememberme"))
 
-    if (configuration.getString(s"oidc.discoveryUrl").isDefined) {
+    if (configuration.getOptional[String](s"oidc.discoveryUrl").isDefined) {
       // OIDC auth is present...first logout "standardly" and then by using PAC4J (can be local or global)
       logoutLocally.map( _ =>
-        Redirect(org.pac4j.play.routes.LogoutController.logout())
+        Redirect(org.pac4j.play.routes.LogoutController.logout)
       )
     } else
       logoutLocally

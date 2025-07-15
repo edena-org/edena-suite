@@ -20,7 +20,7 @@ class AdminController @Inject() (
   val controllerComponents: ControllerComponents
 ) extends BaseController {
 
-  private val appHomeRedirect = Redirect(routes.AppController.index())
+  private val appHomeRedirect = Redirect(routes.AppController.index)
 
   def importLdapUsers = restrictAdminAny(noCaching = true) {
     implicit request =>

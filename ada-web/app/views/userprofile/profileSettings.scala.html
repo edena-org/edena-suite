@@ -6,7 +6,7 @@
 
 @(form: Form[UserUpdateEntry])(implicit webContext: WebContext))
 
-@main(webContext.configuration.getString("project.name").getOrElse("") + " Home") {
+@main(webContext.configuration.getOptional[String]("project.name").getOrElse("") + " Home") {
     <div class="container" style="padding-bottom: 190px;" xmlns="http://www.w3.org/1999/html">
         @userprofile.profileHeader(2)
         <br>
@@ -26,7 +26,7 @@
 
                 <div class="actions">
                     <input type="submit" value="Update" class="btn btn-primary">
-                    <a href="@routes.UserProfileController.profile()" class="btn btn-default">Cancel</a>
+                    <a href="@routes.UserProfileController.profile" class="btn btn-default">Cancel</a>
                 </div>
             }
             </div>

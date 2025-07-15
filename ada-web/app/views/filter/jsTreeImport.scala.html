@@ -5,6 +5,6 @@
 @()(implicit webJarAssets: WebJarsUtil)
 
 <script type="text/javascript" src="@CustomDirAssets.versioned("javascripts/jstree-3.3.3.js")"></script>
-@webJarAssets.locate("jquery-ui.min.js").script()
+@webJarAssets.locate("jquery-ui", "jquery-ui.min.js").script()
 <script type="text/javascript" src="@CustomDirAssets.versioned("javascripts/jsTreeWidget.js")"></script>
 <link rel="stylesheet" type="text/css" media="screen" href="@CustomDirAssets.versioned("stylesheets/jsTree/style.css")">

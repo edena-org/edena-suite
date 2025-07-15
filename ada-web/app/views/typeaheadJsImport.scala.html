@@ -5,4 +5,4 @@
 @()(implicit webJarAssets: WebJarsUtil)
 
 <link rel="stylesheet" type="text/css" media="screen" href="@CustomDirAssets.versioned("stylesheets/typeahead.css")">
-@webJarAssets.locate("typeahead.bundle.min.js").script()
+@webJarAssets.locate("typeaheadjs", "typeahead.bundle.min.js").script()

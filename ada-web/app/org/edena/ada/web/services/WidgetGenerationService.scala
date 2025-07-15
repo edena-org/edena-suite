@@ -6,12 +6,12 @@ import akka.actor.ActorSystem
 import akka.stream.{ActorMaterializer, Materializer}
 import akka.stream.scaladsl.{Flow, Sink}
 import com.google.inject.ImplementedBy
-import play.api.{Configuration, Logger}
+import play.api.{Configuration, Logging}
 import play.api.libs.json.JsObject
 import reactivemongo.api.bson.BSONObjectID
 import org.edena.core.store.{And, Criterion, NoCriterion}
 import org.edena.core.akka.AkkaStreamUtil
-import org.edena.core.util.GroupMapList
+import org.edena.core.util.{GroupMapList, LoggingSupport}
 import org.edena.store.json.StoreTypes.JsonReadonlyStore
 import org.edena.core.calc.CalculatorTypePack
 import org.edena.ada.server.services.StatsService
@@ -77,11 +77,10 @@ class WidgetGenerationServiceImpl @Inject() (
   statsService: StatsService,
   configuration: Configuration)(
   implicit val system: ActorSystem, materializer: Materializer
-) extends WidgetGenerationService {
+) extends WidgetGenerationService with LoggingSupport {
 
-  private val streamedCorrelationCalcParallelism = configuration.getInt("streamedcalc.correlation.parallelism").getOrElse(4)
+  private val streamedCorrelationCalcParallelism = configuration.getOptional[Int]("streamedcalc.correlation.parallelism").getOrElse(4)
 
-  private val logger = Logger
 
   import statsService._
   import WidgetGenerationMethod._

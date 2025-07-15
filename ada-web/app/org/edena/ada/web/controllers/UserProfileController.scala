@@ -3,11 +3,10 @@ package org.edena.ada.web.controllers
 import java.util.concurrent.TimeoutException
 
 import org.edena.core.store.EdenaDataStoreException
-import play.api.Logger
+import play.api.Logging
 import play.api.data.Form
 import play.api.data.Forms._
 import play.api.libs.json.Json
-import play.api.i18n.Messages.Implicits._
 import views.html.{userprofile => views}
 
 import scala.concurrent.ExecutionContext.Implicits._
@@ -80,15 +79,15 @@ class UserProfileController @Inject() (
 
           userRepo.update(updatedUser).map { _ =>
             render {
-              case Accepts.Html() => Redirect(routes.UserProfileController.profile()).flashing("success" -> "Your profile has been updated")
+              case Accepts.Html() => Redirect(routes.UserProfileController.profile).flashing("success" -> "Your profile has been updated")
               case Accepts.Json() => Ok(Json.obj("message" -> "Your profile successfully updated"))
             }
           }.recover {
             case t: TimeoutException =>
-              Logger.error("Problem found in the update process")
+              logger.error("Problem found in the update process")
               InternalServerError(t.getMessage)
             case i: EdenaDataStoreException =>
-              Logger.error("Problem found in the update process")
+              logger.error("Problem found in the update process")
               InternalServerError(i.getMessage)
           }
         }

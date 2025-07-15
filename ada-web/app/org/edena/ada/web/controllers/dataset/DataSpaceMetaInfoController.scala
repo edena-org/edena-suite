@@ -52,7 +52,7 @@ class DataSpaceMetaInfoController @Inject() (
         Some((item._id, item.name, item.sortOrder, item.timeCreated, item.dataSetMetaInfos))
   ))
 
-  override protected val homeCall = org.edena.ada.web.controllers.routes.AppController.dataSets()
+  override protected val homeCall = org.edena.ada.web.controllers.routes.AppController.dataSets
 
   // create view
 

@@ -26,7 +26,7 @@ import org.edena.ada.server.models.ml._
 import org.edena.ada.web.controllers.dataset.IndependenceTestResult._
 import org.edena.ada.server.dataaccess.StoreTypes.{ClassifierStore, ClusteringStore, RegressorStore}
 import org.edena.ada.server.dataaccess.dataset.{DataSetAccessor, DataSetAccessorFactory}
-import play.api.Logger
+import play.api.Logging
 import play.api.data.{Form, Mapping}
 import play.api.data.Forms.{mapping, number, of, optional}
 import play.api.libs.json._
@@ -102,7 +102,6 @@ protected[controllers] class DataSetControllerImpl @Inject() (
   protected val filterRepo = dsa.filterStore
   protected val dataViewRepo = dsa.dataViewStore
 
-  private val logger = Logger // (this.getClass())
 
   // note that the associated data set repo could be updated (by calling updateDataSetRepo)
   // therefore it should not be stored as val
@@ -571,7 +570,7 @@ protected[controllers] class DataSetControllerImpl @Inject() (
             }
           )
       } yield {
-        Logger.info(s"Data loading of a view for the data set '${dataSetId}' finished in ${new ju.Date().getTime - start.getTime} ms")
+        logger.info(s"Data loading of a view for the data set '${dataSetId}' finished in ${new ju.Date().getTime - start.getTime} ms")
         val renderingStart = new ju.Date()
         render {
           case Accepts.Html() => {
@@ -613,7 +612,7 @@ protected[controllers] class DataSetControllerImpl @Inject() (
                 dataSpaceTree
               )
             )
-            Logger.info(s"Rendering of a view for the data set '${dataSetId}' finished in ${new ju.Date().getTime - renderingStart.getTime} ms")
+            logger.info(s"Rendering of a view for the data set '${dataSetId}' finished in ${new ju.Date().getTime - renderingStart.getTime} ms")
             response
           }
 

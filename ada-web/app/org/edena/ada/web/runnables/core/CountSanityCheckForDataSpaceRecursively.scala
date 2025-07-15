@@ -4,7 +4,7 @@ import javax.inject.Inject
 import org.edena.core.runnables.{InputFutureRunnable, InputFutureRunnableExt, RunnableHtmlOutput}
 import org.edena.core.util.seqFutures
 import org.edena.ada.server.dataaccess.dataset.DataSetAccessorFactory
-import play.api.Logger
+import play.api.Logging
 import org.edena.store.json.JsonReadonlyStoreExtra._
 import org.edena.ada.server.models.DataSpaceMetaInfo
 import org.edena.ada.server.AdaException
@@ -18,7 +18,7 @@ import org.edena.core.DefaultTypes.Seq
 class CountSanityCheckForDataSpaceRecursively @Inject() (
     val dsaf: DataSetAccessorFactory,
     dataSpaceService: DataSpaceService
-  ) extends InputFutureRunnableExt[CountSanityCheckForDataSpaceRecursivelySpec] with CountSanityCheckHelper {
+  ) extends InputFutureRunnableExt[CountSanityCheckForDataSpaceRecursivelySpec] with CountSanityCheckHelper with Logging {
 
   override def runAsFuture(input: CountSanityCheckForDataSpaceRecursivelySpec) =
     for {
@@ -56,7 +56,7 @@ class CountSanityCheckForDataSpaceRecursively @Inject() (
 
 class CountSanityCheckForDataSet @Inject() (
   val dsaf: DataSetAccessorFactory
-) extends InputFutureRunnableExt[CountSanityCheckForDataSetSpec] with CountSanityCheckHelper {
+) extends InputFutureRunnableExt[CountSanityCheckForDataSetSpec] with CountSanityCheckHelper with Logging {
 
   override def runAsFuture(
     input: CountSanityCheckForDataSetSpec
@@ -71,11 +71,9 @@ class CountSanityCheckForDataSet @Inject() (
       }
 }
 
-trait CountSanityCheckHelper extends RunnableHtmlOutput {
+trait CountSanityCheckHelper extends RunnableHtmlOutput with Logging {
 
   protected val dsaf: DataSetAccessorFactory
-
-  protected val logger = Logger
 
   protected def checkDataSet(
     dataSetId: String

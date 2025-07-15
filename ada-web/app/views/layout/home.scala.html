@@ -11,7 +11,7 @@
 )
 
 @main(
-    title = Messages("homepage.title", context.configuration.getString("project.name").getOrElse("")),
+    title = Messages("homepage.title", context.configuration.getOptional[String]("project.name").getOrElse("")),
     showMessageBox = false
 ) {
 
@@ -19,12 +19,12 @@
         <div class="row">
             <div class="col-md-12 aligned-container">
             <div class="col-md-9 col-sm-12">
-                @Messages("homepage.title", context.configuration.getString("project.name").getOrElse(""))
+                @Messages("homepage.title", context.configuration.getOptional[String]("project.name").getOrElse(""))
             </div>
             <div class="col-md-3 col-sm-12">
-                @context.configuration.getString("project.url").map { url =>
+                @context.configuration.getOptional[String]("project.url").map { url =>
                     <a target="_blank" href="@url">
-                        @context.configuration.getString("project.logo").map { logo =>
+                        @context.configuration.getOptional[String]("project.logo").map { logo =>
                             <img class="img-responsive pull-right" src="@CustomDirAssets.versioned(logo)" />
                         }.getOrElse {
                             <div class="pull-right">&rarr;</div>
@@ -35,7 +35,7 @@
             </div>
         </div>
     </div>
-    @if(context.configuration.getBoolean("homepage.carousel.enabled").getOrElse(true)) {
+    @if(context.configuration.getOptional[Boolean]("homepage.carousel.enabled").getOrElse(true)) {
         @carousel()
         <hr/>
     }
@@ -47,7 +47,7 @@
     <div class="row-fluid">
         <hr/>
         <h4>
-            If you want to try Ada <a class="btn btn-sm btn-primary" href="@routes.AppController.dataSets()">Login</a> or <a class="btn btn-sm btn-primary" href="@routes.AppController.contact()">Request an account</a>.<br/>
+            If you want to try Ada <a class="btn btn-sm btn-primary" href="@routes.AppController.dataSets">Login</a> or <a class="btn btn-sm btn-primary" href="@routes.AppController.contact">Request an account</a>.<br/>
             Note that at the moment we provide accounts only for the collaborating partners, not for the general public.
         </h4>
     </div>

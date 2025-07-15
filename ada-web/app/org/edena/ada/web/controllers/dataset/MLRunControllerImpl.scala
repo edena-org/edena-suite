@@ -10,7 +10,7 @@ import org.edena.ada.server.models.DataSetFormattersAndIds._
 import org.edena.ada.server.dataaccess.dataset.FilterRepoExtra._
 import org.edena.ada.web.models.Widget.scatterWidgetFormat
 import org.edena.ada.server.dataaccess.dataset.DataSetAccessor
-import play.api.Logger
+import play.api.Logging
 import play.api.data.Forms._
 import play.api.libs.json._
 import play.api.mvc.{Action, Request}
@@ -64,7 +64,6 @@ protected[controllers] abstract class MLRunControllerImpl[R <: MLResult : Format
   protected val extraFields = caseClassToFlatFieldTypes[ResultExtra]()
 
   protected val ftf = FieldTypeHelper.fieldTypeFactory()
-  protected val logger = Logger // (this.getClass())
 
   override protected def format: Format[R] = implicitly[Format[R]]
 

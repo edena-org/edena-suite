@@ -9,7 +9,7 @@ import org.edena.ada.web.models.D3Node
 import org.edena.ada.server.models._
 import org.edena.ada.server.models.DataSetFormattersAndIds._
 import org.edena.ada.server.dataaccess.dataset.{DataSetAccessor, DataSetAccessorFactory}
-import play.api.Logger
+import play.api.Logging
 import play.api.data.Form
 import play.api.data.Forms._
 import play.api.libs.json.Json
@@ -45,7 +45,6 @@ protected[controllers] class CategoryControllerImpl @Inject() (
 
   protected val dsa: DataSetAccessor = dsaf.applySync(dataSetId).get
 
-  private val logger = Logger  // (this.getClass())
 
   protected val fieldRepo = dsa.fieldStore
 

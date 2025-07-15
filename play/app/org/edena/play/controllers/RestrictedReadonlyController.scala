@@ -3,13 +3,15 @@ package org.edena.play.controllers
 import org.edena.core.FilterCondition
 import org.edena.play.security.ActionSecurity
 import org.edena.play.security.ActionSecurity.{AuthActionTransformation, AuthActionTransformationAny, AuthenticatedAction}
-import play.api.mvc.BodyParsers.parse
-import play.api.mvc.{Action, AnyContent, BodyParser}
+// Removed import for BodyParsers.parse as it's now accessed via controllerComponents
+import play.api.mvc.{Action, AnyContent, BodyParser, ControllerComponents}
 import org.edena.play.security.SecurityUtil._
 
 import org.edena.core.DefaultTypes.Seq
 
 trait RestrictedReadonlyController[ID] extends ReadonlyController[ID] {
+  
+  protected def controllerComponents: ControllerComponents
 
   abstract override def get(id: ID): Action[AnyContent] =
     restrictAny(super.get(id))
@@ -24,12 +26,12 @@ trait RestrictedReadonlyController[ID] extends ReadonlyController[ID] {
     bodyParser: BodyParser[A]
   ): AuthActionTransformation[A]
 
-  protected def restrictAny: AuthActionTransformationAny = restrict(parse.anyContent)
+  protected def restrictAny: AuthActionTransformationAny = restrict(controllerComponents.parsers.anyContent)
 
   protected def restrictAny(
     action: Action[AnyContent]
   ): Action[AnyContent] =
-    restrict[AnyContent](parse.anyContent)(toAuthenticatedAction(action))
+    restrict[AnyContent](controllerComponents.parsers.anyContent)(toAuthenticatedAction(action))
 }
 
 trait RestrictedCrudController[ID] extends RestrictedReadonlyController[ID] with CrudController[ID] {

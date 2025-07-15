@@ -23,10 +23,13 @@ libraryDependencies ++= Seq(
 
   "org.reflections" % "reflections" % "0.9.10" exclude("com.google.code.findbugs", "annotations"),  // class finder - TODO: upgrade to 0.9.12
   "com.unboundid" % "unboundid-ldapsdk" % "2.3.8",                                                  // LDAP
-  "com.github.lejon.T-SNE-Java" % "tsne" % "v2.5.0",                                                // t-SNE Java
+  // t-SNE Java
+  "com.github.lejon.T-SNE-Java" % "tsne" % "v2.5.0",
+
   "org.scalanlp" %% "breeze" % Versions.breeze,                                                     // linear algebra and stuff
   "org.scalanlp" %% "breeze-natives" % Versions.breeze,                                             // linear algebra and stuff (native)
   //  "org.scalanlp" %% "breeze-viz" % Versions.breeze,    // breeze visualization
+
   "org.scalatest" %% "scalatest" % Versions.scalaTest % "test"
 ) map { _.exclude("org.slf4j","slf4j-log4j12").exclude("com.google.inject", "guice").exclude("com.google.inject.extensions", "guice-assistedinject") }
 

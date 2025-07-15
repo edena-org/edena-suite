@@ -33,7 +33,7 @@
 }
 
 @listItemAux(url: String, text: String, matchPrefixDepth: Option[Int] = None, urlType: URLType.Value) = {
-    <li @if(matchesCorePath(url, toRequest.uri, matchPrefixDepth, configuration.getString("play.http.context"))) { class="active"}>
+    <li @if(matchesCorePath(url, toRequest.uri, matchPrefixDepth, configuration.getOptional[String]("play.http.context"))) { class="active"}>
         @{urlType match {
             case URLType.GET => plainLink(url, text)
             case URLType.POST => onClickLink(url, text, "post")

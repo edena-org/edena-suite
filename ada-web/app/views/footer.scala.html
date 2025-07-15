@@ -1,5 +1,6 @@
 @import play.api.Configuration
 @import org.edena.play.routes.CustomDirAssets
+@import org.edena.core.util.ConfigImplicits.ConfigExt
 
 @()(implicit msg: Messages, configuration: Configuration)
 
@@ -10,7 +11,7 @@
 <footer>
     <div align="center">
         <hr/>
-        @configuration.getObjectList("footer.logos").map { configObjects =>
+        @configuration.underlying.optionalObjectList("footer.logos").map { configObjects =>
             <ul class="list-inline">
             @configObjects.map(_.toConfig).map { logoConfig =>
                 <li>
@@ -24,10 +25,10 @@
         }
 
         <p class="text-muted" align="center">
-            App Version: @configuration.getString("app.version").get@configuration.getString("project.name").map(", Project: " + _)
+            App Version: @{configuration.get[String]("app.version")}@{configuration.getOptional[String]("project.name").map(", Project: " + _)}
         </p>
         <p class="text-muted" align="center">
-            @{defining((configuration.getString("copyright.url"), configuration.getString("copyright.text"))) { urlAndText: (Option[String], Option[String]) =>
+            @{defining((configuration.getOptional[String]("copyright.url"), configuration.getOptional[String]("copyright.text"))) { urlAndText: (Option[String], Option[String]) =>
                 if(urlAndText._1.isDefined && urlAndText._2.isDefined) {
                     copyrightURL(urlAndText._1.get, urlAndText._2.get)
                 } else {

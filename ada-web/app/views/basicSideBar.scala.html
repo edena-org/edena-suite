@@ -23,7 +23,7 @@
 }
 
 @listItem(call: Call, text: String, matchPrefixDepth : Option[Int] = None) = {
-    <li @if(matchesPath(routesPrefix)(call.url, context.request.path, matchPrefixDepth, toConfiguration.getString("play.http.context"))) {class="inner-node active"} else {class="inner-node"}>
+    <li @if(matchesPath(routesPrefix)(call.url, context.request.path, matchPrefixDepth, toConfiguration.getOptional[String]("play.http.context"))) {class="inner-node active"} else {class="inner-node"}>
         <a href="@call">
             <ul class="list-inline">
                 <li>

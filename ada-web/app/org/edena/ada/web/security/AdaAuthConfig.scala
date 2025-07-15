@@ -82,7 +82,7 @@ trait AdaAuthConfig extends AuthConfig {
       if (successfulLoginUrl.isDefined && successfulLoginUrl.get.nonEmpty)
         Redirect(successfulLoginUrl.get).withSession("successfulLoginUrl" -> "")
       else
-        Redirect(routes.AppController.dataSets())
+        Redirect(routes.AppController.dataSets)
     )
   }
 
@@ -125,7 +125,8 @@ trait AdaAuthConfig extends AuthConfig {
     * Default implementation use Cookie.
     */
   override lazy val tokenAccessor: CookieTokenAccessor = new CookieTokenAccessor(
-    cookieSecureOption = false, // TODO: Introduce   play.api.Play.isProd(play.api.Play.current),
+    cookieSecureOption = environment.mode == play.api.Mode.Prod,
+//    cookieSecureOption = false, // TODO: Introduce   play.api.Play.isProd(play.api.Play.current),
     cookieHttpOnlyOption = true,
     cookieMaxAge       = Some(sessionTimeoutInSeconds),
     cookieSigner = cookieSigner

@@ -1,53 +1,56 @@
+import sbt.librarymanagement.ModuleID
+import sbt.librarymanagement.DependencyBuilders.Organization
+
 object Dependencies {
 
   object Versions {
-    val akka = "2.5.32"
+    val akka = "2.6.21"
     val scalaTest = "3.0.8" // originally "3.0.0"
-    val playJson = "2.7.4" // JDK 17 is supported by Play 2.8 https://github.com/playframework/playframework/releases/tag/2.8.15
+    val playJson = "2.8.2" // Updated for Play 2.8.x compatibility
 
     val scalaGuice = "4.2.11"
     val googleGuice = "4.2.3" // needed for JDK 17 - 5.1.0
     val guiceAssistedinject = "4.2.3"
 
+    // JSON
+    val jackson = "2.13.3"
+
     // ES
-    val elastic4s = "7.2.0"
+    val elastic4s = "7.10.8" // Available version close to 7.10.6
 
     // MONGO
     // reactivemongo-akkastream uses akka-stream 2.5.23
     val reactivemongo = "1.1.0-RC12"
-    // uses play json 2.7.4
-    val reactivemongoPlay = "1.1.0.play27-RC12"
+    // uses play json 2.7.4 but we override to 2.8.2
+    val reactivemongoPlay = "1.1.0.play28-RC12"
 
     // WS
     // JSON WS Streaming
-    val akkaHttp = "10.1.10" // originally "10.0.14"
+    val akkaHttp = "10.2.10" // compatible with Akka 2.6.21
 
     // SPARK
-    val spark = "3.2.1"// "2.4.7"
-//    val spark = "2.4.7" // Spark 3 is JDK 11 compatible, should upgrade (the latest version is 3.2.1)
+    val spark = "3.5.4"
     val bnd = "0.7.3"
 
     // IGNITE
     val ignite = "2.4.0" //  "2.14.0" - uses JDK 17
 
     // WS + ADA-SERVER
-    // uses Akka 2.5.23
-    val playWs = "2.0.8" // originally "1.1.10" for WS
-    val breeze = "2.1.0" // originally "0.13.2"
+    val playWs = "2.1.11" // compatible with Akka 2.6.21
+    val breeze = "2.1.0"
 
     // PLAY
-    val play = "2.7.9"  // "com.typesafe.play" %% "play" % "2.7.9" - akka 2.5.31
-    val deadbolt = "2.7.1"  // uses play 2.7.3
-    val webjars = "2.7.3"
+    val play = "2.8.22"  // "com.typesafe.play" %% "play" % "2.8.22" - akka 2.6.21
+    val deadbolt = "2.8.2"  // updated for Play 2.8.x and Scala 2.13
+    val webjars = "2.8.0"
 
     // ADA-WEB
-    val playMongo = "1.1.0.play27-RC12"
-//    val play = "2.7.9"
-    val playMailer = "7.0.2" // "6.0.1"
-    val playPac4j = "9.0.2"
-    val pac4jOidc = "4.1.0"
-    val jackson = "2.9.9"
-    val scalazCore = "7.2.36" // originally "7.2.24"
-    val scalatestplusPlay = "4.0.3" // originally "3.1.2"
+    val playMongo = "1.1.0.play28-RC12"
+    val playMailer = "8.0.1"
+    val playPac4j = "11.1.0-PLAY2.8" //"10.0.2"
+    val pac4jOidc = "5.3.1"
+
+    val scalazCore = "7.2.36"
+    val scalatestplusPlay = "4.0.3"
   }
 }

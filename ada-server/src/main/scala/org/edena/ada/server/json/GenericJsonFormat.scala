@@ -133,12 +133,12 @@ object GenericJson {
         val readsSeq = Reads.list[Any](innerFormat)
         Format.GenericFormat(readsSeq, writesSeq)
 
-      // traversable
-      case t if t subMatches typeOf[Traversable[_]] =>
+      // Iterable
+      case t if t subMatches typeOf[Iterable[_]] =>
         val typeArgs = t.typeArgs
-        val innerFormat = genericFormat(typeArgs(0), mirror)
-        val writesSeq = Writes.traversableWrites[Any](innerFormat)
-        val readsSeq = Reads.seq[Any](innerFormat)
+        implicit val innerFormat = genericFormat(typeArgs(0), mirror)
+        val writesSeq = Writes.iterableWrites[Any, Iterable]
+        val readsSeq: Reads[Iterable[Any]] = Reads.seq[Any](innerFormat).map(_.toIterable)
         Format.GenericFormat(readsSeq, writesSeq)
 
       // tuple2

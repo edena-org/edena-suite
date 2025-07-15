@@ -14,7 +14,7 @@ import org.edena.core.util.{hasNonAlphanumericUnderscore, nonAlphanumericToUnder
 import org.edena.spark_ml.models.result.{ClassificationResult, StandardClassificationResult, TemporalClassificationResult}
 import org.edena.ada.server.dataaccess.dataset.DataSetAccessorFactory
 import org.edena.ada.server.models.datatrans.ResultDataSetSpec
-import play.api.Logger
+import play.api.Logging
 import org.edena.ada.server.services.DataSetService
 import org.edena.ada.server.services.ServiceTypes.DataSetCentralTransformer
 import org.edena.ada.web.services.DataSpaceService
@@ -32,9 +32,8 @@ class FixNonalphanumericFields @Inject() (
   dataSpaceMetaInfoRepo: DataSpaceMetaInfoStore,
   dataSetCentralTransformation: DataSetCentralTransformer,
   dataSpaceService: DataSpaceService
-  ) extends InputFutureRunnableExt[FixNonalphanumericFieldsSpec] {
+  ) extends InputFutureRunnableExt[FixNonalphanumericFieldsSpec] with Logging {
 
-  private val logger = Logger
   private val escapedDotString = "u002e"
 
   private implicit val system = ActorSystem()
