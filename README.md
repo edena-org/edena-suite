@@ -13,7 +13,7 @@ Edena Suite is a comprehensive data discovery and analytics platform built with 
 
 ## Module Structure
 
-### Core Infra Modules
+### Core Infra Modules 
 
 #### core
 **Focus**: Foundation utilities, repository interfaces, shared models
