@@ -15,93 +15,93 @@ Edena Suite is a comprehensive data discovery and analytics platform built with 
 
 ### Core Infra Modules
 
-#### core
-**Focus**: Foundation utilities, repository interfaces, shared models
+### - core
+Foundation utilities, repository interfaces, shared models
 - **Akka**: 2.6.21
 - **Guice**: 4.2.3
 - **ScalaTest**: 3.0.8
 - **Commons**: IO, Lang, Math3
 - **Logging**: Logback 1.4.14, SLF4J 1.7.26
 
-#### json
-**Focus**: JSON processing utilities
+### - json
+JSON processing utilities
 - **Jackson**: 2.13.3
 - **Play JSON**: 2.8.2
 - Depends on: core
 
-#### store-json
-**Focus**: Unified JSON storage abstraction
+### - store-json
+Unified JSON storage abstraction
 - **Jackson**: 2.13.3
 - **Play JSON**: 2.8.2
 - Depends on: json
 
 ### Storage Modules
 
-#### mongo
-**Focus**: MongoDB integration with ReactiveMongo
+### - mongo
+MongoDB integration with ReactiveMongo
 - **ReactiveMongo**: 1.1.0-RC12
 - **ReactiveMongo Play**: 1.1.0.play28-RC12
 - **Akka Streams**: 2.6.21
 - Depends on: store-json
 
-#### elastic
-**Focus**: Elasticsearch integration
+### - elastic
+Elasticsearch integration
 - **Elastic4S**: 7.10.8
 - **Apache Commons Lang3**: 3.5
 - Depends on: core
 
-#### elastic-json
-**Focus**: Elasticsearch JSON storage implementation
+### - elastic-json
+Elasticsearch JSON storage implementation
 - **Elastic4S**: 7.10.8
 - **Jackson**: 2.13.3
 - Depends on: store-json, elastic
 
-#### ignite
-**Focus**: Apache Ignite in-memory data grid
+### - ignite
+Apache Ignite in-memory data grid
 - **Apache Ignite**: 2.4.0 (core, spring, indexing, scalar)
 - Depends on: json
 
 ### Machine Learning Modules
 
-#### ml-spark
-**Focus**: Apache Spark ML integration and extensions
+### - ml-spark
+Apache Spark ML integration and extensions
 - **Apache Spark**: 3.5.4 (core, sql, mllib)
 - **Breeze**: 2.1.0
 - **Tablesaw**: 0.36.0
 - Depends on: core
 
-#### ml-dl4j
-**Focus**: Deep learning with DL4J
+### - ml-dl4j
+Deep learning with DL4J
 - **Akka**: 2.6.21
 - **Jackson**: 2.13.3
 - Depends on: core
 
 ### Web & Communication Modules
 
-#### ws
-**Focus**: Web service client utilities
+### - ws (deprecated)
+Web service client utilities
 - **Akka HTTP**: 10.2.10
 - **Play WS**: 2.1.11
 - **Jackson**: 2.13.3
 - Depends on: core
 
-#### play
-**Focus**: Play Framework extensions
+### - play
+Play Framework extensions
 - **Play Framework**: 2.8.22
 - **Jackson**: 2.13.3
 - **Play JSON**: 2.8.2
 - Depends on: json
 
-#### elastic-util
-**Focus**: Additional Elasticsearch utilities
+### - elastic-util
+Additional Elasticsearch utilities
 - **Akka HTTP**: 10.2.10
 - **Play WS**: 2.1.11
 - Depends on: ws
 
 ### Application Modules
 
-#### ada-server
-**Focus**: Core business logic and services
+### - ada-server
+Core business logic and services
 - **Play WS**: 2.1.11
 - **Breeze**: 2.1.0 (linear algebra)
 - **T-SNE Java**: v2.5.0
@@ -109,8 +109,8 @@ Edena Suite is a comprehensive data discovery and analytics platform built with 
 - **Guice**: 4.2.3
 - Depends on: elastic-json, mongo, ignite, ml-spark
 
-#### ada-web
-**Focus**: Play Framework web application (main UI)
+### - ada-web
+Play Framework web application (main UI)
 - **Play Framework**: 2.8.22
 - **PAC4J**: 11.1.0-PLAY2.8 (authentication)
 - **PAC4J OIDC**: 5.3.1
