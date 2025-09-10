@@ -9,6 +9,6 @@ libraryDependencies ++= Seq(
   "org.apache.ignite" % "ignite-core" % Versions.ignite,
   "org.apache.ignite" % "ignite-spring" % Versions.ignite,
   "org.apache.ignite" % "ignite-indexing" % Versions.ignite,
-  "org.apache.ignite" % "ignite-scalar" % Versions.ignite,
+//  "org.apache.ignite" % "ignite-scalar" % Versions.ignite, the last version 2.13.0
   "org.slf4j" % "slf4j-api" % "1.7.21"
 )

@@ -1,26 +1,33 @@
-package org.edena.store.ignite
+package org.edena.store.ignite.front
 
-import java.{util => ju}
-
-import org.edena.store.ignite._
-import org.apache.ignite.cache.query.{QueryCursor, ScanQuery, SqlFieldsQuery}
-import org.apache.ignite.{Ignite, IgniteCache}
+import org.apache.ignite.cache.query.{QueryCursor, SqlFieldsQuery}
 import org.apache.ignite.configuration.CacheConfiguration
-import org.h2.value.DataType
-import org.apache.ignite.transactions.{TransactionConcurrency, TransactionIsolation}
-import org.h2.value.Value
+import org.apache.ignite.{Ignite, IgniteCache}
+import org.edena.core.DefaultTypes.Seq
 import org.edena.core.Identity
 import org.edena.core.store.ValueMapAux.ValueMap
-import org.slf4j.{Logger, LoggerFactory}
 import org.edena.core.store._
-import org.edena.core.DefaultTypes.Seq
+import org.edena.store.ignite._
+import org.h2.value.{DataType, Value}
+import org.slf4j.LoggerFactory
 
-import scala.jdk.CollectionConverters._
+import java.{util => ju}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
-import scala.util.control.NonFatal
+import scala.jdk.CollectionConverters._
 
-abstract class AbstractCacheCrudStore[ID, E, CACHE_ID, CACHE_E](
+/**
+ * This is the front-facing class for Ignite based stores/repositories.
+ *
+ * @param cache
+ * @param entityName
+ * @param identity
+ * @tparam ID
+ * @tparam E
+ * @tparam CACHE_ID
+ * @tparam CACHE_E
+ */
+abstract class AbstractCacheWrappingCrudStore[ID, E, CACHE_ID, CACHE_E](
     cache: IgniteCache[CACHE_ID, CACHE_E],
     entityName: String,
     identity: Identity[E, ID]
@@ -218,6 +225,8 @@ abstract class AbstractCacheCrudStore[ID, E, CACHE_ID, CACHE_E](
       query = query.setArgs(args :_*)
     }
 
+    println(sql)
+
     Future {
       val cursor = cache.query(query)
 
@@ -358,6 +367,7 @@ abstract class AbstractCacheCrudStore[ID, E, CACHE_ID, CACHE_E](
     Future {
       // TODO: perhaps we could get an id from the underlying db before saving the item
       val (id, cacheItem) = createNewIdWithCacheItem(entity)
+      // cache.put(toCacheId(id), cacheItem)
       cache.put(toCacheId(id), cacheItem)
       id
       // throw new EdenaDataAccessException(s"If cache is used in order to save an item of type '${entity.getClass.getName}' ID must already be set.")

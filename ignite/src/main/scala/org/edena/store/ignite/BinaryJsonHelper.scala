@@ -42,7 +42,7 @@ trait BinaryJsonHelper extends JsonHelper {
     json: JsObject
   ): BinaryObject = {
     val builder = igniteBinary.builder(cacheName)
-    json.fields.foreach{ case (fieldName, jsonValue) =>
+    json.fields.foreach { case (fieldName, jsonValue) =>
       val escapedFieldName = escapeIgniteFieldName(fieldName)
       val value = getValueFromJson(jsonValue)
       if (value != null)

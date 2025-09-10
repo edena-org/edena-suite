@@ -3,6 +3,7 @@ package org.edena.store.ignite
 import javax.inject.{Inject, Provider, Singleton}
 import org.apache.ignite.binary.BinaryTypeConfiguration
 import org.apache.ignite.configuration.{BinaryConfiguration, IgniteConfiguration}
+import org.apache.ignite.marshaller.jdk.JdkMarshaller
 import org.apache.ignite.spi.discovery.tcp.TcpDiscoverySpi
 import org.apache.ignite.spi.discovery.tcp.ipfinder.vm.TcpDiscoveryVmIpFinder
 import org.apache.ignite.{Ignite, Ignition}
@@ -28,9 +29,11 @@ class IgniteFactory @Inject() (
 
     val binaryCfg = new BinaryConfiguration()
     binaryCfg.setTypeConfigurations(Seq(binaryTypeCfg).asJava)
+    binaryCfg.setCompactFooter(false)
 
     val cfg = new IgniteConfiguration()
     cfg.setBinaryConfiguration(binaryCfg)
+    // cfg.setMarshaller(new JdkMarshaller())  // Disable marshaller to use default binary
     cfg.setLifecycleBeans(lifecycleBean)
     cfg.setClassLoader(Thread.currentThread().getContextClassLoader())
 

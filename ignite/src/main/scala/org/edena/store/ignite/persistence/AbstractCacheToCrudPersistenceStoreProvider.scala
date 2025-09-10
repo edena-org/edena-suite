@@ -1,43 +1,54 @@
-package org.edena.store.ignite
+package org.edena.store.ignite.persistence
 
-import java.io.Serializable
-import java.util
-import javax.cache.Cache.Entry
-import javax.cache.configuration.Factory
 import org.apache.ignite.cache.store.CacheStoreAdapter
 import org.apache.ignite.lang.IgniteBiInClosure
 import org.edena.core.store.{CrudStore, StoreSynchronizer}
 import org.slf4j.LoggerFactory
 
-import scala.jdk.CollectionConverters._
-import scala.concurrent.duration._
+import java.util
+import javax.cache.Cache.Entry
+import javax.cache.configuration.Factory
 import scala.concurrent.Await
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.duration._
+import scala.jdk.CollectionConverters._
 
+/**
+ * Cache -> Store adapter using CrudStore
+ *
+ * @tparam CACHE_ID
+ * @tparam CACHE_E
+ * @tparam STORE_ID
+ * @tparam STORE_E
+ */
 //@CacheLocalStore
-abstract class AbstractCacheCrudStoreProvider[ID, E, STORE_ID, STORE_E] extends CacheStoreAdapter[ID, E] with Serializable {
+abstract class AbstractCacheToCrudPersistenceStoreProvider[CACHE_ID, CACHE_E, STORE_ID, STORE_E] extends CacheStoreAdapter[CACHE_ID, CACHE_E] with Serializable {
 
-  val repoFactory: Factory[CrudStore[STORE_E, STORE_ID]]
-  def toStoreItem: E => STORE_E
-  def fromStoreItem: STORE_E => E
-  def toStoreId: ID => STORE_ID
-  def fromStoreId: STORE_ID => ID
+  val persistenceStoreFactory: Factory[CrudStore[STORE_E, STORE_ID]]
+
+  def toStoreItem: CACHE_E => STORE_E
+  def fromStoreItem: STORE_E => CACHE_E
+  def toStoreId: CACHE_ID => STORE_ID
+  def fromStoreId: STORE_ID => CACHE_ID
 
   def getId: STORE_E => Option[STORE_ID]
 
   protected val logger = LoggerFactory getLogger getClass.getName
-  private val crudStore: CrudStore[STORE_E, STORE_ID] = repoFactory.create
+
+  // because of serialization issue, each cache has to create its own CrudStore instance
+  private val crudStore: CrudStore[STORE_E, STORE_ID] = persistenceStoreFactory.create
+
   private lazy val syncStore = StoreSynchronizer(crudStore, 2.minutes)
 
   override def delete(key: Any): Unit = {
-    val id = toStoreId(key.asInstanceOf[ID])
+    val id = toStoreId(key.asInstanceOf[CACHE_ID])
     syncStore.delete(id)
   }
 
   override def deleteAll(keys: util.Collection[_]): Unit =
-    syncStore.delete(keys.asScala.map(key => toStoreId(key.asInstanceOf[ID])))
+    syncStore.delete(keys.asScala.map(key => toStoreId(key.asInstanceOf[CACHE_ID])))
 
-  override def write(entry: Entry[_ <: ID, _ <: E]): Unit = {
+  override def write(entry: Entry[_ <: CACHE_ID, _ <: CACHE_E]): Unit = {
     val id = toStoreId(entry.getKey)
     val item = toStoreItem(entry.getValue)
     //    val version = entry.getVersion
@@ -59,7 +70,7 @@ abstract class AbstractCacheCrudStoreProvider[ID, E, STORE_ID, STORE_E] extends 
     Await.result(future, 2.minutes)
   }
 
-  override def writeAll(entries: util.Collection[Entry[_ <: ID, _ <: E]]): Unit = {
+  override def writeAll(entries: util.Collection[Entry[_ <: CACHE_ID, _ <: CACHE_E]]): Unit = {
     val ids = entries.asScala.map(_.getKey)
     val items = entries.asScala.map(entry => toStoreItem(entry.getValue))
 
@@ -70,13 +81,13 @@ abstract class AbstractCacheCrudStoreProvider[ID, E, STORE_ID, STORE_E] extends 
     }
   }
 
-  override def load(key: ID): E = {
+  override def load(key: CACHE_ID): CACHE_E = {
     logger.info(s"Loading item for key of type ${key.getClass.getSimpleName}")
     val id = toStoreId(key)
-    syncStore.get(id).map(fromStoreItem).getOrElse(null.asInstanceOf[E])
+    syncStore.get(id).map(fromStoreItem).getOrElse(null.asInstanceOf[CACHE_E])
   }
 
-  override def loadCache(clo: IgniteBiInClosure[ID, E], args: AnyRef *): Unit = {
+  override def loadCache(clo: IgniteBiInClosure[CACHE_ID, CACHE_E], args: AnyRef *): Unit = {
     logger.info("Loading Cache")
     syncStore.find().foreach( item =>
       getId(item).map(id => clo.apply(fromStoreId(id), fromStoreItem(item)))
