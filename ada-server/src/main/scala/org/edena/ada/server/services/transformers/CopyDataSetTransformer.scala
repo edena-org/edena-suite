@@ -41,7 +41,7 @@ private class CopyDataSetTransformer extends AbstractDataSetTransformer[CopyData
       fields <- sourceDsa.fieldStore.find()
 
       // input data stream
-      inputStream <- sourceDsa.dataSetStore.findAsStream()
+      inputStream <- sourceDsa.dataSetStore.findAsStream(limit = spec.readBatchSize)
     } yield
       (sourceDsa, fields, inputStream, saveViewsAndFilters)
 }

@@ -16,6 +16,8 @@ case class CopyDataSetTransformation(
   sourceDataSetId: String,
   resultDataSetSpec: ResultDataSetSpec,
 
+  readBatchSize: Option[Int] = None, // new field
+
   streamSpec: StreamSpec = StreamSpec(),
   scheduled: Boolean = false,
   scheduledTime: Option[ScheduledTime] = None,

@@ -6,7 +6,8 @@ name := "edena-play"
 description := "Edena extension for Play Framework providing basic readonly/crud controllers, deadbolt-backed security, json formatters, etc."
 
 resolvers ++= Seq(
-  Resolver.mavenLocal
+  Resolver.mavenLocal,
+  Resolver.mavenCentral
 )
 
 libraryDependencies += guice
@@ -14,7 +15,8 @@ libraryDependencies += guice
 libraryDependencies ++= Seq(
   "com.typesafe.play" %% "play" % Versions.play,
   "be.objectify" %% "deadbolt-scala" % Versions.deadbolt, // Deadbolt (authentication)
-  "org.webjars" %% "webjars-play" % Versions.webjars,
+  "org.webjars" %% "webjars-play" % Versions.webjars,  // Temporarily disabled due to WebJarExtractor issue
+  "org.webjars" % "webjars-locator-core" % "0.59",      // WebJar extractor
   "org.webjars" % "bootstrap" % "3.3.7",                // Bootstrap
   "org.webjars" % "bootswatch-united" % "3.3.4+1"       // Bootstrap
 )

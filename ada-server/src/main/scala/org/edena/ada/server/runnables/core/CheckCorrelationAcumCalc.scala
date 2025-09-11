@@ -201,9 +201,6 @@ object CheckCorrelationAcumCalc extends App {
     val sizes = groupedPSums.map(_.size).toList
     val starts = sizes.scanLeft(0){_+_}
 
-    println("Sizes  : " + sizes.mkString(","))
-    println("Starts : " + starts.mkString(","))
-
     PersonIterativeAccumGlobalParallel(
       accumGlobal.sumSqSums,
       groupedPSums.zip(starts).par,
@@ -218,9 +215,6 @@ object CheckCorrelationAcumCalc extends App {
     val groupedPSums = accumGlobal.pSums.grouped(parallelGroupSizes).toArray
     val sizes = groupedPSums.map(_.size).toList
     val starts = sizes.scanLeft(0){_+_}
-
-    println("Sizes  : " + sizes.mkString(","))
-    println("Starts : " + starts.mkString(","))
 
     PersonIterativeAccumGlobalFuture(
       accumGlobal.sumSqSums,

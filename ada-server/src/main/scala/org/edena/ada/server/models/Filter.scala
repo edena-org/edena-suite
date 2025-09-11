@@ -9,6 +9,7 @@ import play.api.libs.json.{Format, Json, __}
 import play.api.libs.functional.syntax._
 import reactivemongo.api.bson.BSONObjectID
 import org.edena.store.json.BSONObjectIDFormat
+import scala.jdk.CollectionConverters._
 
 import org.edena.core.DefaultTypes.Seq
 
@@ -59,4 +60,26 @@ object Filter {
     }
 
   type FilterOrId = Either[Seq[FilterCondition], BSONObjectID]
+  
+  def fromPOJO(pojo: FilterPOJO): Filter = {
+    new Filter(
+      _id = Option(pojo.get_id()).map(BSONObjectID.parse(_).get),
+      name = Option(pojo.getName),
+      conditions = Option(pojo.getConditions).map(_.asScala.toSeq).getOrElse(Seq.empty).asInstanceOf[Seq[FilterCondition]],
+      isPrivate = Option(pojo.getIsPrivate).map(_.booleanValue()).getOrElse(false),
+      createdById = Option(pojo.getCreatedById).map(BSONObjectID.parse(_).get),
+      timeCreated = Option(pojo.getTimeCreated)
+    )
+  }
+  
+  def toPOJO(filter: Filter): FilterPOJO = {
+    val pojo = new FilterPOJO()
+    pojo.set_id(filter._id.map(_.stringify).orNull)
+    pojo.setName(filter.name.orNull)
+    pojo.setConditions(filter.conditions.asInstanceOf[Seq[Object]].asJava)
+    pojo.setIsPrivate(filter.isPrivate)
+    pojo.setCreatedById(filter.createdById.map(_.stringify).orNull)
+    pojo.setTimeCreated(filter.timeCreated.orNull)
+    pojo
+  }
 }

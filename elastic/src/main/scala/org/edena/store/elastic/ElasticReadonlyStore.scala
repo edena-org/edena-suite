@@ -250,7 +250,15 @@ abstract class ElasticReadonlyStore[E, ID](
     operationName: String
   ) =
     if (response.isError) {
-      throw new EdenaDataStoreException(s"Elastic search failed while performing '${operationName}' due to ${response.error.reason}. Affected index: ${response.error.index.getOrElse("N/A")}.")
+      val values = Map(
+        "reason" -> response.error.reason,
+        "error type" -> response.error.`type`,
+        "root cause" -> response.error.rootCause.map(rc => s"${rc.`type`}: ${rc.reason}").mkString("; "),
+        "index" -> response.error.index.getOrElse("N/A")
+      )
+      throw new EdenaDataStoreException(
+        s"Elastic search failed while performing '${operationName}' due to ${values.map(v => s"${v._1}: ${v._2}").mkString(", ")}"
+      )
     }
 
   private def createSearchDefinition(
@@ -439,6 +447,7 @@ abstract class ElasticReadonlyStore[E, ID](
       result.isExists
     }
 
+  // TODO: remove result
   protected def createIndexIfNeeded: Unit =
     result(
       {
@@ -448,7 +457,7 @@ abstract class ElasticReadonlyStore[E, ID](
         } yield
           ()
       },
-      30.seconds
+      2.minutes
     )
 
   protected def handleExceptions[A]: PartialFunction[Throwable, A] = {

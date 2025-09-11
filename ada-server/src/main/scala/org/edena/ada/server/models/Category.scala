@@ -46,3 +46,31 @@ case class Category(
 
   override def hashCode = name.hashCode
 }
+
+object Category {
+  import scala.jdk.CollectionConverters._
+  
+  def fromPOJO(pojo: CategoryPOJO): Category = {
+    val originalItem = Option(pojo.getOriginalItem)
+
+    Category(
+      _id = Option(pojo.get_id()).map(BSONObjectID.parse(_).get),
+      name = pojo.getName,
+      label = Option(pojo.getLabel),
+      parentId = Option(pojo.getParentId).map(BSONObjectID.parse(_).get),
+      parent = originalItem.flatMap(_.parent),
+      children = originalItem.map(_.children).getOrElse(Nil),
+    )
+  }
+  
+  def toPOJO(category: Category): CategoryPOJO = {
+    val pojo = new CategoryPOJO()
+    pojo.set_id(category._id.map(_.stringify).orNull)
+    pojo.setName(category.name)
+    pojo.setLabel(category.label.orNull)
+    pojo.setParentId(category.parentId.map(_.stringify).orNull)
+    // Preserve original item for complex fields
+    pojo.setOriginalItem(category)
+    pojo
+  }
+}

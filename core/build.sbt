@@ -14,8 +14,8 @@ libraryDependencies ++= Seq(
   "org.scala-lang.modules" %% "scala-parallel-collections" % "1.0.4", // to be able to call par for Scala 2.13
 
   // Guice
-  "net.codingwell" %% "scala-guice" % Versions.scalaGuice,   // uses guice 4.2.3 (bellow)
-  "com.google.inject" % "guice" % Versions.googleGuice classifier "no_aop",  // no_aop is set due to https://github.com/google/guice/issues/1133 // 4.0.1
+  "net.codingwell" %% "scala-guice" % Versions.scalaGuice, // uses guice 4.2.3 (bellow)
+  "com.google.inject" % "guice" % Versions.googleGuice, // no_aop is set due to https://github.com/google/guice/issues/1133 // 4.0.1
   "com.google.inject.extensions" % "guice-assistedinject" % Versions.guiceAssistedinject,
 
   // Akka
@@ -27,6 +27,9 @@ libraryDependencies ++= Seq(
   "commons-lang" % "commons-lang" % "2.6",
   "org.apache.commons" % "commons-math3" % "3.6.1",
   "joda-time" % "joda-time" % "2.9.9",
+
+  // Async semaphore
+  "io.monix" %% "monix-execution" % "3.4.1",
 
   // Test
   "org.scalatest" %% "scalatest" % Versions.scalaTest % "test",
@@ -46,7 +49,10 @@ dependencyOverrides ++= Seq(
 )
 
 // some of the libs' licenses are not included hence we need to provide them (override) manually
-licenseOverrides := {
-  case DepModuleInfo("commons-io", "commons-io", _) =>
-    LicenseInfo(LicenseCategory.Apache, "Apache License v2.0", "http://www.apache.org/licenses/LICENSE-2.0")
+licenseOverrides := { case DepModuleInfo("commons-io", "commons-io", _) =>
+  LicenseInfo(
+    LicenseCategory.Apache,
+    "Apache License v2.0",
+    "http://www.apache.org/licenses/LICENSE-2.0"
+  )
 }

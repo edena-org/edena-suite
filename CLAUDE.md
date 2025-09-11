@@ -25,12 +25,12 @@ Edena Suite is a comprehensive data discovery and analytics platform built with 
 
 ### Key Dependencies
 - **Scala**: 2.13.11
-- **Play Framework**: 2.7.9
-- **Apache Spark**: 3.2.1
-- **MongoDB**: ReactiveMongo 1.1.0
-- **Elasticsearch**: Elastic4S 7.2.0
-- **Apache Ignite**: 2.4.0
-- **Akka**: 2.5.32
+- **Play Framework**: 2.9.6
+- **Apache Spark**: 3.5.4
+- **MongoDB**: ReactiveMongo 1.1.0-RC12
+- **Elasticsearch**: Elastic4S 7.10.8
+- **Apache Ignite**: 2.14.0
+- **Akka**: 2.6.21
 
 ## Common Development Commands
 
@@ -75,7 +75,7 @@ sbt reload                 # Reload build configuration
 ### Build Configuration
 - `build.sbt`: Root project configuration
 - `project/Dependencies.scala`: Centralized dependency management
-- `project/build.properties`: SBT version (1.3.5)
+- `project/build.properties`: SBT version (1.9.6)
 
 ## Development Guidelines
 
@@ -158,7 +158,7 @@ The project follows a clear dependency hierarchy:
 
 ### Development Environment
 - **JDK**: Java 11 or higher
-- **SBT**: 1.3.5 or higher
+- **SBT**: 1.9.6 or higher
 - **Node.js**: For frontend asset compilation
 - **Git**: Version control
 

@@ -1,5 +1,7 @@
 package org.edena.ada.server.dataaccess.dataset
 
+import akka.stream.Materializer
+
 import javax.inject.{Inject, Named, Singleton}
 import org.edena.ada.server.AdaException
 import org.edena.ada.server.dataaccess._
@@ -60,7 +62,9 @@ protected[dataaccess] class DataSetAccessorFactoryImpl @Inject()(
   dataSetMetaInfoStoreFactory: DataSetMetaInfoStoreFactory,
   dataSpaceMetaInfoStore: DataSpaceMetaInfoStore,
   dataSetSettingStore: DataSetSettingStore
-  ) extends InitializableCacheImpl[String, DataSetAccessor](false) with DataSetAccessorFactory {
+)(
+  implicit materializer: Materializer
+) extends InitializableCacheImpl[String, DataSetAccessor](false) with DataSetAccessorFactory {
 
   @Deprecated
   def applySync(id: String): Option[DataSetAccessor] =

@@ -1,11 +1,11 @@
 package org.edena.ada.server.dataaccess.ignite.mongo
 
 import org.edena.ada.server.dataaccess._
-import org.edena.ada.server.dataaccess.ignite.{BinaryCacheFactory, JsonBinaryCacheCrudStore}
 import org.edena.ada.server.field.FieldTypeFactory
 import org.apache.ignite.Ignite
 import org.edena.core.field.FieldTypeSpec
-import org.edena.store.ignite.BinaryJsonHelper
+import org.edena.store.ignite.{BinaryCacheFactory, BinaryJsonHelper}
+import org.edena.store.ignite.front.JsonBinaryCacheWrappingCrudStore
 import org.edena.store.json.JsObjectIdentity
 import org.edena.store.json.StoreTypes.JsonCrudStore
 import org.edena.store.mongo.{MongoJsonCrudStoreFactory, PlayMongoJsonRepoFactory}
@@ -36,13 +36,14 @@ private[dataaccess] class PlayCachedMongoJsonCrudStoreFactoryImpl @Inject()(
         (escapeIgniteFieldName(fieldName), ftf(fieldTypeSpec).valueClass.asInstanceOf[Class[_ >: Any]])
       } ++ Seq((identity.name, classOf[Option[BSONObjectID]].asInstanceOf[Class[_ >: Any]])))
 
-    val cache = cacheFactory(
+    val cache = cacheFactory.withJson(
       cacheName,
-      fieldNamesAndClasses,
+      fieldNamesAndClasses.toMap.mapValues(_.getName).toMap,
+      fieldsToExcludeFromIndex = Set(),
       new PlayMongoJsonRepoFactory(collectionName, createIndexForProjectionAutomatically, configuration, new SerializableApplicationLifecycle()),
       identity.of(_)
     ) // new DefaultApplicationLifecycle().addStopHook
     cache.loadCache(null)
-    new JsonBinaryCacheCrudStore(cache, cacheName, ignite, identity)
+    new JsonBinaryCacheWrappingCrudStore(cache, cacheName, ignite, identity)
   }
 }

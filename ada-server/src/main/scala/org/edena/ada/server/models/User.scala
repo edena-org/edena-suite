@@ -30,11 +30,41 @@ case class User(
 )
 
 object User {
+  import scala.jdk.CollectionConverters._
+  
   val userFormat: Format[User] = Json.format[User]
   implicit val serializableUserFormat: Format[User] = new SerializableFormat(userFormat.reads, userFormat.writes)
 
   implicit object UserIdentity extends BSONObjectIdentity[User] {
     def of(entity: User): Option[BSONObjectID] = entity._id
     protected def set(entity: User, id: Option[BSONObjectID]) = entity.copy(id)
+  }
+  
+  def fromPOJO(pojo: UserPOJO): User = {
+    User(
+      _id = Option(pojo.get_id()).map(BSONObjectID.parse(_).get),
+      userId = pojo.getUserId,
+      oidcUserName = Option(pojo.getOidcUserName),
+      name = pojo.getName,
+      email = pojo.getEmail,
+      roles = Option(pojo.getRoles).map(_.asScala.toSeq).getOrElse(Seq.empty),
+      permissions = Option(pojo.getPermissions).map(_.asScala.toSeq).getOrElse(Seq.empty),
+      locked = Option(pojo.getLocked).map(_.booleanValue()).getOrElse(false),
+      passwordHash = Option(pojo.getPasswordHash)
+    )
+  }
+  
+  def toPOJO(user: User): UserPOJO = {
+    val pojo = new UserPOJO()
+    pojo.set_id(user._id.map(_.stringify).orNull)
+    pojo.setUserId(user.userId)
+    pojo.setOidcUserName(user.oidcUserName.orNull)
+    pojo.setName(user.name)
+    pojo.setEmail(user.email)
+    pojo.setRoles(user.roles.asJava)
+    pojo.setPermissions(user.permissions.asJava)
+    pojo.setLocked(user.locked)
+    pojo.setPasswordHash(user.passwordHash.orNull)
+    pojo
   }
 }

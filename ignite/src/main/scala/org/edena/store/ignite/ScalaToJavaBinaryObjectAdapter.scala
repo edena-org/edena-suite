@@ -75,7 +75,6 @@ final class ScalaToJavaBinaryObjectAdapter[E](
         else box(v)
       builder.setField(n, toStore)
     }
-    println(s"toBinaryObject: ${e} ")
     builder.build()
   }
 

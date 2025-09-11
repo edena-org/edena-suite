@@ -57,7 +57,8 @@ libraryDependencies ++= Seq(
 
 libraryDependencies ++= Seq(
   "net.codingwell" %% "scala-guice" % Versions.scalaGuice,   // uses guice 4.2.3 (bellow)
-  "com.google.inject" % "guice" % Versions.googleGuice classifier "no_aop",  // no_aop is set due to https://github.com/google/guice/issues/1133 // 4.0.1
+//  "com.google.inject" % "guice" % Versions.googleGuice classifier "no_aop",  // no_aop is set due to https://github.com/google/guice/issues/1133 // 4.0.1
+  "com.google.inject" % "guice" % Versions.googleGuice,
   "com.google.inject.extensions" % "guice-assistedinject" % Versions.guiceAssistedinject,
 
   "com.typesafe.akka" %% "akka-stream" % Versions.akka, // Akka Streams

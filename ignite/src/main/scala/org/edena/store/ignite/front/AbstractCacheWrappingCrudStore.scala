@@ -15,6 +15,7 @@ import java.{util => ju}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.jdk.CollectionConverters._
+import scala.reflect.ClassTag
 
 /**
  * This is the front-facing class for Ignite based stores/repositories.
@@ -27,14 +28,16 @@ import scala.jdk.CollectionConverters._
  * @tparam CACHE_ID
  * @tparam CACHE_E
  */
-abstract class AbstractCacheWrappingCrudStore[ID, E, CACHE_ID, CACHE_E](
-    cache: IgniteCache[CACHE_ID, CACHE_E],
-    entityName: String,
-    identity: Identity[E, ID]
-  ) extends CrudStore[E, ID]
-      with BinaryJsonHelper {
+abstract class AbstractCacheWrappingCrudStore[ID: ClassTag, E, CACHE_ID, CACHE_E](
+  cache: IgniteCache[CACHE_ID, CACHE_E],
+  entityName: String,
+  identity: Identity[E, ID]
+) extends CrudStore[E, ID]
+    with BinaryJsonHelper {
 
   protected val logger = LoggerFactory getLogger getClass.getName
+
+  private val idTag = implicitly[ClassTag[ID]]
 
   // hooks
   protected val ignite: Ignite
@@ -53,9 +56,7 @@ abstract class AbstractCacheWrappingCrudStore[ID, E, CACHE_ID, CACHE_E](
     results: Traversable[Seq[Any]]
   ): Traversable[E] =
     // default implementation simply iterate through and use the single item version findResultToItem
-    results.map( result =>
-      findResultToItem(fieldNames.zip(result))
-    )
+    results.map(result => findResultToItem(fieldNames.zip(result)))
 
   // override if needed
   protected def findResultsToValueMaps(
@@ -63,14 +64,21 @@ abstract class AbstractCacheWrappingCrudStore[ID, E, CACHE_ID, CACHE_E](
     results: Traversable[Seq[Any]]
   ): Traversable[ValueMap] =
     // default implementation simply iterate through and zip
-    results.map( result =>
-      fieldNames.zip(result).map { case (fieldName, value) =>
-        (fieldName, Option.apply(value))
-      }.toMap
+    results.map(result =>
+      fieldNames
+        .zip(result)
+        .map { case (fieldName, value) =>
+          (fieldName, Option.apply(value))
+        }
+        .toMap
     )
 
   protected val fieldNameAndTypeNames: Traversable[(String, String)] = {
-    val queryEntity = cache.getConfiguration(classOf[CacheConfiguration[CACHE_ID, CACHE_E]]).getQueryEntities.asScala.head
+    val queryEntity = cache
+      .getConfiguration(classOf[CacheConfiguration[CACHE_ID, CACHE_E]])
+      .getQueryEntities
+      .asScala
+      .head
     queryEntity.getFields.asScala
   }
 
@@ -112,7 +120,7 @@ abstract class AbstractCacheWrappingCrudStore[ID, E, CACHE_ID, CACHE_E](
 
     if (whereClauseAndArgs._2.nonEmpty)
       query = query.setArgs(
-        whereClauseAndArgs._2.asInstanceOf[Seq[Object]].toList :_*
+        whereClauseAndArgs._2.asInstanceOf[Seq[Object]].toList: _*
       )
 
     Future {
@@ -133,17 +141,21 @@ abstract class AbstractCacheWrappingCrudStore[ID, E, CACHE_ID, CACHE_E](
     limit: Option[Int],
     skip: Option[Int]
   ): Future[Traversable[E]] = {
-    val cursorToResult = { (cursor: QueryCursor[ju.List[_]], projectionSeq: Seq[String]) =>
-      projection match {
-        case Nil =>
-          cursor.asScala.map { values =>
-            toItem(values.get(0).asInstanceOf[CACHE_E])
-          }
+    val cursorToResult = {
+      (
+        cursor: QueryCursor[ju.List[_]],
+        projectionSeq: Seq[String]
+      ) =>
+        projection match {
+          case Nil =>
+            cursor.asScala.map { values =>
+              toItem(values.get(0).asInstanceOf[CACHE_E])
+            }
 
-        case _ =>
-          val values = cursor.asScala.map(list => list.asScala.toSeq)
-          findResultsToItems(projectionSeq, values)
-      }
+          case _ =>
+            val values = cursor.asScala.map(list => list.asScala.toSeq)
+            findResultsToItems(projectionSeq, values)
+        }
     }
 
     findAux(cursorToResult)(criterion, sort, projection, limit, skip)
@@ -156,22 +168,29 @@ abstract class AbstractCacheWrappingCrudStore[ID, E, CACHE_ID, CACHE_E](
     limit: Option[Int],
     skip: Option[Int]
   ): Future[Traversable[ValueMap]] = {
-    val cursorToResult = { (cursor: QueryCursor[ju.List[_]], projectionSeq: Seq[String]) =>
-      projection match {
-        case Nil =>
-          throw new EdenaDataStoreException("Projection expected for the 'findAsValueMap' store/repo function.")
+    val cursorToResult = {
+      (
+        cursor: QueryCursor[ju.List[_]],
+        projectionSeq: Seq[String]
+      ) =>
+        projection match {
+          case Nil =>
+            throw new EdenaDataStoreException(
+              "Projection expected for the 'findAsValueMap' store/repo function."
+            )
 
-        case _ =>
-          val values = cursor.asScala.map(list => list.asScala.toSeq)
-          findResultsToValueMaps(projectionSeq, values)
-      }
+          case _ =>
+            val values = cursor.asScala.map(list => list.asScala.toSeq)
+            findResultsToValueMaps(projectionSeq, values)
+        }
     }
 
     findAux(cursorToResult)(criterion, sort, projection, limit, skip)
   }
 
   private def findAux[CC](
-    serialize: (QueryCursor[ju.List[_]], Seq[String]) => Traversable[CC])(
+    serialize: (QueryCursor[ju.List[_]], Seq[String]) => Traversable[CC]
+  )(
     criterion: Criterion,
     sort: Seq[Sort],
     projection: Traversable[String],
@@ -186,35 +205,37 @@ abstract class AbstractCacheWrappingCrudStore[ID, E, CACHE_ID, CACHE_E](
           Seq(identity.name)
         else
           Seq()
-        )
-      ).map(escapeIgniteFieldName)
+      )
+    ).map(escapeIgniteFieldName)
 
     val projectionPart = projection match {
       case Nil => "_val"
-      case _ => projectionSeq.mkString(", ")
+      case _   => projectionSeq.mkString(", ")
     }
 
     val whereClauseAndArgs = toSqlWhereClauseAndArgs(criterion)
 
     // limit + offset
-    val limitPart = limit.map{ limit =>
+    val limitPart = limit.map { limit =>
       "limit " + limit +
         skip.map(skip => " offset " + skip).getOrElse("")
     }.getOrElse("")
 
     val orderByPart = sort match {
       case Nil => ""
-      case _ => "order by " + sort.map{ singleSort =>
-        escapeIgniteFieldName(singleSort.fieldName) + {
-          singleSort match {
-            case AscSort(fieldName) => " asc"
-            case DescSort(fieldName) => " desc"
+      case _ =>
+        "order by " + sort.map { singleSort =>
+          escapeIgniteFieldName(singleSort.fieldName) + {
+            singleSort match {
+              case AscSort(fieldName)  => " asc"
+              case DescSort(fieldName) => " desc"
+            }
           }
-        }
-      }.mkString(", ")
+        }.mkString(", ")
     }
 
-    val sql = s"select $projectionPart from $entityName ${whereClauseAndArgs._1} $orderByPart $limitPart"
+    val sql =
+      s"select $projectionPart from $entityName ${whereClauseAndArgs._1} $orderByPart $limitPart"
     logger.debug("Running SQL on Ignite cache: " + sql)
 
     var query = new SqlFieldsQuery(sql)
@@ -222,10 +243,8 @@ abstract class AbstractCacheWrappingCrudStore[ID, E, CACHE_ID, CACHE_E](
     if (whereClauseAndArgs._2.nonEmpty) {
       val args = whereClauseAndArgs._2.toList.asInstanceOf[List[Object]]
 
-      query = query.setArgs(args :_*)
+      query = query.setArgs(args: _*)
     }
-
-    println(sql)
 
     Future {
       val cursor = cache.query(query)
@@ -248,7 +267,10 @@ abstract class AbstractCacheWrappingCrudStore[ID, E, CACHE_ID, CACHE_E](
     }
 
   protected def toSqlCriterionAndArgs(criterion: Criterion): Option[(String, Seq[Any])] = {
-    def sqlAndArgsAux(criteria: Seq[Criterion], separator: String) =
+    def sqlAndArgsAux(
+      criteria: Seq[Criterion],
+      separator: String
+    ) =
       criteria.flatMap(toSqlCriterionAndArgs) match {
         case Nil => None
         case sqlCriteriaWithArgs =>
@@ -258,36 +280,68 @@ abstract class AbstractCacheWrappingCrudStore[ID, E, CACHE_ID, CACHE_E](
       }
 
     criterion match {
-      case c: And => sqlAndArgsAux(c.criteria, "and")
-      case c: Or =>  sqlAndArgsAux(c.criteria, "or")
-      case NoCriterion => None
+      case c: And               => sqlAndArgsAux(c.criteria, "and")
+      case c: Or                => sqlAndArgsAux(c.criteria, "or")
+      case NoCriterion          => None
       case c: ValueCriterion[_] => toSimpleSqlCriterionAndArgs(c)
     }
   }
 
-  protected def toSimpleSqlCriterionAndArgs(criterion: ValueCriterion[_]): Option[(String, Seq[Any])] = {
+  protected def toSimpleSqlCriterionAndArgs(criterion: ValueCriterion[_])
+    : Option[(String, Seq[Any])] = {
     val fieldName = escapeIgniteFieldName(criterion.fieldName)
-    fieldNameTypeMap.get(fieldName).map( fieldType =>
-      toSimpleSqlCriterionAndArgs(criterion, fieldName, isNonNativeFieldDBType(fieldType))
-    )
+    fieldNameTypeMap
+      .get(fieldName)
+      .map(fieldType => toSimpleSqlCriterionAndArgs(criterion, fieldName, fieldType))
+  }
+
+  private def toCacheValue(
+    fieldName: String,
+    fieldType: String,
+    value: Any
+  ): Any = {
+    // remove none
+    val valueAux1 = value match {
+      case Some(x) => x
+      case x       => x
+    }
+
+    // handle id field conversion
+    val valueAux2 = if (fieldName == identity.name) {
+      valueAux1 match {
+        case id if idTag.runtimeClass.isInstance(id) => toCacheId(id.asInstanceOf[ID])
+        case other                                   => other
+      }
+    } else
+      valueAux1
+
+    // handle string conversion for non-string fields
+    if (fieldType == "java.lang.String")
+      valueAux2.toString
+    else
+      valueAux2
   }
 
   protected def toSimpleSqlCriterionAndArgs(
     criterion: ValueCriterion[_],
     fieldName: String,
-    nonNativeFieldTypeFlag: Boolean
+    fieldType: String
   ): (String, Seq[Any]) = {
+    val nonNativeFieldTypeFlag = isNonNativeFieldDBType(fieldType)
+
     criterion match {
+      case EqualsCriterion(_, None) =>
+        (s"$fieldName is null", Nil)
+
       case EqualsCriterion(_, value) =>
-//        optionalValue match {
-//          case None => ("is null", Nil)
-//          case Some(value) =>
-            if (isJavaDBType(value))
-              (s"binEquals($fieldName, ?)", Seq(value))
-            else if (value.isInstanceOf[String] && nonNativeFieldTypeFlag)
-              (s"binStringEquals($fieldName, ?)", Seq(value))
-            else
-              (s"$fieldName = ?", Seq(value))
+        val actualValue = toCacheValue(fieldName, fieldType, value)
+
+        if (isJavaObjectType(actualValue))
+          (s"binEquals($fieldName, ?)", Seq(actualValue))
+        else if (actualValue.isInstanceOf[String] && nonNativeFieldTypeFlag)
+          (s"binStringEquals($fieldName, ?)", Seq(actualValue))
+        else
+          (s"$fieldName = ?", Seq(actualValue))
 
       case EqualsNullCriterion(_) =>
         (s"$fieldName is null", Nil)
@@ -299,53 +353,72 @@ abstract class AbstractCacheWrappingCrudStore[ID, E, CACHE_ID, CACHE_E](
       case RegexNotEqualsCriterion(_, regexString) =>
         (s"$fieldName not like ?", Seq(s"%$regexString%"))
 
+      case NotEqualsCriterion(_, None) =>
+        (s"$fieldName is not null", Nil)
+
       case NotEqualsCriterion(_, value) =>
-//        optionalValue match {
-//          case None => ("is not null", Nil)
-//          case Some(value) =>
-            if (isJavaDBType(value))
-              (s"binNotEquals($fieldName, ?)", Seq(value))
-            else if (value.isInstanceOf[String] && nonNativeFieldTypeFlag)
-              (s"binStringNotEquals($fieldName, ?)", Seq(value))
-            else
-              (s"$fieldName != ?", Seq(value))
+        val actualValue = toCacheValue(fieldName, fieldType, value)
+
+        if (isJavaObjectType(actualValue))
+          (s"binNotEquals($fieldName, ?)", Seq(actualValue))
+        else if (actualValue.isInstanceOf[String] && nonNativeFieldTypeFlag)
+          (s"binStringNotEquals($fieldName, ?)", Seq(actualValue))
+        else
+          (s"$fieldName != ?", Seq(actualValue))
 
       case NotEqualsNullCriterion(_) =>
         (s"$fieldName is not null", Nil)
 
       case InCriterion(_, values) =>
-        val placeholders = values.map(_ => "?").mkString(",")
-        if (values.nonEmpty && isJavaDBType(values.apply(0)))
-          (s"binIn($fieldName, $placeholders)", values)
-        else if (values.nonEmpty && values.apply(0).isInstanceOf[String] && nonNativeFieldTypeFlag)
-          (s"binStringIn($fieldName, $placeholders)", values)
-        else
-          (s"$fieldName in ($placeholders)", values)
+        val actualValues = values.map(toCacheValue(fieldName, fieldType, _))
+        val placeholders = actualValues.map(_ => "?").mkString(",")
+
+        if (actualValues.nonEmpty && isJavaObjectType(actualValues.apply(0))) {
+          (s"binIn($fieldName, $placeholders)", actualValues)
+        } else if (
+          actualValues.nonEmpty && actualValues
+            .apply(0)
+            .isInstanceOf[String] && nonNativeFieldTypeFlag
+        )
+          (s"binStringIn($fieldName, $placeholders)", actualValues)
+        else {
+          (s"$fieldName in ($placeholders)", actualValues)
+        }
 
       case NotInCriterion(_, values) =>
-        val placeholders = values.map(_ => "?").mkString(",")
-        if (values.nonEmpty && isJavaDBType(values.apply(0)))
-          (s"binNotIn($fieldName, $placeholders)", values)
-        else if (values.nonEmpty && values.apply(0).isInstanceOf[String] && nonNativeFieldTypeFlag)
-          (s"binStringNotIn($fieldName, $placeholders)", values)
+        val actualValues = values.map(toCacheValue(fieldName, fieldType, _))
+        val placeholders = actualValues.map(_ => "?").mkString(",")
+
+        if (actualValues.nonEmpty && isJavaObjectType(actualValues.apply(0)))
+          (s"binNotIn($fieldName, $placeholders)", actualValues)
+        else if (
+          actualValues.nonEmpty && actualValues
+            .apply(0)
+            .isInstanceOf[String] && nonNativeFieldTypeFlag
+        )
+          (s"binStringNotIn($fieldName, $placeholders)", actualValues)
         else
-          (s"$fieldName not in ($placeholders)", values)
+          (s"$fieldName not in ($placeholders)", actualValues)
 
       case GreaterCriterion(_, value) =>
-        (s"$fieldName > ?", Seq(value))
+        val actualValue = toCacheValue(fieldName, fieldType, value)
+        (s"$fieldName > ?", Seq(actualValue))
 
       case GreaterEqualCriterion(_, value) =>
-        (s"$fieldName >= ?", Seq(value))
+        val actualValue = toCacheValue(fieldName, fieldType, value)
+        (s"$fieldName >= ?", Seq(actualValue))
 
       case LessCriterion(_, value) =>
-        (s"$fieldName < ?", Seq(value))
+        val actualValue = toCacheValue(fieldName, fieldType, value)
+        (s"$fieldName < ?", Seq(actualValue))
 
       case LessEqualCriterion(_, value) =>
-        (s"$fieldName <= ?", Seq(value))
+        val actualValue = toCacheValue(fieldName, fieldType, value)
+        (s"$fieldName <= ?", Seq(actualValue))
     }
   }
 
-  private def isJavaDBType(value: Any): Boolean =
+  private def isJavaObjectType(value: Any): Boolean =
     DataType.getTypeFromClass(value.getClass) == Value.JAVA_OBJECT
 
   // TODO: Finish the list or obtain it another way... see H2 DataType
@@ -377,7 +450,9 @@ abstract class AbstractCacheWrappingCrudStore[ID, E, CACHE_ID, CACHE_E](
     Future {
       val idWithCacheItems = entities.map(createNewIdWithCacheItem)
       val ids = idWithCacheItems.map(_._1)
-      val cacheIdItems = idWithCacheItems.map { case (id, cacheItem) => (toCacheId(id), cacheItem) }.toMap
+      val cacheIdItems = idWithCacheItems.map { case (id, cacheItem) =>
+        (toCacheId(id), cacheItem)
+      }.toMap
       cache.putAll(cacheIdItems.asJava)
       ids
     }
@@ -398,8 +473,7 @@ abstract class AbstractCacheWrappingCrudStore[ID, E, CACHE_ID, CACHE_E](
     for {
       _ <- delete(ids)
       _ <- save(entities)
-    } yield
-      ids
+    } yield ids
   }
 
   override def delete(id: ID): Future[Unit] =

@@ -19,7 +19,7 @@ object FieldStore {
     categoryRepo: CategoryStore,
     fields: Traversable[Field]
   ): Future[Unit] = {
-    val categoryIds = fields.map(_.categoryId).flatten.map(Some(_)).toSeq
+    val categoryIds = fields.flatMap(_.categoryId).toSeq
 
     if (categoryIds.nonEmpty) {
       categoryRepo.find(CategoryIdentity.name #-> categoryIds).map { categories =>

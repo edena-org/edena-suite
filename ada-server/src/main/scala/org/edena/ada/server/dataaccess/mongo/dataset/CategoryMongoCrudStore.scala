@@ -13,7 +13,9 @@ import scala.concurrent.Future
 class CategoryMongoCrudStore @Inject()(
   @Assisted dataSetId : String,
   dictionaryRepo: DictionaryRootStore
-) extends DictionarySubordinateMongoCrudStore[Category, BSONObjectID]("categories", dataSetId, dictionaryRepo) {
+) extends DictionarySubordinateMongoCrudStore[Category, BSONObjectID](
+  "categories", dataSetId, dictionaryRepo
+) {
 
   override def save(entity: Category): Future[BSONObjectID] = {
     val initializedId = CategoryIdentity.of(entity).getOrElse(BSONObjectID.generate)

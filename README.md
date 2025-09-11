@@ -6,17 +6,17 @@ Edena Suite is a comprehensive data discovery and analytics platform built with 
 
 ### Global Configuration
 - **Scala**: 2.13.11
-- **SBT**: 1.3.5
+- **SBT**: 1.9.6
 - **Akka**: 2.6.21 (unified across all modules)
-- **Jackson**: 2.13.3 (unified JSON processing)
-- **Play JSON**: 2.8.2 (unified Play JSON)
+- **Jackson**: 2.14.3 (unified JSON processing)
+- **Play JSON**: 2.10.6 (unified Play JSON)
 
 ## Module Structure
 
 ### Core Infra Modules
 
 ### - core
-Foundation utilities, repository interfaces, shared models
+Foundation utilities (reflection, akka, locking), calculators, repository interfaces, shared models
 - **Akka**: 2.6.21
 - **Guice**: 4.2.3
 - **ScalaTest**: 3.0.8
@@ -25,14 +25,14 @@ Foundation utilities, repository interfaces, shared models
 
 ### - json
 JSON processing utilities
-- **Jackson**: 2.13.3
-- **Play JSON**: 2.8.2
+- **Jackson**: 2.14.3
+- **Play JSON**: 2.10.6
 - Depends on: core
 
 ### - store-json
 Unified JSON storage abstraction
-- **Jackson**: 2.13.3
-- **Play JSON**: 2.8.2
+- **Jackson**: 2.14.3
+- **Play JSON**: 2.10.6
 - Depends on: json
 
 ### Storage Modules
@@ -40,7 +40,7 @@ Unified JSON storage abstraction
 ### - mongo
 MongoDB integration with ReactiveMongo
 - **ReactiveMongo**: 1.1.0-RC12
-- **ReactiveMongo Play**: 1.1.0.play28-RC12
+- **ReactiveMongo Play**: 1.1.0.play29-RC12
 - **Akka Streams**: 2.6.21
 - Depends on: store-json
 
@@ -53,12 +53,12 @@ Elasticsearch integration
 ### - elastic-json
 Elasticsearch JSON storage implementation
 - **Elastic4S**: 7.10.8
-- **Jackson**: 2.13.3
+- **Jackson**: 2.14.3
 - Depends on: store-json, elastic
 
 ### - ignite
 Apache Ignite in-memory data grid
-- **Apache Ignite**: 2.4.0 (core, spring, indexing, scalar)
+- **Apache Ignite**: 2.14.0 (core, spring, indexing, scalar)
 - Depends on: json
 
 ### Machine Learning Modules
@@ -73,7 +73,7 @@ Apache Spark ML integration and extensions
 ### - ml-dl4j
 Deep learning with DL4J
 - **Akka**: 2.6.21
-- **Jackson**: 2.13.3
+- **Jackson**: 2.14.3
 - Depends on: core
 
 ### Web & Communication Modules
@@ -82,14 +82,14 @@ Deep learning with DL4J
 Web service client utilities
 - **Akka HTTP**: 10.2.10
 - **Play WS**: 2.1.11
-- **Jackson**: 2.13.3
+- **Jackson**: 2.14.3
 - Depends on: core
 
 ### - play
 Play Framework extensions
-- **Play Framework**: 2.8.22
-- **Jackson**: 2.13.3
-- **Play JSON**: 2.8.2
+- **Play Framework**: 2.9.6
+- **Jackson**: 2.14.3
+- **Play JSON**: 2.10.6
 - Depends on: json
 
 ### - elastic-util
@@ -111,12 +111,12 @@ Core business logic and services
 
 ### - ada-web
 Play Framework web application (main UI)
-- **Play Framework**: 2.8.22
-- **PAC4J**: 11.1.0-PLAY2.8 (authentication)
-- **PAC4J OIDC**: 5.3.1
-- **Deadbolt**: 2.8.2 (security)
-- **Play Mailer**: 8.0.1
-- **ReactiveMongo Play**: 1.1.0.play28-RC12
+- **Play Framework**: 2.9.6
+- **PAC4J**: 12.0.1-PLAY2.9 (authentication)
+- **PAC4J OIDC**: 6.2.1
+- **Deadbolt**: 2.9.0 (security)
+- **Play Mailer**: 9.0.1
+- **ReactiveMongo Play**: 1.1.0.play29-RC12
 - **Scalaz**: 7.2.36
 - **Frontend Libraries**:
   - Bootstrap Select: 1.13.2

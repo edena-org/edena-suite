@@ -1587,7 +1587,9 @@ protected[controllers] class DataSetControllerImpl @Inject() (
 
       allWidgets <- Future.sequence(filters.zip(multiCriteria).map((widgetsAux(_, _)).tupled))
 
-      anovaResult <- statsService.testAnovaForMultiCriteriaSorted(store, multiCriteria, Seq(field)).map(_.head._2)
+      anovaResultRaw <- statsService.testAnovaForMultiCriteriaSorted(store, multiCriteria, Seq(field))
+
+      anovaResult = anovaResultRaw.headOption.flatMap(_._2)
     } yield {
       // aux function to extract widgets at given seq index
       def filterNameWidgets[W <: Widget](index: Int): Seq[(String, W)] =
@@ -2216,7 +2218,12 @@ protected[controllers] class DataSetControllerImpl @Inject() (
     } yield {
       val fieldNameAndLabels = valueMaps.map { valueMap =>
         val name = valueMap.getAs[String]("name").get
-        val label = valueMap.getAs[Option[String]]("label").flatten
+        val label = valueMap.get("label").flatten.flatMap {
+          case Some(s: String) if s.trim.nonEmpty => Some(s)
+          case s: String if s.trim.nonEmpty => Some(s)
+          case _ => None
+        }
+
         (name, label)
       }.toSeq
 

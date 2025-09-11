@@ -3,11 +3,11 @@ package org.edena.ada.server.dataaccess.ignite.mongo
 import org.edena.ada.server.dataaccess.StoreTypes.DataSetMetaInfoStore
 import org.edena.ada.server.dataaccess._
 import org.edena.ada.server.dataaccess.dataset.DataSetMetaInfoStoreFactory
-import org.edena.ada.server.dataaccess.ignite.CacheCrudStoreFactory
 import org.edena.ada.server.dataaccess.mongo.dataset.DataSetMetaInfoMongoCrudStore
 import org.edena.ada.server.models.DataSetFormattersAndIds._
-import org.edena.ada.server.models.{DataSetMetaInfo, DataSpaceMetaInfo}
+import org.edena.ada.server.models.{DataSetMetaInfo, DataSetMetaInfoPOJO, DataSpaceMetaInfo}
 import org.edena.core.store.CrudStore
+import org.edena.store.ignite.front.{CustomFromToCacheCrudStoreFactory, IdentityCacheCrudStoreFactory}
 import play.api.Configuration
 import play.api.inject.ApplicationLifecycle
 import reactivemongo.api.bson.BSONObjectID
@@ -18,14 +18,24 @@ import javax.inject.Inject
 import scala.concurrent.ExecutionContext.Implicits.global
 
 private[dataaccess] class PlayDataSetMetaInfoCacheCrudStoreFactoryImpl @Inject()(
-  cacheRepoFactory: CacheCrudStoreFactory,
+  customFromToCacheCrudStoreFactory: CustomFromToCacheCrudStoreFactory,
   configuration: Configuration
 ) extends DataSetMetaInfoStoreFactory {
 
   def apply(dataSpaceId: BSONObjectID): DataSetMetaInfoStore = {
     val cacheName = "DataSetMetaInfo_" + dataSpaceId.stringify
     val mongoRepoFactory = new PlayDataSetMetaInfoMongoCrudStoreFactory(dataSpaceId.stringify, configuration, new SerializableApplicationLifecycle())
-    cacheRepoFactory(mongoRepoFactory, cacheName)
+    
+    customFromToCacheCrudStoreFactory.apply[BSONObjectID, DataSetMetaInfo, String, DataSetMetaInfoPOJO](
+      mongoRepoFactory,
+      cacheName,
+      toStoreItem = DataSetMetaInfo.fromPOJO,
+      fromStoreItem = DataSetMetaInfo.toPOJO,
+      toStoreId = x => BSONObjectID.parse(x).get,
+      fromStoreId = _.stringify,
+      usePOJOAccess = true,
+      fieldsToExcludeFromIndex = Set()
+    )
   }
 }
 

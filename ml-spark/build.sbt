@@ -18,12 +18,16 @@ libraryDependencies ++= Seq(
   "org.apache.spark" %% "spark-sql" % Versions.spark,
   "org.apache.spark" %% "spark-mllib" % Versions.spark,
 
-  "com.bnd-lib" %% "bnd-network-guice" % Versions.bnd,
+  "com.bnd-lib" %% "bnd-network" % Versions.bnd,
+//  "com.bnd-lib" %% "bnd-network-guice" % Versions.bnd,
   "tech.tablesaw" % "tablesaw-jsplot" % "0.36.0",
   "org.slf4j" % "slf4j-api" % "1.7.21",
 
   "org.reactivemongo" %% "reactivemongo-bson-api" % Versions.reactivemongo,              // because of BSONObjectID - should be removed
 )
+
+// Resolve scala-parser-combinators version conflict between Spark 3.5.4 and ssl-config-core
+libraryDependencySchemes += "org.scala-lang.modules" %% "scala-parser-combinators" % VersionScheme.Always
 
 // For licenses not automatically downloaded (need to list them manually)
 licenseOverrides := {

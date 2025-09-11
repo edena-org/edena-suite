@@ -113,4 +113,79 @@ object DataView {
       false,
       generationMethod
     )
+    
+  def fromPOJO(pojo: DataViewPOJO): DataView = {
+    import scala.jdk.CollectionConverters._
+    
+    // Get the separate lists
+    val filters = Option(pojo.getFilters).map(_.asScala.toSeq).getOrElse(Seq.empty)
+    val filterIds = Option(pojo.getFilterIds).map(_.asScala.toSeq).getOrElse(Seq.empty) 
+    val types = Option(pojo.getFilterOrIdTypes).map(_.asScala.toSeq).getOrElse(Seq.empty)
+    
+    // Rebuild filterOrIds preserving order using the types array
+    var filterIndex = 0
+    var idIndex = 0
+    val filterOrIds: Seq[Either[Seq[FilterCondition], BSONObjectID]] = types.map {
+      case "filter" =>
+        val result = Left(filters(filterIndex).asInstanceOf[Seq[FilterCondition]])
+        filterIndex += 1
+        result
+      case "id" =>
+        val result = Right(BSONObjectID.parse(filterIds(idIndex)).get)
+        idIndex += 1
+        result
+    }
+    
+    DataView(
+      _id = Option(pojo.get_id()).map(BSONObjectID.parse(_).get),
+      name = pojo.getName,
+      filterOrIds = filterOrIds,
+      tableColumnNames = Option(pojo.getTableColumnNames).map(_.asScala.toSeq).getOrElse(Seq.empty),
+      initTableSortFieldName = Option(pojo.getInitTableSortFieldName),
+      initTableSortType = Option(pojo.getInitTableSortType).flatMap(s => SortType.values.find(_.toString == s)),
+      widgetSpecs = Option(pojo.getWidgetSpecs).map(_.asScala.toSeq).getOrElse(Seq.empty).asInstanceOf[Seq[WidgetSpec]], // Complex conversion needed
+      elementGridWidth = Option(pojo.getElementGridWidth).map(_.intValue).getOrElse(3),
+      default = Option(pojo.getDefault).exists(_.booleanValue),
+      isPrivate = Option(pojo.getIsPrivate).exists(_.booleanValue),
+      generationMethod = Option(pojo.getGenerationMethod).flatMap(s => WidgetGenerationMethod.values.find(_.toString == s)).getOrElse(WidgetGenerationMethod.Auto),
+      createdById = Option(pojo.getCreatedById).map(BSONObjectID.parse(_).get),
+      timeCreated = Option(pojo.getTimeCreated).getOrElse(new Date()),
+    )
+  }
+  
+  def toPOJO(dataView: DataView): DataViewPOJO = {
+    import scala.jdk.CollectionConverters._
+    
+    // Separate filterOrIds while preserving order
+    val filters = scala.collection.mutable.ListBuffer[Object]()
+    val filterIds = scala.collection.mutable.ListBuffer[String]()
+    val types = scala.collection.mutable.ListBuffer[String]()
+    
+    dataView.filterOrIds.foreach {
+      case Left(filterConditions) =>
+        filters += filterConditions.asInstanceOf[Object]
+        types += "filter"
+      case Right(objectId) =>
+        filterIds += objectId.stringify
+        types += "id"
+    }
+    
+    val pojo = new DataViewPOJO()
+    pojo.set_id(dataView._id.map(_.stringify).orNull)
+    pojo.setName(dataView.name)
+    pojo.setFilters(filters.toList.asJava)
+    pojo.setFilterIds(filterIds.toList.asJava)
+    pojo.setFilterOrIdTypes(types.toList.asJava)
+    pojo.setTableColumnNames(dataView.tableColumnNames.asJava)
+    pojo.setInitTableSortFieldName(dataView.initTableSortFieldName.orNull)
+    pojo.setInitTableSortType(dataView.initTableSortType.map(_.toString).orNull)
+    pojo.setWidgetSpecs(dataView.widgetSpecs.asInstanceOf[Seq[Object]].asJava) // Complex conversion needed
+    pojo.setElementGridWidth(dataView.elementGridWidth)
+    pojo.setDefault(dataView.default)
+    pojo.setIsPrivate(dataView.isPrivate)
+    pojo.setGenerationMethod(dataView.generationMethod.toString)
+    pojo.setCreatedById(dataView.createdById.map(_.stringify).orNull)
+    pojo.setTimeCreated(dataView.timeCreated)
+    pojo
+  }
 }

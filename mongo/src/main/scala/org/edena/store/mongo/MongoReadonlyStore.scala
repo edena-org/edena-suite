@@ -75,8 +75,12 @@ class MongoReadonlyStore[E: Format, ID: Format](
   override def get(id: ID): Future[Option[E]] =
     withCollection(
       _.find(
-        Json.obj(identityName -> id), None
-      ).one[E] // .map(_.map(_.as[E]))
+        selector   = Json.obj(identityName -> id),
+        projection = Option.empty[JsObject]
+      ).one[E]
+//      _.find(
+//        Json.obj(identityName -> id), None
+//      ).one[E]
     )
 
   override def find(

@@ -9,7 +9,7 @@ import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
 import org.edena.core.DefaultTypes.Seq
 
-class MongoCacheCrudStoreProvider[E: TypeTag, ID: ClassTag](
+class IdentityMongoCacheCrudStoreProvider[E: TypeTag: ClassTag, ID: ClassTag](
   val mongoCollectionName: String,
   fieldsToExcludeFromIndex: Set[String] = Set[String](),
   val cacheName: Option[String] = None)(

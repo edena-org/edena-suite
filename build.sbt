@@ -2,7 +2,7 @@ name := "edena-suite"
 
 organization in ThisBuild := "org.edena"
 scalaVersion in ThisBuild := "2.13.11" // "2.12.15"
-version in ThisBuild := "1.1.0"
+version in ThisBuild := "1.1.0.RC.13"
 isSnapshot in ThisBuild := false
 
 // Dependency override groups
@@ -63,7 +63,7 @@ val playLibs = Seq(
   "com.typesafe.play" %% "play-logback"          % Dependencies.Versions.play,
   "com.typesafe.play" %% "play-server"           % Dependencies.Versions.play,
   "com.typesafe.play" %% "play-test"             % Dependencies.Versions.play,
-  "com.typesafe.play" %% "filters-helpers"       % Dependencies.Versions.play,
+//  "com.typesafe.play" %% "filters-helpers"       % Dependencies.Versions.play,
   "com.typesafe.play" %% "play-netty-server"     % Dependencies.Versions.play
 )
 
@@ -194,6 +194,13 @@ lazy val adaWeb = (project in file("ada-web"))
   )
 
 fork in Test := true
+
+// Global dependency scheme overrides to resolve version conflicts
+ThisBuild / libraryDependencySchemes ++= Seq(
+  "org.scala-lang.modules" %% "scala-parser-combinators" % VersionScheme.Always,
+  "org.scala-lang.modules" %% "scala-xml" % VersionScheme.Always,
+  "com.github.luben" % "zstd-jni" % VersionScheme.Always
+)
 
 // POM settings for Sonatype
 ThisBuild / homepage := Some(url("https://peterbanda.net"))

@@ -2,9 +2,7 @@ package org.edena.store.ignite
 
 import org.apache.ignite.cache.store.CacheStore
 
-import java.{lang => jl, util => ju}
 import scala.reflect.runtime.universe._
-import java.io.Serializable
 import javax.cache.configuration.Factory
 import javax.inject.Inject
 import org.edena.core.store.CrudStore
@@ -40,7 +38,8 @@ class CacheFactory @Inject() (ignite: Ignite) extends Serializable {
     fromStoreId: STORE_ID => ID,
     toStoreItem: E => STORE_E,
     fromStoreItem: STORE_E => E,
-    fieldsToExcludeFromIndex: Set[String]
+    fieldsToExcludeFromIndex: Set[String],
+    explicitFieldNameTypes: Map[String, String] = Map.empty
   )(
     implicit tagId: ClassTag[ID],
     typeTagE: TypeTag[E], classTag: ClassTag[E]
@@ -57,7 +56,8 @@ class CacheFactory @Inject() (ignite: Ignite) extends Serializable {
           fromStoreItem
         )
       ),
-      fieldsToExcludeFromIndex
+      fieldsToExcludeFromIndex,
+      explicitFieldNameTypes
     )
 
   def withSameItemType[ID, STORE_ID, E](
@@ -89,14 +89,19 @@ class CacheFactory @Inject() (ignite: Ignite) extends Serializable {
   def apply[ID, E](
     cacheName: String,
     cacheStoreFactoryOption: Option[Factory[CacheStore[ID, E]]],
-    fieldsToExcludeFromIndex: Set[String]
+    fieldsToExcludeFromIndex: Set[String],
+    explicitFieldNameTypes: Map[String, String] = Map.empty
   )(
     implicit tagId: ClassTag[ID],
     typeTagE: TypeTag[E], classTag: ClassTag[E]
   ): IgniteCache[ID, E] = {
     val cacheConfig = new CacheConfiguration[ID, E]()
 
-    val fieldNamesAndTypes = IgniteTypeMapper[E]
+    val implicitFieldNamesAndTypes = IgniteTypeMapper[E]
+    val fieldNamesAndTypes = {
+      val implicitMap = implicitFieldNamesAndTypes.toMap
+      (implicitMap ++ explicitFieldNameTypes).toSeq // explicitMap overwrites implicitMap for duplicate keys
+    }
     val fieldNames = fieldNamesAndTypes.map(_._1)
 
     val indeces = fieldNames
@@ -104,7 +109,6 @@ class CacheFactory @Inject() (ignite: Ignite) extends Serializable {
         fieldsToExcludeFromIndex.contains
       )
       .map(new QueryIndex(_))
-      .toSeq
 
     val valueType = typeOf[E].typeSymbol.fullName
     val tableName = typeOf[E].typeSymbol.fullName.split("\\.").lastOption.getOrElse("Unknown").stripSuffix("POJO")
@@ -117,10 +121,7 @@ class CacheFactory @Inject() (ignite: Ignite) extends Serializable {
       setIndexes(indeces.asJava)
     }
 
-    println(s"Creating cache '$cacheName' with fields and types:")
-    println(fieldNames.mkString("\n"))
-    println("Value type is: " + queryEntity.getValueType)
-    println("Table name is: " + queryEntity.getTableName)
+    println(s"Creating cache '$cacheName' with these fields ${fieldNames.mkString(", ")}")
 
     cacheConfig.setSqlFunctionClasses(classOf[CustomSqlFunctions])
     cacheConfig.setName(cacheName)

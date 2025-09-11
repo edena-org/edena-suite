@@ -5,7 +5,9 @@ import org.apache.ignite.{Ignite, IgniteCache}
 import org.edena.core.Identity
 import play.api.libs.json.JsObject
 
-class JsonBinaryCacheWrappingCrudStore[ID](
+import scala.reflect.ClassTag
+
+class JsonBinaryCacheWrappingCrudStore[ID: ClassTag](
     cache: IgniteCache[ID, BinaryObject],
     cacheName: String,
     val ignite: Ignite,

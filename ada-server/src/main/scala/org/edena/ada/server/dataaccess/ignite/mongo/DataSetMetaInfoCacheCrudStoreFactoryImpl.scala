@@ -3,10 +3,9 @@ package org.edena.ada.server.dataaccess.ignite.mongo
 import com.typesafe.config.Config
 import org.edena.ada.server.dataaccess.StoreTypes.DataSetMetaInfoStore
 import org.edena.ada.server.dataaccess.dataset.DataSetMetaInfoStoreFactory
-import org.edena.ada.server.dataaccess.ignite.CacheCrudStoreFactory
 import org.edena.ada.server.dataaccess.mongo.dataset.DataSetMetaInfoMongoCrudStore
 import org.edena.ada.server.models.DataSetFormattersAndIds._
-import org.edena.ada.server.models.{DataSetMetaInfo, DataSpaceMetaInfo}
+import org.edena.ada.server.models.{DataSetMetaInfo, DataSetMetaInfoPOJO, DataSpaceMetaInfo}
 import org.edena.core.store.{CrudStore, CrudStoreIdAdapter}
 import reactivemongo.api.bson.BSONObjectID
 import org.edena.store.json.BSONObjectIDFormat
@@ -15,16 +14,27 @@ import org.edena.store.mongo.{CommonReactiveMongoApiFactory, MongoCrudStore}
 import javax.cache.configuration.Factory
 import javax.inject.Inject
 import org.edena.core.DefaultTypes.Seq
+import org.edena.store.ignite.front.{CustomFromToCacheCrudStoreFactory, IdentityCacheCrudStoreFactory}
 
 private[dataaccess] class DataSetMetaInfoCacheCrudStoreFactoryImpl @Inject()(
-  cacheRepoFactory: CacheCrudStoreFactory,
+  customFromToCacheCrudStoreFactory: CustomFromToCacheCrudStoreFactory,
   config: Config
 ) extends DataSetMetaInfoStoreFactory {
 
   def apply(dataSpaceId: BSONObjectID): DataSetMetaInfoStore = {
     val cacheName = "DataSetMetaInfo_" + dataSpaceId.stringify
     val mongoRepoFactory = new DataSetMetaInfoMongoCrudStoreFactory(dataSpaceId.stringify, config)
-    cacheRepoFactory(mongoRepoFactory, cacheName)
+    
+    customFromToCacheCrudStoreFactory.apply[BSONObjectID, DataSetMetaInfo, String, DataSetMetaInfoPOJO](
+      mongoRepoFactory,
+      cacheName,
+      toStoreItem = DataSetMetaInfo.fromPOJO,
+      fromStoreItem = DataSetMetaInfo.toPOJO,
+      toStoreId = x => BSONObjectID.parse(x).get,
+      fromStoreId = _.stringify,
+      usePOJOAccess = true,
+      fieldsToExcludeFromIndex = Set()
+    )
   }
 }
 

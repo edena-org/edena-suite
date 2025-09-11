@@ -5,8 +5,16 @@ import com.bnd.function.business.FunctionEvaluatorFactoryImpl
 import com.bnd.function.enumerator.{ListEnumeratorFactory, ListEnumeratorFactoryImpl}
 import com.bnd.function.evaluator.FunctionEvaluatorFactory
 import com.bnd.math.business.learning.IOStreamFactory
-import com.bnd.network.business.function.{ActivationFunctionFactory, DoubleActivationFunctionFactory, JavaDoubleActivationFunctionFactory}
-import com.bnd.network.business.integrator.{DoubleConvertibleSWIntegratorFactory, MetaStatesWeightsIntegratorFactory, StatesWeightsIntegratorFactory}
+import com.bnd.network.business.function.{
+  ActivationFunctionFactory,
+  DoubleActivationFunctionFactory,
+  JavaDoubleActivationFunctionFactory
+}
+import com.bnd.network.business.integrator.{
+  DoubleConvertibleSWIntegratorFactory,
+  MetaStatesWeightsIntegratorFactory,
+  StatesWeightsIntegratorFactory
+}
 import com.bnd.network.business.learning.{ReservoirRunnableFactory, ReservoirTrainerFactory}
 import com.bnd.network.metrics.{DoubleConvertibleMetricsFactory, DoubleMetricsFactory}
 import com.google.inject.name.Named

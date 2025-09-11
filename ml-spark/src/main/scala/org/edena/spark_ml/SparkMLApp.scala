@@ -1,6 +1,6 @@
 package org.edena.spark_ml
 
-import com.bnd.network.business.NetworkModule
+import com.bnd.network.business.NetworkModuleLocal
 import com.google.inject.Guice
 import org.apache.spark.SparkConf
 import org.apache.spark.sql.{Dataset, SparkSession}
@@ -29,7 +29,7 @@ class SparkMLApp(execute: (SparkSession, SparkMLService) => Future[Unit]) extend
   protected def mlServiceSetting = SparkMLServiceSetting(debugMode = false)
 
   private def createMLService = {
-    val injector = Guice.createInjector(new NetworkModule())
+    val injector = Guice.createInjector(new NetworkModuleLocal())
     val factory = injector.instance[SparkMLServiceFactory]
     factory(mlServiceSetting)
   }
