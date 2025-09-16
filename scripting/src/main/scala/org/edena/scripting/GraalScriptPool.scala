@@ -66,7 +66,7 @@ abstract class GraalScriptPoolImpl(
   init
 
   private def init = logExecutionTime(
-    s"${getClass.getSimpleName} with $actualPoolSize contexts/threads initialization"
+    s"Initialization of ${getClass.getSimpleName} with $actualPoolSize contexts/threads"
   ) {
     // Create and warm contexts
     (1 to actualPoolSize).foreach { _ =>

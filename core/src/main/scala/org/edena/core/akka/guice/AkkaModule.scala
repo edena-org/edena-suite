@@ -1,13 +1,13 @@
 package org.edena.core.akka.guice
 
-import akka.actor.ActorSystem
+import akka.actor.{ActorSystem, CoordinatedShutdown}
 import AkkaModule.{ActorSystemProvider, ExecutionContextProvider, MaterializerProvider}
 import akka.stream.{ActorMaterializer, ActorMaterializerSettings, Materializer}
-import com.google.inject.{AbstractModule, Injector, Provider}
+import com.google.inject.{AbstractModule, Injector, Provider, Provides}
 import com.typesafe.config.Config
 import net.codingwell.scalaguice.ScalaModule
 
-import javax.inject.Inject
+import javax.inject.{Inject, Singleton}
 import scala.concurrent.ExecutionContext
 
 object AkkaModule {
@@ -51,5 +51,11 @@ class AkkaModule(includeExecutionContext: Boolean = true) extends AbstractModule
     if (includeExecutionContext) {
       bind[ExecutionContext].toProvider[ExecutionContextProvider].asEagerSingleton()
     }
+  }
+
+  @Provides
+  @Singleton
+  def provideCoordinatedShutdown(actorSystem: ActorSystem): CoordinatedShutdown = {
+    CoordinatedShutdown(actorSystem)
   }
 }

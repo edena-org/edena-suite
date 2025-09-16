@@ -42,7 +42,8 @@ object Dependencies {
     val ignite = "2.14.0" //  "2.14.0" - uses JDK 17
 
     // WS + ADA-SERVER
-    val playWs = "2.1.11" // compatible with Akka 2.6.21
+    val playWs = "2.2.10" // compatible with Akka 2.6.21 and Play 2.9.6 uses it
+//    val playWs = "2.1.11" // compatible with Akka 2.6.21
     val breeze = "2.1.0"
 
     // PLAY
@@ -66,5 +67,8 @@ object Dependencies {
 
     val scalazCore = "7.2.36"
     val scalatestplusPlay = "4.0.3"
+
+    // GraalVM
+    val graalvm = "24.2.0"   // JDK 17
   }
 }

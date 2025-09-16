@@ -195,7 +195,7 @@ lazy val adaServer = (project in file("ada-server"))
 lazy val adaWeb = (project in file("ada-web"))
   .enablePlugins(PlayScala, SbtWeb)
   .dependsOn(play, adaServer)
-  .aggregate(play, adaServer, ws, elasticUtil, mlDl4j)
+  .aggregate(play, adaServer, ws, elasticUtil, mlDl4j, scripting)
   .settings(
     // define the extra artifact with classifier "web-assets"
     Assets / packageBin / artifact :=

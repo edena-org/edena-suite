@@ -10,7 +10,7 @@ import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec
 import play.api.libs.ws.StandaloneWSClient
 import play.api.libs.ws.ahc.StandaloneAhcWSClient
-import play.shaded.oauth.org.apache.commons.codec.binary.Hex
+import java.util.HexFormat
 
 trait WSHelper extends HasNonce {
 
@@ -49,7 +49,7 @@ trait WSHelper extends HasNonce {
 
     val bytes = mac.doFinal(message.getBytes(charset.getOrElse(ascii)))
     // //    Codecs.toHexString(bytes)
-    new String(Hex.encodeHex(bytes))
+    HexFormat.of().formatHex(bytes)
   }
 }
 
