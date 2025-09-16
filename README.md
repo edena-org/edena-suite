@@ -18,7 +18,7 @@ Edena Suite is a comprehensive data discovery and analytics platform built with 
 ### - core
 Foundation utilities (reflection, akka, locking), calculators, repository interfaces, shared models
 - **Akka**: 2.6.21
-- **Guice**: 4.2.3
+- **Guice**: 5.1.0
 - **ScalaTest**: 3.0.8
 - **Commons**: IO, Lang, Math3
 - **Logging**: Logback 1.4.14, SLF4J 1.7.26
@@ -106,7 +106,7 @@ Core business logic and services
 - **Breeze**: 2.1.0 (linear algebra)
 - **T-SNE Java**: v2.5.0
 - **LDAP SDK**: 2.3.8
-- **Guice**: 4.2.3
+- **Guice**: 5.1.0
 - Depends on: elastic-json, mongo, ignite, ml-spark
 
 ### - ada-web

@@ -128,6 +128,15 @@ lazy val ignite = (project in file("ignite"))
       dependencyOverrides ++= jacksonLibs
   )
 
+lazy val scripting = (project in file("scripting"))
+  .dependsOn(json)
+  .aggregate(json)
+  .settings(
+    aggregate in test := false,
+    aggregate in testOnly := false,
+    dependencyOverrides ++= jacksonLibs ++ playJsonLibs
+  )
+
 lazy val mlSpark = (project in file("ml-spark"))
   .dependsOn(core)
   .aggregate(core)
@@ -188,6 +197,16 @@ lazy val adaWeb = (project in file("ada-web"))
   .dependsOn(play, adaServer)
   .aggregate(play, adaServer, ws, elasticUtil, mlDl4j)
   .settings(
+    // define the extra artifact with classifier "web-assets"
+    Assets / packageBin / artifact :=
+      (Assets / packageBin / artifact).value
+        .withName(moduleName.value)      // keep artifactId = ada-web_2.13
+        .withType("jar")
+        .withExtension("jar")
+        .withClassifier(Some("web-assets")),
+
+    // bind that artifact to the task that produces it so it gets published (Maven + Ivy)
+    addArtifact(Assets / packageBin / artifact, Assets / packageBin),
     aggregate in test := false,
     aggregate in testOnly := false,
     dependencyOverrides ++= akkaLibs ++ jacksonLibs ++ playJsonLibs ++ akkaHttpLibs ++ playWsLibs ++ playLibs
