@@ -40,6 +40,11 @@ trait GraalScriptPool {
     code: String,
     bindings: Map[String, Any] = Map.empty
   ): Either[String, JsValue]
+
+  /** Close all contexts and the underlying engine;
+   * pool is no longer usable after this.
+   */
+  def close(): Unit
 }
 
 abstract class GraalScriptPoolImpl(
@@ -103,10 +108,7 @@ abstract class GraalScriptPoolImpl(
   ): Either[String, String] =
     withContext { ctx =>
       Try {
-        val languageBindings = ctx.getBindings(language)
-        bindings.foreach { case (k, v) => languageBindings.putMember(k, v) }
-        val v = ctx.eval(language, code)
-        if (v.isString) v.asString() else v.toString
+        evalCore(code, bindings, ctx)
       }.fold(
         {
           case pe: PolyglotException =>
@@ -122,6 +124,17 @@ abstract class GraalScriptPoolImpl(
         result => Right(result)
       )
     }
+
+  protected def evalCore(
+    code: String,
+    bindings: Map[String, Any] = Map.empty,
+    ctx: Context
+  ): String = {
+    val languageBindings = ctx.getBindings(language)
+    bindings.foreach { case (k, v) => languageBindings.putMember(k, v) }
+    val v = ctx.eval(language, code)
+    if (v.isString) v.asString() else v.toString
+  }
 
   /** Evaluate script that returns JSON string; parse into JsValue. */
   def evalToJson(
@@ -147,7 +160,7 @@ abstract class GraalScriptPoolImpl(
     }
   }
 
-  def close(): Unit = {
+  override def close(): Unit = {
     var c = pool.poll()
     while (c != null) {
       try c.close()

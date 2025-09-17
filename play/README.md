@@ -22,4 +22,4 @@ or to *pom.xml* (if you use maven)
 
 #### Play
 
-This library uses (and is compatible with) Play version **2.6.20**.
+This library uses (and is compatible with) Play version **2.9.6**.

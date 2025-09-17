@@ -117,7 +117,7 @@ class GraalPyPoolTest extends FlatSpec
     val futures = parallelize(1 to repetitions, Some(parallelism)) { i =>
       Future {
         val input = i % 1000
-        val jsonResult = graalPyPool.evalToJson(
+        val result = graalPyPool.evalToJson(
           """
             |import json
             |data = {"result": x * 3, "iteration": iter}
@@ -125,16 +125,21 @@ class GraalPyPoolTest extends FlatSpec
             |""".stripMargin,
           bindings = Map("x" -> input, "iter" -> i)
         )
-        jsonResult.isRight should be(true)
-        val json = jsonResult.right.get.asInstanceOf[JsObject]
-        (json \ "result").as[Int] should be(input * 3)
-        (json \ "iteration").as[Int] should be(i)
+        (input, i, result)
       }
     }
 
-    Await.ready(futures, 30.seconds)
+    val results = Await.result(futures, 30.seconds)
+
+    results.foreach { case (input, i, jsonResult) =>
+      jsonResult.isRight should be(true)
+      val json = jsonResult.right.get.asInstanceOf[JsObject]
+      (json \ "result").as[Int] should be(input * 3)
+      (json \ "iteration").as[Int] should be(i)
+    }
+
     val duration = System.currentTimeMillis() - startTime
-    println(s"Completed $repetitions concurrent Python evaluations in ${duration}ms")
+    println(s"Completed $repetitions concurrent JavaScript evaluations in ${duration}ms")
   }
 
   it should "handle Python data structures and return valid JSON" in {

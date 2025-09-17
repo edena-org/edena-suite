@@ -19,7 +19,7 @@ class FromToCacheWrappingCrudStore[ID: ClassTag, E, CACHE_ID, CACHE_E: TypeTag](
   fromCache: CACHE_E => E,
   toCache: E => CACHE_E,
   asCacheId: ID => CACHE_ID
-) extends AbstractCacheWrappingCrudStore[ID, E, CACHE_ID, CACHE_E](cache, entityName, identity) with LoggingSupport {
+) extends AbstractCacheWrappingCrudStore[ID, E, CACHE_ID, CACHE_E](cache, entityName, identity) {
 
 //  private val frontItemConstructorFinder = DynamicConstructorFinder.apply[E]
 

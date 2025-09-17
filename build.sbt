@@ -200,7 +200,7 @@ lazy val adaWeb = (project in file("ada-web"))
     // define the extra artifact with classifier "web-assets"
     Assets / packageBin / artifact :=
       (Assets / packageBin / artifact).value
-        .withName(moduleName.value)      // keep artifactId = ada-web_2.13
+        .withName(moduleName.value)      // keep artifactId = ada-web_2.13 needed for publishM2
         .withType("jar")
         .withExtension("jar")
         .withClassifier(Some("web-assets")),

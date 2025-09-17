@@ -50,10 +50,35 @@ class GraalJSPoolTest extends FlatSpec
       bindings = Map("x" -> input)
     )
 
+    println(jsonResult)
     jsonResult.isRight should be(true)
     val json = jsonResult.right.get.asInstanceOf[JsObject]
     (json \ "answer").as[Int] should be(43)
     (json \ "input").as[Int] should be(42)
+  }
+
+  it should "evaluate JavaScript to check consts have been cleaned up" in {
+    val input = 42
+    def callAux = graalJsPool.evalToJson(
+      """
+        |const data = {"answer": x + 1, "input": x};
+        |JSON.stringify(data);
+        |""".stripMargin,
+      bindings = Map("x" -> input)
+    )
+
+    val jsonResult1 = callAux
+    val jsonResult2 = callAux
+
+    jsonResult1.isRight should be(true)
+    val json1 = jsonResult1.right.get.asInstanceOf[JsObject]
+    (json1 \ "answer").as[Int] should be(43)
+    (json1 \ "input").as[Int] should be(42)
+
+    jsonResult2.isRight should be(true)
+    val json2 = jsonResult1.right.get.asInstanceOf[JsObject]
+    (json2 \ "answer").as[Int] should be(43)
+    (json2 \ "input").as[Int] should be(42)
   }
 
   it should "handle JavaScript errors gracefully" in {
@@ -90,21 +115,59 @@ class GraalJSPoolTest extends FlatSpec
     val futures = parallelize(1 to repetitions, Some(parallelism)) { i =>
       Future {
         val input = i % 1000
-        val jsonResult = graalJsPool.evalToJson(
+        val result = graalJsPool.evalToJson(
           """
             |var data = {"result": x * 2, "iteration": iter};
             |JSON.stringify(data);
             |""".stripMargin,
           bindings = Map("x" -> input, "iter" -> i)
         )
-        jsonResult.isRight should be(true)
-        val json = jsonResult.right.get.asInstanceOf[JsObject]
-        (json \ "result").as[Int] should be(input * 2)
-        (json \ "iteration").as[Int] should be(i)
+        (input, i, result)
       }
     }
 
-    Await.ready(futures, 30.seconds)
+    val results = Await.result(futures, 30.seconds)
+
+    results.foreach { case (input, i, jsonResult) =>
+      jsonResult.isRight should be(true)
+      val json = jsonResult.right.get.asInstanceOf[JsObject]
+      (json \ "result").as[Int] should be(input * 2)
+      (json \ "iteration").as[Int] should be(i)
+    }
+
+    val duration = System.currentTimeMillis() - startTime
+    println(s"Completed $repetitions concurrent JavaScript evaluations in ${duration}ms")
+  }
+
+  it should "handle concurrent execution efficiently with costs (to check cleanup)" in {
+    val repetitions = 1000
+    val parallelism = 100
+
+    val startTime = System.currentTimeMillis()
+
+    val futures = parallelize(1 to repetitions, Some(parallelism)) { i =>
+      Future {
+        val input = i % 1000
+        val result = graalJsPool.evalToJson(
+          """
+            |const data = {"result": x * 2, "iteration": iter};
+            |JSON.stringify(data);
+            |""".stripMargin,
+          bindings = Map("x" -> input, "iter" -> i)
+        )
+        (input, i, result)
+      }
+    }
+
+    val results = Await.result(futures, 30.seconds)
+
+    results.foreach { case (input, i, jsonResult) =>
+      jsonResult.isRight should be(true)
+      val json = jsonResult.right.get.asInstanceOf[JsObject]
+      (json \ "result").as[Int] should be(input * 2)
+      (json \ "iteration").as[Int] should be(i)
+    }
+
     val duration = System.currentTimeMillis() - startTime
     println(s"Completed $repetitions concurrent JavaScript evaluations in ${duration}ms")
   }

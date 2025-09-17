@@ -7,6 +7,7 @@ import org.edena.core.DefaultTypes.Seq
 import org.edena.core.Identity
 import org.edena.core.store.ValueMapAux.ValueMap
 import org.edena.core.store._
+import org.edena.core.util.LoggingSupport
 import org.edena.store.ignite._
 import org.h2.value.{DataType, Value}
 import org.slf4j.LoggerFactory
@@ -33,9 +34,8 @@ abstract class AbstractCacheWrappingCrudStore[ID: ClassTag, E, CACHE_ID, CACHE_E
   entityName: String,
   identity: Identity[E, ID]
 ) extends CrudStore[E, ID]
-    with BinaryJsonHelper {
-
-  protected val logger = LoggerFactory getLogger getClass.getName
+    with BinaryJsonHelper
+    with LoggingSupport {
 
   private val idTag = implicitly[ClassTag[ID]]
 

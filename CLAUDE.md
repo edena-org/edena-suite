@@ -16,9 +16,10 @@ Edena Suite is a comprehensive data discovery and analytics platform built with 
 - **play**: Play Framework extensions
 - **ws**: Web service client utilities
 - **elastic/elastic-json**: Elasticsearch integration
-- **mongo**: MongoDB integration  
+- **mongo**: MongoDB integration
 - **ignite**: Apache Ignite in-memory data grid
 - **store-json**: Unified JSON storage abstraction
+- **scripting**: GraalVM-based JavaScript and Python script execution
 - **ml-spark**: Apache Spark ML integration
 - **ml-dl4j**: Deep learning with DL4J
 - **elastic-util**: Additional Elasticsearch utilities
@@ -30,6 +31,7 @@ Edena Suite is a comprehensive data discovery and analytics platform built with 
 - **MongoDB**: ReactiveMongo 1.1.0-RC12
 - **Elasticsearch**: Elastic4S 7.10.8
 - **Apache Ignite**: 2.14.0
+- **GraalVM**: For polyglot scripting (JavaScript, Python)
 - **Akka**: 2.6.21
 
 ## Common Development Commands
@@ -46,7 +48,9 @@ sbt publishLocal      # Publish to local Maven repo
 sbt test                    # Run all tests
 sbt core/test              # Run tests for specific module
 sbt ada-web/test           # Run web app tests
+sbt scripting/test         # Run scripting module tests
 sbt "testOnly *ClassName*" # Run specific test class
+sbt "scripting/testOnly *GraalJSPoolTest*" # Run JavaScript pool tests
 ```
 
 ### Running the Application
@@ -103,6 +107,18 @@ The project follows a clear dependency hierarchy:
 - **DL4J**: Deep learning and neural networks
 - **Breeze**: Linear algebra and numerical computing
 - Located in `ml-spark` and `ml-dl4j` modules
+
+### Scripting Engine
+- **GraalVM Polyglot**: Multi-language script execution
+- **JavaScript Support**: Full ES6+ support with proper variable isolation
+- **Python Support**: Python script execution via GraalPy
+- **Thread-Safe Pools**: Concurrent script execution with configurable pool sizes
+- **Variable Isolation**: Proper cleanup between script executions (const/let/var)
+- **Error Handling**: Preserves original PolyglotException for debugging
+- **JSON Integration**: Built-in JSON parsing and generation support
+- **Async Support**: JavaScript async/await functionality
+- **Configuration**: `graalvm.js.pool_size` and `graalvm.js.reset_after_each_use`
+- **Testing**: Comprehensive test coverage for concurrent execution and variable cleanup
 
 ### Security
 - **Deadbolt**: Role-based access control

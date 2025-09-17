@@ -61,6 +61,15 @@ Apache Ignite in-memory data grid
 - **Apache Ignite**: 2.14.0 (core, spring, indexing, scalar)
 - Depends on: json
 
+### - scripting
+GraalVM-based JavaScript and Python script execution
+- **GraalVM Polyglot**: 23.1.5
+- **Thread-Safe Pools**: Concurrent script execution with configurable pool sizes
+- **Variable Isolation**: Proper cleanup between script executions (const/let/var)
+- **JSON Integration**: Built-in JSON parsing and generation support
+- **Async Support**: JavaScript async/await functionality
+- Depends on: core
+
 ### Machine Learning Modules
 
 ### - ml-spark
@@ -157,6 +166,14 @@ Play Framework web application (main UI)
 - **DL4J**: Deep learning and neural networks
 - **Breeze**: Linear algebra and numerical computing
 
+### Scripting Engine
+- **GraalVM Polyglot**: Multi-language script execution (JavaScript, Python)
+- **Thread-Safe Execution**: Concurrent script execution with configurable pool sizes
+- **Variable Isolation**: Proper cleanup between script executions (const/let/var)
+- **Error Handling**: Preserves original PolyglotException for debugging
+- **JSON Integration**: Built-in JSON parsing and generation support
+- **Async Support**: JavaScript async/await functionality
+
 ## Development
 
 ### Build Commands
@@ -164,6 +181,7 @@ Play Framework web application (main UI)
 sbt compile           # Compile all modules
 sbt ada-web/run       # Run the web application
 sbt test              # Run all tests
+sbt scripting/test    # Run scripting module tests
 sbt publishLocal      # Publish to local Maven repo
 ```
 
