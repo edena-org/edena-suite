@@ -2,19 +2,20 @@ package org.edena.scripting
 
 import akka.stream.Materializer
 import org.edena.core.util.parallelize
-import org.scalatest.{FlatSpec, Matchers, BeforeAndAfterAll, BeforeAndAfterEach}
-import play.api.libs.json.{JsArray, JsObject}
+import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach, FlatSpec, Matchers}
+import play.api.libs.json.{JsArray, JsObject, Json}
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContext, Future}
 
-class GraalPyPoolTest extends FlatSpec
-  with Matchers
-  with BeforeAndAfterAll
-  with BeforeAndAfterEach
-  with GraalVmBaseContainer {
+class GraalPyPoolTest
+    extends FlatSpec
+    with Matchers
+    with BeforeAndAfterAll
+    with BeforeAndAfterEach
+    with GraalVmBaseContainer {
 
-  private val graalPyPool = instance[GraalPyPool]
+  private val graalPyPool = instance[GraalScriptPool, PyDefault]
   private implicit val ec: ExecutionContext = instance[ExecutionContext]
   private implicit val materializer: Materializer = instance[Materializer]
 
@@ -175,5 +176,226 @@ class GraalPyPoolTest extends FlatSpec
     // sqrt(16) + pi ≈ 4 + 3.14159 ≈ 7.14
     result.right.get.toDouble should be > 7.0
     result.right.get.toDouble should be < 8.0
+  }
+
+  it should "handle JSON processing and data manipulation" in {
+    val code = """
+                 |# Parse sample data from JSON string
+                 |sample_data = json.loads(sample_data_str)
+                 |
+                 |# Process data
+                 |result = {
+                 |    'original_count': len(sample_data),
+                 |    'numbers_sum': sum(sample_data['numbers']),
+                 |    'strings_joined': ' '.join(sample_data['strings']),
+                 |    'nested_access': sample_data['nested']['key2']['inner'],
+                 |    'json_serializable': True
+                 |}
+                 |
+                 |json.dumps(result)
+                 |""".stripMargin
+
+    val sampleData = Json.obj(
+      "numbers" -> Json.arr(1, 2, 3, 4, 5),
+      "strings" -> Json.arr("hello", "world", "python"),
+      "nested" -> Json.obj(
+        "key1" -> "value1",
+        "key2" -> Json.obj("inner" -> "data")
+      )
+    )
+
+    graalPyPool.evalToJson(code, Map("sample_data_str" -> sampleData.toString())) match {
+      case Right(json) =>
+        val obj = json.as[JsObject]
+        (obj \ "original_count").as[Int] should be(3)
+        (obj \ "numbers_sum").as[Int] should be(15)
+        (obj \ "strings_joined").as[String] should be("hello world python")
+        (obj \ "nested_access").as[String] should be("data")
+        (obj \ "json_serializable").as[Boolean] should be(true)
+      case Left(error) =>
+        fail(s"JSON processing should work in Python: $error")
+    }
+  }
+
+  it should "demonstrate error handling and exception management" in {
+    val code = """
+                 |results = {}
+                 |
+                 |# Test 1: Division by zero
+                 |try:
+                 |    x = 1 / 0
+                 |    results['division'] = 'no_error'
+                 |except ZeroDivisionError:
+                 |    results['division'] = 'caught_zero_division'
+                 |except Exception as e:
+                 |    results['division'] = f'other_error: {type(e).__name__}'
+                 |
+                 |# Test 2: Invalid JSON
+                 |try:
+                 |    json.loads('invalid json')
+                 |    results['json_parse'] = 'no_error'
+                 |except json.JSONDecodeError:
+                 |    results['json_parse'] = 'caught_json_error'
+                 |except Exception as e:
+                 |    results['json_parse'] = f'other_error: {type(e).__name__}'
+                 |
+                 |# Test 3: KeyError
+                 |try:
+                 |    d = {'a': 1}
+                 |    value = d['missing_key']
+                 |    results['key_access'] = 'no_error'
+                 |except KeyError:
+                 |    results['key_access'] = 'caught_key_error'
+                 |except Exception as e:
+                 |    results['key_access'] = f'other_error: {type(e).__name__}'
+                 |
+                 |# Test 4: Normal operation
+                 |results['normal_op'] = 'works'
+                 |
+                 |json.dumps(results)
+                 |""".stripMargin
+
+    graalPyPool.evalToJson(code) match {
+      case Right(json) =>
+        val obj = json.as[JsObject]
+        (obj \ "division").as[String] should be("caught_zero_division")
+        (obj \ "json_parse").as[String] should be("caught_json_error")
+        (obj \ "key_access").as[String] should be("caught_key_error")
+        (obj \ "normal_op").as[String] should be("works")
+      case Left(error) =>
+        fail(s"Error handling should work properly: $error")
+    }
+  }
+
+  it should "demonstrate list comprehensions and functional programming" in {
+    val code = """
+                 |# Sample data
+                 |numbers = list(range(1, 11))  # [1, 2, 3, ..., 10]
+                 |
+                 |result = {
+                 |    'original': numbers,
+                 |    'squares': [x*x for x in numbers],
+                 |    'evens': [x for x in numbers if x % 2 == 0],
+                 |    'mapped_doubled': list(map(lambda x: x * 2, numbers[:5])),
+                 |    'filtered_gt5': list(filter(lambda x: x > 5, numbers)),
+                 |    'sum_all': sum(numbers),
+                 |    'max_value': max(numbers),
+                 |    'list_length': len(numbers)
+                 |}
+                 |
+                 |json.dumps(result)
+                 |""".stripMargin
+
+    graalPyPool.evalToJson(code) match {
+      case Right(json) =>
+        val obj = json.as[JsObject]
+        (obj \ "sum_all").as[Int] should be(55) // sum of 1-10
+        (obj \ "max_value").as[Int] should be(10)
+        (obj \ "list_length").as[Int] should be(10)
+        val squares = (obj \ "squares").as[Seq[Int]]
+        squares should contain(1)
+        squares should contain(100)
+        val evens = (obj \ "evens").as[Seq[Int]]
+        evens should be(Seq(2, 4, 6, 8, 10))
+      case Left(error) =>
+        fail(s"List comprehensions should work: $error")
+    }
+  }
+
+  it should "fail to make HTTP requests using urllib (no IO access)" in {
+    val code = """
+                 |import urllib.request
+                 |import urllib.error
+                 |import sys, codecs, encodings
+                 |
+                 |try:
+                 |    # Make HTTP request to a working JSON API
+                 |    with urllib.request.urlopen('https://api.github.com/zen') as response:
+                 |        if response.status == 200:
+                 |            data = response.read().decode('utf-8')
+                 |            result = {
+                 |                'success': True,
+                 |                'status': response.status,
+                 |                'has_data': data is not None and len(data.strip()) > 0,
+                 |                'content_type': response.headers.get('Content-Type', 'unknown'),
+                 |                'response_text': data.strip()
+                 |            }
+                 |        else:
+                 |            result = {
+                 |                'success': False,
+                 |                'status': response.status,
+                 |                'error': f'HTTP {response.status}'
+                 |            }
+                 |except Exception as e:
+                 |    result = {
+                 |        'success': False,
+                 |        'error': str(e),
+                 |        'error_type': type(e).__name__
+                 |    }
+                 |
+                 |json.dumps(result)
+                 |""".stripMargin
+
+    graalPyPool.evalToJson(code) match {
+      case Right(json) =>
+        val obj = json.as[JsObject]
+        (obj \ "success").as[Boolean] should be(false)
+        obj.keys should contain("error")
+        // Should fail due to IO restrictions
+      case Left(error) =>
+        // Expected to fail due to script execution error or IO restrictions
+        error should include("Script execution error")
+    }
+  }
+
+  it should "fail to perform file system operations (no IO access)" in {
+    val code = """
+                 |import os
+                 |import tempfile
+                 |
+                 |try:
+                 |    # Create a temporary file
+                 |    with tempfile.NamedTemporaryFile(mode='w+', delete=False, suffix='.txt') as temp_file:
+                 |        temp_file_path = temp_file.name
+                 |        test_content = 'Hello from GraalPy admin pool!'
+                 |        temp_file.write(test_content)
+                 |        temp_file.flush()
+                 |
+                 |    # Read the file back
+                 |    with open(temp_file_path, 'r') as read_file:
+                 |        read_content = read_file.read()
+                 |
+                 |    # Clean up - delete the temporary file
+                 |    os.unlink(temp_file_path)
+                 |
+                 |    result = {
+                 |        'success': True,
+                 |        'written_content': test_content,
+                 |        'read_content': read_content,
+                 |        'content_match': test_content == read_content,
+                 |        'temp_file_path': temp_file_path,
+                 |        'file_operations': 'complete'
+                 |    }
+                 |
+                 |except Exception as e:
+                 |    result = {
+                 |        'success': False,
+                 |        'error': str(e),
+                 |        'error_type': type(e).__name__
+                 |    }
+                 |
+                 |json.dumps(result)
+                 |""".stripMargin
+
+    graalPyPool.evalToJson(code) match {
+      case Right(json) =>
+        val obj = json.as[JsObject]
+        (obj \ "success").as[Boolean] should be(false)
+        obj.keys should contain("error")
+        // Should fail due to IO restrictions
+      case Left(error) =>
+        // Expected to fail due to script execution error or IO restrictions
+        error should include("Script execution error")
+    }
   }
 }

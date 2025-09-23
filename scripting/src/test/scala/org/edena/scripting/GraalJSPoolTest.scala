@@ -1,8 +1,9 @@
 package org.edena.scripting
 
 import akka.stream.Materializer
+import net.codingwell.scalaguice.InjectorExtensions._
 import org.edena.core.util.parallelize
-import org.scalatest.{FlatSpec, Matchers, BeforeAndAfterAll, BeforeAndAfterEach}
+import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach, FlatSpec, Matchers}
 import play.api.libs.json.JsObject
 
 import scala.concurrent.duration._
@@ -14,7 +15,7 @@ class GraalJSPoolTest extends FlatSpec
   with BeforeAndAfterEach
   with GraalVmBaseContainer {
 
-  private val graalJsPool = instance[GraalJsPool]
+  private val graalJsPool = instance[GraalScriptPool, JsDefault]
   private implicit val ec: ExecutionContext = instance[ExecutionContext]
   private implicit val materializer: Materializer = instance[Materializer]
 
@@ -184,5 +185,68 @@ class GraalJSPoolTest extends FlatSpec
     result.isRight should be(true)
     val json = result.right.get.asInstanceOf[JsObject]
     (json \ "sum").as[Int] should be(30) // sum of [2, 4, 6, 8, 10]
+  }
+
+  it should "fail when attempting to use require() for file access" in {
+    val code = """
+      |try {
+      |  const fs = require('fs');
+      |  const content = fs.readFileSync('package.json', 'utf8');
+      |  JSON.stringify({ success: true, content: content });
+      |} catch (e) {
+      |  JSON.stringify({ success: false, error: e.message });
+      |}
+      |""".stripMargin
+
+    graalJsPool.evalToJson(code) match {
+      case Right(json) =>
+        val obj = json.as[JsObject]
+        (obj \ "success").as[Boolean] should be(false)
+        (obj \ "error").as[String] should include("require")
+      case Left(error) =>
+        // Also acceptable - the script execution itself fails
+        error should include("Script execution error")
+    }
+  }
+
+  it should "fail when attempting to use fetch() for HTTP requests" in {
+    val code = """
+      |try {
+      |  fetch('https://httpbin.org/json');
+      |  JSON.stringify({ success: true });
+      |} catch (e) {
+      |  JSON.stringify({ success: false, error: e.message });
+      |}
+      |""".stripMargin
+
+    graalJsPool.evalToString(code) match {
+      case Right(result) =>
+        result should include("success\":false")
+        result should include("fetch")
+      case Left(error) =>
+        // Expected - fetch is not defined
+        error should include("Script execution error")
+    }
+  }
+
+  it should "fail when attempting to access process.env" in {
+    val code = """
+      |try {
+      |  const env = process.env;
+      |  JSON.stringify({ success: true, hasEnv: typeof env === 'object' });
+      |} catch (e) {
+      |  JSON.stringify({ success: false, error: e.message });
+      |}
+      |""".stripMargin
+
+    graalJsPool.evalToJson(code) match {
+      case Right(json) =>
+        val obj = json.as[JsObject]
+        (obj \ "success").as[Boolean] should be(false)
+        (obj \ "error").as[String] should include("process")
+      case Left(error) =>
+        // Expected - process is not defined
+        error should include("Script execution error")
+    }
   }
 }

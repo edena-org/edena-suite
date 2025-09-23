@@ -7,6 +7,7 @@ trait GraalVmBaseContainer extends GuiceContainer {
   override protected def modules = Seq(
     new ConfigModule(),
     new AkkaModule(includeExecutionContext = true),
-    new GraalVmModule()
+    new GraalVmModule(),
+    new GraalVmAdminModule()
   )
 }

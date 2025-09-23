@@ -8,15 +8,46 @@ import org.graalvm.polyglot._
 import javax.inject._
 import scala.concurrent.ExecutionContext
 
-final private class GraalPyPool @Inject() (
-  config: Config,
+final private class GraalPyPoolFactoryImpl @Inject()(
+  appConfig: Config,
+  coordinatedShutdown: CoordinatedShutdown
+)(
+  implicit ec: ExecutionContext
+) extends GraalPoolFactory {
+
+  override def apply(
+    config: GraalPoolConfig,
+    extendEngine: Option[Engine#Builder => Unit],
+    extendContextBuilder: Option[(Context#Builder, Int) => Unit],
+    extendContext: Option[Context => Unit]
+  ): GraalScriptPool = {
+    val configFinal = config.copy(
+      poolSize = config.poolSize.orElse(
+        appConfig.optionalInt("graalvm.python.pool_size")
+      ),
+      resetAfterEachUse = config.resetAfterEachUse.orElse(
+        appConfig.optionalBoolean("graalvm.python.reset_after_each_use")
+      )
+    )
+
+    new GraalPyPool(configFinal, extendEngine, extendContextBuilder, extendContext, coordinatedShutdown)
+  }
+}
+
+final private class GraalPyPool(
+  config: GraalPoolConfig,
+  extendEngine: Option[Engine#Builder => Unit],
+  extendContextBuilder: Option[(Context#Builder, Int) => Unit],
+  extendContext: Option[Context => Unit],
   coordinatedShutdown: CoordinatedShutdown
 )(
   implicit ec: ExecutionContext
 ) extends GraalScriptPoolImpl(
   language = "python",
-  poolSize = config.optionalInt("graalvm.python.pool_size"),
-  resetAfterEachUse = config.optionalBoolean("graalvm.python.reset_after_each_use").getOrElse(true),
+  config,
+  extendEngine,
+  extendContextBuilder,
+  extendContext,
   coordinatedShutdown
 ) {
 
@@ -40,4 +71,8 @@ final private class GraalPyPool @Inject() (
     // Warmup (imports compile paths)
     preImport.foreach(m => ctx.eval(language, s"import $m"))
   }
+
+//  // needed for IsolateNativeModules = true / native access but doesn't quite work
+//  override protected def createContextBuilder(): Context#Builder =
+//    GraalPyResources.contextBuilder()
 }

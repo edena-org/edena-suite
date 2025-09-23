@@ -7,21 +7,51 @@ import org.graalvm.polyglot._
 import org.graalvm.polyglot.proxy.ProxyExecutable
 
 import java.util.concurrent.CompletableFuture
-import javax.inject._
+import javax.inject.Inject
 import scala.concurrent.ExecutionContext
 
-final private class GraalJsPool @Inject() (
-  config: Config,
+final private class GraalJsPoolFactoryImpl @Inject() (
+  appConfig: Config,
+  coordinatedShutdown: CoordinatedShutdown
+)(
+  implicit ec: ExecutionContext
+) extends GraalPoolFactory {
+
+  override def apply(
+    config: GraalPoolConfig,
+    extendEngine: Option[Engine#Builder => Unit],
+    extendContextBuilder: Option[(Context#Builder, Int) => Unit],
+    extendContext: Option[Context => Unit]
+  ): GraalScriptPool = {
+    val configFinal = config.copy(
+      poolSize = config.poolSize.orElse(
+        appConfig.optionalInt("graalvm.js.pool_size")
+      ),
+      resetAfterEachUse = config.resetAfterEachUse.orElse(
+        appConfig.optionalBoolean("graalvm.js.reset_after_each_use")
+      )
+    )
+
+    new GraalJsPool(configFinal, extendEngine, extendContextBuilder, extendContext, coordinatedShutdown)
+  }
+}
+
+final private class GraalJsPool(
+  config: GraalPoolConfig,
+  extendEngine: Option[Engine#Builder => Unit],
+  extendContextBuilder: Option[(Context#Builder, Int) => Unit],
+  extendContext: Option[Context => Unit],
   coordinatedShutdown: CoordinatedShutdown
 )(
   implicit ec: ExecutionContext
 ) extends GraalScriptPoolImpl(
-      language = "js",
-      poolSize = config.optionalInt("graalvm.js.pool_size"),
-      resetAfterEachUse =
-        config.optionalBoolean("graalvm.js.reset_after_each_use").getOrElse(true),
-      coordinatedShutdown
-    ) {
+  language = "js",
+  config,
+  extendEngine,
+  extendContextBuilder,
+  extendContext,
+  coordinatedShutdown
+) {
 
   // Common JavaScript globals to preserve during reset
   private val preservedGlobals: Seq[String] = Seq(
@@ -85,14 +115,18 @@ final private class GraalJsPool @Inject() (
   ): String = {
     val languageBindings = ctx.getBindings(language)
     bindings.foreach { case (k, v) => languageBindings.putMember(k, v) }
+
     //    val v = ctx.eval(language, code)
     val v = evalJsIsolatedAwait(ctx, code)
     if (v.isString) v.asString() else v.toString
   }
 
-  private def evalJsIsolatedAwait(ctx: Context, code: String): Value = {
+  private def evalJsIsolatedAwait(
+    ctx: Context,
+    code: String
+  ): Value = {
     // bind the code so JS can eval it
-    val bindings = ctx.getBindings("js")
+    val bindings = ctx.getBindings(language)
     bindings.putMember("__code", code)
 
     def await(p: Value): Value = {
@@ -136,5 +170,4 @@ final private class GraalJsPool @Inject() (
         ctx.eval(language, code)
     }
   }
-
 }
