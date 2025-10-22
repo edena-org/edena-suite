@@ -10,12 +10,13 @@ import javax.inject.Inject
 import ElasticBSONIDUtil._
 import com.sksamuel.elastic4s.requests.get.GetResponse
 import com.sksamuel.elastic4s.{ElasticClient, ElasticDsl}
-import com.sksamuel.elastic4s.requests.mappings.FieldDefinition
+import com.sksamuel.elastic4s.fields.ElasticField
 import com.sksamuel.elastic4s.requests.searches.{SearchHit, SearchResponse}
 import com.typesafe.config.Config
 import org.edena.core.util.ConfigImplicits._
 import org.edena.store.json.JsObjectIdentity
 import org.edena.store.{json => JsonUtil}
+import org.edena.store.elastic.ElasticFieldMappingExtra._
 import reactivemongo.api.bson.BSONObjectID
 
 private[elastic] final class ElasticJsonCrudStoreImpl @Inject()(
@@ -50,7 +51,7 @@ private[elastic] final class ElasticJsonCrudStoreImpl @Inject()(
   private val keywordIgnoreAboveCharCount = 30000
   private val textAnalyzerName = configuration.optionalString("elastic.text.analyzer")
 
-  override protected lazy val fieldDefs: Iterable[FieldDefinition] =
+  override protected lazy val fieldDefs: Iterable[ElasticField] =
     fieldNamesAndTypeWithId.map { case (fieldName, fieldTypeSpec) =>
       toElasticFieldType(fieldName, fieldTypeSpec)
     }
@@ -79,7 +80,7 @@ private[elastic] final class ElasticJsonCrudStoreImpl @Inject()(
   private def toElasticFieldType(
     fieldName: String,
     fieldTypeSpec: FieldTypeSpec
-  ): FieldDefinition =
+  ): ElasticField =
     fieldTypeSpec.fieldType match {
       case FieldTypeId.String =>
         if (textAnalyzerName.isDefined)

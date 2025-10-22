@@ -1,11 +1,11 @@
 package org.edena.store.elastic.caseclass
 
 import com.sksamuel.elastic4s.ElasticDsl
-import com.sksamuel.elastic4s.requests.mappings.FieldDefinition
+import com.sksamuel.elastic4s.fields.ElasticField
 import org.edena.store.elastic.{ElasticCrudStore, ElasticSetting}
 import org.edena.core.Identity
 import org.edena.core.field.FieldTypeId
-
+import org.edena.store.elastic.ElasticFieldMappingExtra._
 import scala.reflect.ClassTag
 import scala.reflect.runtime.universe.TypeTag
 
@@ -26,7 +26,7 @@ abstract class ElasticCaseClassCrudStore[E, ID](
 
   override protected def fieldDefs = fieldDefsAux(Set())
 
-  protected def fieldDefsAux(fieldNamesToExclude: Set[String]): Iterable[FieldDefinition] =
+  protected def fieldDefsAux(fieldNamesToExclude: Set[String]): Iterable[ElasticField] =
     namedFieldTypes
       .filter { case (fieldName, _) => !fieldNamesToExclude.contains(fieldName) }
       .map { case (fieldName, typeSpec) =>
@@ -43,6 +43,6 @@ abstract class ElasticCaseClassCrudStore[E, ID](
           case Null => shortField(fieldName)
         }
 
-        field store true // includeInAll(includeInAll)
-      }.toIterable
+        field store true
+      }
 }

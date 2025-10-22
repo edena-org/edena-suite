@@ -13,16 +13,13 @@ import akka.NotUsed
 import akka.actor.ActorSystem
 import akka.stream.Materializer
 import akka.stream.scaladsl.Source
-import com.sksamuel.elastic4s.fields.ObjectField
-import com.sksamuel.elastic4s.requests.TypesApi
+import com.sksamuel.elastic4s.fields.{ElasticField, ObjectField, NestedField}
 import com.sksamuel.elastic4s.requests.searches.SearchRequest
-import com.sksamuel.elastic4s.requests.searches.queries.term.{TermQuery, TermsQuery}
 import com.sksamuel.elastic4s.requests.searches.sort.{FieldSort, SortOrder}
 import com.sksamuel.elastic4s.{ElasticClient, Index, IndexAndType, Indexes, Response}
 import org.elasticsearch.client.ResponseException
 import com.sksamuel.elastic4s.requests.searches.{SearchHit, SearchResponse}
-import com.sksamuel.elastic4s.requests.searches.queries._
-import com.sksamuel.elastic4s.requests.mappings.{FieldDefinition, NestedField}
+import com.sksamuel.elastic4s.requests.searches.queries.Query
 import com.sksamuel.elastic4s.{ElasticDsl, HttpClient}
 import com.sksamuel.elastic4s.requests.common.{RefreshPolicy => ElasticRefreshPolicy}
 import org.edena.core.store.ValueMapAux.ValueMap
@@ -48,8 +45,7 @@ abstract class ElasticReadonlyStore[E, ID](
   val setting: ElasticSetting
 ) extends ReadonlyStore[E, ID]
   with ElasticSerializer[E]
-  with ElasticHandlers
-  with TypesApi {
+  with ElasticHandlers {
 
   protected val index = Index(indexName)
   protected val unboundLimit = Integer.MAX_VALUE
@@ -60,7 +56,7 @@ abstract class ElasticReadonlyStore[E, ID](
   protected def stringId(id: ID) = id.toString
 
   // override if needed to customize field definitions
-  protected def fieldDefs: Iterable[FieldDefinition] = Nil
+  protected def fieldDefs: Iterable[ElasticField] = Nil
 
   // Automatically derived from fieldDefs - finds all nested fields (not object fields)
   // Supports multi-level nesting: Set("addresses", "addresses.city")
@@ -69,7 +65,7 @@ abstract class ElasticReadonlyStore[E, ID](
   // Extract nested field names from field definitions by checking type
   // Distinguishes "nested" from "object" field mappings
   private def extractNestedFieldNames(
-    fields: Iterable[FieldDefinition],
+    fields: Iterable[ElasticField],
     parentPath: String = ""
   ): Set[String] = {
     fields.flatMap { field =>
@@ -81,13 +77,13 @@ abstract class ElasticReadonlyStore[E, ID](
           val currentFieldSet = Set(currentPath)
 
           // Recursively process nested sub-fields
-          val nestedFieldSet = extractNestedFieldNames(nestedField.fields, currentPath)
+          val nestedFieldSet = extractNestedFieldNames(nestedField.properties, currentPath)
 
           currentFieldSet ++ nestedFieldSet
 
         case objectField: ObjectField =>
           // This is an object field (not nested) - don't add to set, just recurse
-          extractNestedFieldNames(objectField.fields, currentPath)
+          extractNestedFieldNames(objectField.properties, currentPath)
 
         case _ =>
           // Primitive field type
@@ -400,48 +396,48 @@ abstract class ElasticReadonlyStore[E, ID](
 
     val qDef = criterion match {
       case c: EqualsCriterion[T] =>
-        TermQuery(fieldName, toDBValue(c.value))
+        termQuery(fieldName, toDBValue(c.value))
 
       case c: EqualsNullCriterion =>
-        BoolQuery().not(ExistsQuery(fieldName))
+        boolQuery().not(existsQuery(fieldName))
 
       case c: RegexEqualsCriterion =>
-        RegexQuery(fieldName, toDBValue(c.value).toString)
+        regexQuery(fieldName, toDBValue(c.value).toString)
 
       case c: RegexNotEqualsCriterion =>
-        BoolQuery().not(RegexQuery(fieldName, toDBValue(c.value).toString))
+        boolQuery().not(regexQuery(fieldName, toDBValue(c.value).toString))
 
       case c: NotEqualsCriterion[T] =>
-        BoolQuery().not(TermQuery(fieldName, toDBValue(c.value)))
+        boolQuery().not(termQuery(fieldName, toDBValue(c.value)))
 
       case c: NotEqualsNullCriterion =>
-        ExistsQuery(fieldName)
+        existsQuery(fieldName)
 
       case c: InCriterion[V] =>
-        TermsQuery(fieldName, c.value.map(value => toDBValue(value).toString))
+        termsQuery(fieldName, c.value.map(value => toDBValue(value).toString))
 
       case c: NotInCriterion[V] =>
-        BoolQuery().not(TermsQuery(fieldName, c.value.map(value => toDBValue(value).toString)))
+        boolQuery().not(termsQuery(fieldName, c.value.map(value => toDBValue(value).toString)))
 
       case c: GreaterCriterion[T] =>
-        RangeQuery(fieldName) gt toDBValue(c.value).toString
+        rangeQuery(fieldName) gt toDBValue(c.value).toString
 
       case c: GreaterEqualCriterion[T] =>
-        RangeQuery(fieldName) gte toDBValue(c.value).toString
+        rangeQuery(fieldName) gte toDBValue(c.value).toString
 
       case c: LessCriterion[T] =>
-        RangeQuery(fieldName) lt toDBValue(c.value).toString
+        rangeQuery(fieldName) lt toDBValue(c.value).toString
 
       case c: LessEqualCriterion[T] =>
-        RangeQuery(fieldName) lte toDBValue(c.value).toString
+        rangeQuery(fieldName) lte toDBValue(c.value).toString
     }
 
-    // Wrap in NestedQuery for each nested level (supports multi-level nesting)
+    // Wrap in nestedQuery for each nested level (supports multi-level nesting)
     // E.g., "addresses.city.name" with nested "addresses" and "addresses.city"
-    // becomes: NestedQuery("addresses", NestedQuery("addresses.city", qDef))
+    // becomes: nestedQuery("addresses", nestedQuery("addresses.city", qDef))
     val nestedPaths = getNestedPaths(fieldName)
     nestedPaths.foldRight(qDef) { (path, query) =>
-      NestedQuery(path, query)
+      nestedQuery(path, query)
     }
   }
 

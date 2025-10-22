@@ -5,7 +5,8 @@ import com.sksamuel.elastic4s.ElasticClient
 import java.util.UUID
 import javax.inject.Inject
 import org.edena.store.elastic.json.format.ElasticFormatCrudStore
-import org.edena.store.elastic.{ElasticCrudExtraStore, ElasticCrudStore, ElasticCrudStoreExtraImpl, ElasticSetting}
+import org.edena.store.elastic.{ElasticCrudExtraStore, ElasticCrudStoreExtraImpl, ElasticSetting}
+import org.edena.store.elastic.ElasticFieldMappingExtra._
 import Company.companyFormat
 
 private[company] class ElasticCompanyStore @Inject()(

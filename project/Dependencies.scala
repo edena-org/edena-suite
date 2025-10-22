@@ -20,7 +20,7 @@ object Dependencies {
     val jackson = "2.14.3"
 
     // ES
-    val elastic4s = "7.10.8" // Available version close to 7.10.6
+    val elastic4s = "7.17.2" // Stable release compatible with ES 7.17.x
 
     // MONGO
     // reactivemongo-akkastream uses akka-stream 2.5.23

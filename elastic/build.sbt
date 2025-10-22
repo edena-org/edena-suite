@@ -11,6 +11,7 @@ libraryDependencies ++= Seq(
   "com.sksamuel.elastic4s" %% "elastic4s-client-akka" % Versions.elastic4s,
   //  "com.sksamuel.elastic4s" %% "elastic4s-http" % Versions.elastic4s,
   "com.sksamuel.elastic4s" %% "elastic4s-http-streams" % Versions.elastic4s,
+  "com.sksamuel.exts" %% "exts" % "1.61.1", // Utilities library (Logging, StringOption, etc.)
 //  "javax.inject" % "javax.inject" % "1",
   "org.apache.commons" % "commons-lang3" % "3.5",
   "org.slf4j" % "slf4j-api" % "1.7.21",
