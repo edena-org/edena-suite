@@ -102,7 +102,7 @@ lazy val elastic = (project in file("elastic"))
   )
 
 lazy val elasticJson = (project in file("elastic-json"))
-  .dependsOn(storeJson, elastic)
+  .dependsOn(storeJson, elastic, elastic % "test->test")
   .aggregate(storeJson, elastic)
   .settings(
     aggregate in test := false,
@@ -129,6 +129,15 @@ lazy val ignite = (project in file("ignite"))
   )
 
 lazy val scripting = (project in file("scripting"))
+  .dependsOn(json)
+  .aggregate(json)
+  .settings(
+    aggregate in test := false,
+    aggregate in testOnly := false,
+    dependencyOverrides ++= jacksonLibs ++ playJsonLibs
+  )
+
+lazy val kafka = (project in file("kafka"))
   .dependsOn(json)
   .aggregate(json)
   .settings(
@@ -195,7 +204,7 @@ lazy val adaServer = (project in file("ada-server"))
 lazy val adaWeb = (project in file("ada-web"))
   .enablePlugins(PlayScala, SbtWeb)
   .dependsOn(play, adaServer, scripting)
-  .aggregate(play, adaServer, ws, elasticUtil, mlDl4j, scripting)
+  .aggregate(play, adaServer, ws, elasticUtil, mlDl4j, scripting, kafka)
   .settings(
     // define the extra artifact with classifier "web-assets"
     Assets / packageBin / artifact :=
