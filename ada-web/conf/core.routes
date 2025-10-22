@@ -354,6 +354,10 @@ POST        /htmlSnippets/:id                                                   
 POST        /htmlSnippets/:id/delete                                                org.edena.ada.web.controllers.HtmlSnippetController.delete(id: BSONObjectID)
 GET         /htmlSnippets/linksAsHtml                                               org.edena.ada.web.controllers.HtmlSnippetController.getHtmlLinks
 
+# Script Runner
+GET         /runScriptHome                                                          org.edena.ada.web.controllers.AppController.runScriptHome
+POST        /runScript                                                              org.edena.ada.web.controllers.AppController.runScript
+
 # Map static resources from the /public folder to the /assets URL path
 GET         /assets/*file                                                           org.edena.play.CustomDirAssets.versioned(path="/public", file)
 

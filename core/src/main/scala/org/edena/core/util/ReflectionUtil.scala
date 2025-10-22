@@ -13,6 +13,40 @@ import scala.reflect.runtime.{universe => ru}
   */
 object ReflectionUtil {
 
+  implicit class InfixOp(val typ: ru.Type) {
+
+    private val optionInnerType =
+      if (typ <:< typeOf[Option[_]])
+        Some(typ.typeArgs.head)
+      else
+        None
+
+    def optionalMatches(types: ru.Type*): Boolean =
+      types.exists(typ =:= _) ||
+        (optionInnerType.isDefined && types.exists(optionInnerType.get =:= _))
+
+    def optionalSubMatches(types: ru.Type*): Boolean =
+      types.exists(typ <:< _) ||
+        (optionInnerType.isDefined && types.exists(optionInnerType.get <:< _))
+
+    def matches(types: ru.Type*): Boolean =
+      types.exists(typ =:= _)
+
+    def subMatches(types: ru.Type*): Boolean =
+      types.exists(typ <:< _)
+
+    def isOption(): Boolean =
+      typ <:< typeOf[Option[_]]
+
+    def isCaseClass(): Boolean =
+      typ.members.exists(m => m.isMethod && m.asMethod.isCaseAccessor)
+
+    def getCaseClassFields(): Iterable[(String, ru.Type)] =
+      typ.decls.sorted.collect {
+        case m: MethodSymbol if m.isCaseAccessor => (shortName(m), m.returnType)
+      }
+  }
+
   private val defaultMirror = newMirror(getClass.getClassLoader)
 
   def newCurrentThreadMirror: Mirror = newMirror(currentThreadClassLoader)
@@ -77,9 +111,6 @@ object ReflectionUtil {
     }
   }
 
-  def isCaseClass(runType: ru.Type): Boolean =
-    runType.members.exists( m => m.isMethod && m.asMethod.isCaseAccessor )
-
   def shortName(symbol: Symbol): String = {
     val paramFullName = symbol.fullName
     paramFullName.substring(paramFullName.lastIndexOf('.') + 1, paramFullName.length)
@@ -132,6 +163,13 @@ object ReflectionUtil {
   def javaEnumOrdinalValues[E <: Enum[E]](clazz: Class[E]): Map[Int, E] = {
     val enumValues = clazz.getEnumConstants()
     enumValues.map( value => (value.ordinal, value)).toMap
+  }
+
+  def getEnumOrdinalValues(typ: Type, mirror: Mirror): Map[Long, String] = {
+    val enumValueType = unwrapIfOption(typ)
+    val enumConstruct = enum(enumValueType, mirror)
+
+    (0 until enumConstruct.maxId).map(ordinal => (ordinal.toLong, enumConstruct.apply(ordinal).toString)).toMap
   }
 
   def construct[T](typ: Type, values: Seq[Any]): T =
@@ -188,6 +226,16 @@ object ReflectionUtil {
       case x: Long => new jl.Long(x)
       case _ => throw new IllegalArgumentException(s"Don't know how to box $value of type ${value.getClass.getName}.")
     }
+
+  def getJavaEnumOrdinalValues[E <: Enum[E]](typ: Type, mirror: Mirror): Map[Long, String] = {
+    val enumType = unwrapIfOption(typ)
+    val clazz = ReflectionUtil.typeToClass(enumType, mirror).asInstanceOf[Class[E]]
+    val enumValues = ReflectionUtil.javaEnumOrdinalValues(clazz)
+    enumValues.map { case (ordinal, value) => (ordinal.toLong, value.toString) }
+  }
+
+  def unwrapIfOption(typ: Type) =
+    if (typ <:< typeOf[Option[_]]) typ.typeArgs.head else typ
 }
 
 object ReflectionTest extends App {

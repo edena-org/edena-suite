@@ -158,7 +158,7 @@ object GenericMapping {
       val typ = memberType.typeArgs.head
 
       // if it's an option type continue with its inner type (for a case class)
-      if (isCaseClass(typ)) {
+      if (typ.isCaseClass()) {
         val mapping = GenericMapping.applyCaseClass[Any](typ)
         optional(mapping).asInstanceOf[Mapping[Any]]
       } else {
@@ -167,12 +167,6 @@ object GenericMapping {
       }
     } else
       throw e
-
-  private implicit class Infix(val typ: Type) {
-    def matches(types: Type*) = types.exists(typ =:= _)
-
-    def subMatches(types: Type*) = types.exists(typ <:< _)
-  }
 
   private implicit val bsonObjectIdFormatter = BSONObjectIDStringFormatter
 
@@ -307,7 +301,7 @@ object GenericMapping {
         of(EitherSeqFormatter[Double])
 
       // case class
-      case t if isCaseClass(t) =>
+      case t if t.isCaseClass() =>
         applyCaseClassAux(t, mirror)
 
       // otherwise

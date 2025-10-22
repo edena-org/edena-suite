@@ -3,7 +3,7 @@ package org.edena.core.field
 import java.{util => ju}
 
 import org.edena.core.EdenaException
-import org.edena.core.util.ReflectionUtil
+import org.edena.core.util.ReflectionUtil._
 import org.edena.core.util.ReflectionUtil.newCurrentThreadMirror
 
 import scala.reflect.runtime.universe._
@@ -29,7 +29,7 @@ trait FieldHelper {
   ): Traversable[(String, FieldTypeSpec)] = {
 
     // collect member names and types
-    val memberNamesAndTypes = ReflectionUtil.getCaseClassMemberNamesAndTypes(typ).filter(x => !excludedFieldSet.contains(x._1))
+    val memberNamesAndTypes = getCaseClassMemberNamesAndTypes(typ).filter(x => !excludedFieldSet.contains(x._1))
 
     // create a new mirror using the current thread for reflection
     val currentMirror = newCurrentThreadMirror
@@ -59,40 +59,6 @@ trait FieldHelper {
     }.flatten
   }
 
-  private implicit class InfixOp(val typ: Type) {
-
-    private val optionInnerType =
-      if (typ <:< typeOf[Option[_]])
-        Some(typ.typeArgs.head)
-      else
-        None
-
-    def matches(types: Type*) =
-      types.exists(typ =:= _) ||
-        (optionInnerType.isDefined && types.exists(optionInnerType.get =:= _))
-
-    def subMatches(types: Type*) =
-      types.exists(typ <:< _) ||
-        (optionInnerType.isDefined && types.exists(optionInnerType.get <:< _))
-  }
-
-  private def getEnumOrdinalValues(typ: Type, mirror: Mirror): Map[Long, String] = {
-    val enumValueType = unwrapIfOption(typ)
-    val enum = ReflectionUtil.enum(enumValueType, mirror)
-
-    (0 until enum.maxId).map(ordinal => (ordinal.toLong, enum.apply(ordinal).toString)).toMap
-  }
-
-  private def getJavaEnumOrdinalValues[E <: Enum[E]](typ: Type, mirror: Mirror): Map[Long, String] = {
-    val enumType = unwrapIfOption(typ)
-    val clazz = ReflectionUtil.typeToClass(enumType, mirror).asInstanceOf[Class[E]]
-    val enumValues = ReflectionUtil.javaEnumOrdinalValues(clazz)
-    enumValues.map { case (ordinal, value) => (ordinal.toLong, value.toString) }
-  }
-
-  private def unwrapIfOption(typ: Type) =
-    if (typ <:< typeOf[Option[_]]) typ.typeArgs.head else typ
-
   @throws(classOf[EdenaException])
   private def toFieldTypeSpec(
     typ: Type,
@@ -102,19 +68,19 @@ trait FieldHelper {
   ): FieldTypeSpec =
     typ match {
       // double
-      case t if t matches (typeOf[Double], typeOf[Float], typeOf[BigDecimal], typeOf[BigInt]) =>
+      case t if t optionalMatches (typeOf[Double], typeOf[Float], typeOf[BigDecimal], typeOf[BigInt]) =>
         FieldTypeSpec(FieldTypeId.Double)
 
       // int
-      case t if t matches (typeOf[Int], typeOf[Long], typeOf[Byte]) =>
+      case t if t optionalMatches (typeOf[Int], typeOf[Long], typeOf[Byte]) =>
         FieldTypeSpec(FieldTypeId.Integer)
 
       // boolean
-      case t if t matches typeOf[Boolean] =>
+      case t if t optionalMatches typeOf[Boolean] =>
         FieldTypeSpec(FieldTypeId.Boolean)
 
       // enum
-      case t if t subMatches typeOf[Enumeration#Value] =>
+      case t if t optionalSubMatches typeOf[Enumeration#Value] =>
         if (treatEnumAsString)
           FieldTypeSpec(FieldTypeId.String)
         else {
@@ -124,7 +90,7 @@ trait FieldHelper {
         }
 
       // Java enum
-      case t if t subMatches typeOf[Enum[_]] =>
+      case t if t optionalSubMatches typeOf[Enum[_]] =>
         if (treatEnumAsString)
           FieldTypeSpec(FieldTypeId.String)
         else {
@@ -134,19 +100,19 @@ trait FieldHelper {
         }
 
       // string
-      case t if t matches (typeOf[String], typeOf[java.util.UUID]) =>
+      case t if t optionalMatches (typeOf[String], typeOf[java.util.UUID]) =>
         FieldTypeSpec(FieldTypeId.String)
 
       // date
-      case t if t matches (typeOf[ju.Date], typeOf[org.joda.time.DateTime]) =>
+      case t if t optionalMatches (typeOf[ju.Date], typeOf[org.joda.time.DateTime]) =>
         FieldTypeSpec(FieldTypeId.Date)
 
       // json
-      case t if t subMatches (jsonTypes.toList :_*) =>
+      case t if t optionalSubMatches (jsonTypes.toList :_*) =>
         FieldTypeSpec(FieldTypeId.Json)
 
       // array/seq
-      case t if t subMatches (typeOf[scala.collection.Seq[_]], typeOf[Set[_]]) =>
+      case t if t optionalSubMatches (typeOf[scala.collection.Seq[_]], typeOf[Set[_]]) =>
         val innerType = t.typeArgs.head
         try {
           toFieldTypeSpec(innerType, treatEnumAsString, mirror, jsonTypes).copy(isArray = true)
@@ -155,15 +121,15 @@ trait FieldHelper {
         }
 
       // map
-      case t if t subMatches (typeOf[Map[String, _]]) =>
+      case t if t optionalSubMatches (typeOf[Map[String, _]]) =>
         FieldTypeSpec(FieldTypeId.Json)
 
       // either value or seq int
-      case t if t matches (typeOf[Either[Option[Int], Seq[Int]]], typeOf[Either[Option[Long], Seq[Long]]], typeOf[Either[Option[Byte], Seq[Byte]]]) =>
+      case t if t optionalMatches (typeOf[Either[Option[Int], Seq[Int]]], typeOf[Either[Option[Long], Seq[Long]]], typeOf[Either[Option[Byte], Seq[Byte]]]) =>
         FieldTypeSpec(FieldTypeId.Integer, true)
 
       // either value or seq double
-      case t if t matches (typeOf[Either[Option[Double], Seq[Double]]], typeOf[Either[Option[Float], Seq[Float]]], typeOf[Either[Option[BigDecimal], Seq[BigDecimal]]]) =>
+      case t if t optionalMatches (typeOf[Either[Option[Double], Seq[Double]]], typeOf[Either[Option[Float], Seq[Float]]], typeOf[Either[Option[BigDecimal], Seq[BigDecimal]]]) =>
         FieldTypeSpec(FieldTypeId.Double, true)
 
       // otherwise

@@ -478,7 +478,7 @@ class RunnableController @Inject() (
         for {
           user <- currentUser()
         } yield {
-          val isAdmin = user.map(_.isAdmin).getOrElse(false)
+          val isAdmin = user.exists(_.isAdmin)
           val errorRedirect = if (isAdmin) goHome else appHomeRedirect
 
           try {

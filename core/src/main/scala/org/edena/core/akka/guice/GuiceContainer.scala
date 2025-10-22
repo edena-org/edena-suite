@@ -4,10 +4,12 @@ import akka.actor.ActorSystem
 import com.google.inject.{Guice, Injector, Module}
 import com.typesafe.config.Config
 import net.codingwell.scalaguice.InjectorExtensions._
-import scala.concurrent.duration._
 
+import java.lang.annotation.Annotation
+import scala.concurrent.duration._
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
+import scala.reflect.ClassTag
 
 trait GuiceContainer {
 
@@ -18,6 +20,8 @@ trait GuiceContainer {
   protected lazy val config = instance[Config]
 
   protected def instance[T: Manifest] = injector.instance[T]
+
+  protected def instance[T: Manifest, A <: Annotation : ClassTag] = injector.instance[T, A]
 
   protected def result[T](future: Future[T]) =
     Await.result(future, 100.minutes)
