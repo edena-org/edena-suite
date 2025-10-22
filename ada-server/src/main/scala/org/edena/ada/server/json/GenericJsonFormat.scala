@@ -36,12 +36,6 @@ object GenericJson {
   ): Format[Any] =
     genericFormat(typ, mirror, explicitFormats)
 
-  private implicit class Infix(val typ: Type) {
-    def matches(types: Type*) = types.exists(typ =:= _)
-
-    def subMatches(types: Type*) = types.exists(typ <:< _)
-  }
-
   @throws(classOf[AdaException])
   private def genericFormat(
     typ: Type,
@@ -50,56 +44,56 @@ object GenericJson {
   ): Format[Any] = {
     val format = typ match {
       // float
-      case t if t matches typeOf[Float] =>
+      case t if t optionalMatches typeOf[Float] =>
         implicitly[Format[Float]]
 
       // double
-      case t if t matches typeOf[Double] =>
+      case t if t optionalMatches typeOf[Double] =>
         implicitly[Format[Double]]
 
       // bigdecimal
-      case t if t matches typeOf[BigDecimal] =>
+      case t if t optionalMatches typeOf[BigDecimal] =>
         implicitly[Format[BigDecimal]]
 
       // short
-      case t if t matches typeOf[Short] =>
+      case t if t optionalMatches typeOf[Short] =>
         implicitly[Format[Short]]
 
       // byte
-      case t if t matches typeOf[Byte] =>
+      case t if t optionalMatches typeOf[Byte] =>
         implicitly[Format[Byte]]
 
       // int
-      case t if t matches typeOf[Int] =>
+      case t if t optionalMatches typeOf[Int] =>
         implicitly[Format[Int]]
 
       // long
-      case t if t matches typeOf[Long] =>
+      case t if t optionalMatches typeOf[Long] =>
         implicitly[Format[Long]]
 
       // boolean
-      case t if t matches typeOf[Boolean] =>
+      case t if t optionalMatches typeOf[Boolean] =>
         implicitly[Format[Boolean]]
 
       // string
-      case t if t matches typeOf[String] =>
+      case t if t optionalMatches typeOf[String] =>
         implicitly[Format[String]]
 
       // date
-      case t if t matches typeOf[ju.Date] =>
+      case t if t optionalMatches typeOf[ju.Date] =>
         implicitly[Format[ju.Date]]
 
       // BSON Object Id
-      case t if t matches typeOf[BSONObjectID] =>
+      case t if t optionalMatches typeOf[BSONObjectID] =>
         BSONObjectIDFormat
 
       // enum
-      case t if t subMatches typeOf[Enumeration#Value] =>
+      case t if t optionalSubMatches typeOf[Enumeration#Value] =>
         val enum = ReflectionUtil.enum(t, mirror)
         EnumFormat(enum)
 
       // Java enum
-      case t if t subMatches typeOf[Enum[_]] =>
+      case t if t optionalSubMatches typeOf[Enum[_]] =>
         val clazz = typeToClass(t, mirror)
         JavaEnumFormat.applyClassUnsafe(clazz)
 
@@ -110,7 +104,7 @@ object GenericJson {
 //        new OptionFormat[Any]
 
       // seq
-      case t if t subMatches typeOf[scala.collection.Seq[_]] =>
+      case t if t optionalSubMatches typeOf[scala.collection.Seq[_]] =>
         val typeArgs = t.typeArgs
         val innerFormat = genericFormat(typeArgs(0), mirror)
         val writesSeq = Writes.seq[Any](innerFormat)
@@ -118,7 +112,7 @@ object GenericJson {
         Format.GenericFormat(readsSeq, writesSeq)
 
       // set
-      case t if t subMatches typeOf[Set[_]] =>
+      case t if t optionalSubMatches typeOf[Set[_]] =>
         val typeArgs = t.typeArgs
         val innerFormat = genericFormat(typeArgs(0), mirror)
         val writesSeq = Writes.set[Any](innerFormat)
@@ -126,7 +120,7 @@ object GenericJson {
         Format.GenericFormat(readsSeq, writesSeq)
 
       // list
-      case t if t subMatches typeOf[List[_]] =>
+      case t if t optionalSubMatches typeOf[List[_]] =>
         val typeArgs = t.typeArgs
         val innerFormat = genericFormat(typeArgs(0), mirror)
         val writesSeq = Writes.list[Any](innerFormat)
@@ -134,7 +128,7 @@ object GenericJson {
         Format.GenericFormat(readsSeq, writesSeq)
 
       // Iterable
-      case t if t subMatches typeOf[Iterable[_]] =>
+      case t if t optionalSubMatches typeOf[Iterable[_]] =>
         val typeArgs = t.typeArgs
         implicit val innerFormat = genericFormat(typeArgs(0), mirror)
         val writesSeq = Writes.iterableWrites[Any, Iterable]
@@ -142,14 +136,14 @@ object GenericJson {
         Format.GenericFormat(readsSeq, writesSeq)
 
       // tuple2
-      case t if t subMatches typeOf[Tuple2[_, _]] =>
+      case t if t optionalSubMatches typeOf[Tuple2[_, _]] =>
         val typeArgs = t.typeArgs
         val formatA = genericFormat(typeArgs(0), mirror)
         val formatB = genericFormat(typeArgs(1), mirror)
         TupleFormat(formatA, formatB)
 
       // tuple3
-      case t if t subMatches typeOf[Tuple3[_, _, _]] =>
+      case t if t optionalSubMatches typeOf[Tuple3[_, _, _]] =>
         val typeArgs = t.typeArgs
         val formatA = genericFormat(typeArgs(0), mirror)
         val formatB = genericFormat(typeArgs(1), mirror)
@@ -157,14 +151,14 @@ object GenericJson {
         TupleFormat(formatA, formatB, formatC)
 
       // either
-      case t if t subMatches typeOf[Either[_, _]] =>
+      case t if t optionalSubMatches typeOf[Either[_, _]] =>
         val typeArgs = t.typeArgs
         val formatA = genericFormat(typeArgs(0), mirror)
         val formatB = genericFormat(typeArgs(1), mirror)
         EitherFormat(formatA, formatB)
 
       // case class
-      case x if isCaseClass(x) =>
+      case x if x.isCaseClass() =>
         caseClassFormat(typ, mirror, explicitFormats)
 
       // otherwise
