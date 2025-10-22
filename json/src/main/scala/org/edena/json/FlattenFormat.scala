@@ -1,7 +1,7 @@
 package org.edena.json
 
 import org.edena.core.util.GroupMapList
-import org.edena.core.util.ReflectionUtil.{getCaseClassMemberNamesAndTypes, isCaseClass}
+import org.edena.core.util.ReflectionUtil._
 import play.api.libs.json.{Format, JsNull, JsObject, JsResult, JsValue, Json}
 
 import java.util.UUID
@@ -57,7 +57,7 @@ class FlattenFormat[T: TypeTag](
     val nestedFieldInfos = fieldNameTypeAndIsOptionInfos.flatMap { case (_, typ, isOption) =>
       val actualType = if (isOption) typ.typeArgs.head else typ
 
-      if (isCaseClass(actualType)) collectCaseClassFieldInfoAux(actualType) else Nil
+      if (actualType.isCaseClass()) collectCaseClassFieldInfoAux(actualType) else Nil
     }
 
     Seq((typ, fieldNameTypeAndIsOptionInfos)) ++ nestedFieldInfos

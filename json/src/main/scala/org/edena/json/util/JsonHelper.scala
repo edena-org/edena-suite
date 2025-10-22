@@ -1,6 +1,6 @@
 package org.edena.json.util
 
-import org.edena.core.util.ReflectionUtil.{getCaseClassMemberNamesAndTypes, isCaseClass}
+import org.edena.core.util.ReflectionUtil._
 import play.api.libs.json.{JsArray, JsBoolean, JsDefined, JsNull, JsNumber, JsObject, JsReadable, JsString, JsUndefined, JsValue, Json}
 
 import java.{util => ju}
@@ -123,7 +123,7 @@ trait JsonHelper {
         val isOption = typ <:< optionType
         val actualType = if (isOption) typ.typeArgs.head else typ
 
-        val jsValue = if (isCaseClass(actualType)) {
+        val jsValue = if (actualType.isCaseClass()) {
           val prefix = fieldName + delimiter
           val innerFields = fields.filter { case (jsFieldName, _) => jsFieldName.startsWith(prefix) }
           val innerFieldsStripped = innerFields.map { case (jsFieldName, value) => (jsFieldName.stripPrefix(prefix), value) }
