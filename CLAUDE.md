@@ -29,7 +29,7 @@ Edena Suite is a comprehensive data discovery and analytics platform built with 
 - **Play Framework**: 2.9.6
 - **Apache Spark**: 3.5.4
 - **MongoDB**: ReactiveMongo 1.1.0-RC12
-- **Elasticsearch**: Elastic4S 7.10.8
+- **Elasticsearch**: Elastic4S 7.17.2 (with backward compatibility helpers)
 - **Apache Ignite**: 2.14.0
 - **GraalVM**: For polyglot scripting (JavaScript, Python)
 - **Akka**: 2.6.21
