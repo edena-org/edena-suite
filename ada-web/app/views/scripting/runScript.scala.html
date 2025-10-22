@@ -1,0 +1,21 @@
+@import views.html.elements._
+@import org.edena.play.controllers.WebContext
+@import org.edena.play.controllers.WebContext._
+@import views.html.layout.main
+@import views.html.helper.CSRF
+@import views.html.scripting.runScriptJs
+@import views.html.scripting.runScriptWidget
+
+@(mode: String, generateCodeWithLLMJs: Option[Html] = None)(implicit webContext: WebContext)
+
+@main(
+    s"Script Runner ($mode)",
+    bottomResources = Some(runScriptJs(generateCodeWithLLMJs))
+) {
+    <div class="page-header">
+        <h1>Script Runner (@mode)</h1>
+        <p class="lead">The era of polygot programming is here</p>
+    </div>
+
+    @runScriptWidget(showAIHelp = generateCodeWithLLMJs.isDefined)
+}

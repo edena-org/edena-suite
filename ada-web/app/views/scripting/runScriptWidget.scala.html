@@ -1,0 +1,100 @@
+@import views.html.elements._
+@import org.edena.play.controllers.WebContext
+@import org.edena.play.controllers.WebContext._
+@import views.html.layout.main
+@import views.html.helper.CSRF
+@import org.edena.play.routes.CustomDirAssets
+@import org.edena.ada.web.controllers.routes
+@import views.html.scripting.runScriptJs
+
+@(showAIHelp: Boolean = false)(implicit webContext: WebContext)
+
+<div class="row">
+    <div id="scriptInputContainer">
+        @CSRF.formField
+        <fieldset>
+
+            @labelValue("language", "Language", labelGridWidth = 3) {
+                <div style="display: flex;
+                    align-items: center;
+                    justify-content: space-between;">
+                    <div style="display: flex;
+                        align-items: center;
+                        gap: 15px;">
+                        <select id="language" name="language" class="form-control" style="width: auto;">
+                            <option value="python" selected>Python</option>
+                            <option value="js">JavaScript</option>
+                        </select>
+                        <label style="margin: 0;
+                            display: flex;
+                            align-items: center;
+                            gap: 5px;">
+                            <input type="checkbox" id="themeToggle" style="margin: 0;">
+                            <span>Dark Theme</span>
+                        </label>
+                    </div>
+                    <div style="display: flex;
+                        align-items: center;
+                        gap: 10px;">
+                        @if(showAIHelp) {
+                            <button type="button" class="btn btn-sm" id="aiHelpBtn" style="font-size: 18px;
+                                background-color: rgba(0, 0, 0, 0.05);
+                                border: 1px solid rgba(0, 0, 0, 0.1);
+                                color: #666;">🤖 AI Help</button>
+                        }
+                        <input type="submit" value="Run (Ctrl-Enter)" class="btn btn-primary btn-lg" id="ajaxCallUpload" style="font-size: 16px;
+                            padding: 10px 20px;">
+                    </div>
+                </div>
+            }
+
+            @labelValue("code", "Code", labelGridWidth = 3) {
+                <textarea id="code" name="code" class="form-control" style="display: none;"></textarea>
+            }
+
+            @labelValue("inputVariables", "Input Variables", labelGridWidth = 3) {
+                <div id="variableContainer">
+                    <div class="variable-row" data-row="0">
+                        <div style="display: flex;
+                            align-items: center;
+                            gap: 10px;
+                            margin-bottom: 10px;">
+                            <input name="inputVariable[]" type="text" class="form-control variable-name" placeholder="e.g., myVariable" style="flex: 1;">
+                            <span style="font-weight: bold;">→</span>
+                            <textarea name="inputValue[]" class="form-control variable-value" placeholder="e.g., Hello World" rows="4" style="flex: 1; max-width: 100%; resize: vertical;"></textarea>
+                            <button type="button" class="btn btn-sm btn-danger remove-variable" style="padding: 5px 8px;" disabled>
+                                🗑️
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <button type="button" id="addVariable" class="btn btn-sm btn-success" style="margin-top: 5px;">
+                    ➕ Add Variable
+                </button>
+            }
+        </fieldset>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-12">
+        <hr/>
+    </div>
+</div>
+
+<div class="row" id="outputDiv">
+</div>
+
+    <!-- AI Prompt Modal -->
+<div id="aiPromptModal" class="ai-prompt-modal">
+    <div class="ai-prompt-content">
+        <h4>AI Code Assistant</h4>
+        <p>Enter your prompt below:</p>
+        <textarea id="aiPromptTextarea" class="ai-prompt-textarea" placeholder="e.g., Create a function to sort an array..."></textarea>
+        <div style="text-align: right;
+            margin-top: 10px;">
+            <button id="aiPromptCancel" class="btn btn-secondary" style="margin-right: 10px;">Cancel</button>
+            <button id="aiPromptExecute" class="btn btn-primary">Generate (Ctrl+Enter)</button>
+        </div>
+    </div>
+</div>

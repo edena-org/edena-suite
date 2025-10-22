@@ -1,0 +1,540 @@
+@import views.html.elements._
+@import org.edena.play.controllers.WebContext
+@import org.edena.play.controllers.WebContext._
+@import views.html.layout.main
+@import views.html.helper.CSRF
+@import org.edena.play.routes.CustomDirAssets
+@import org.edena.ada.web.controllers.routes
+
+@(generateCodeWithLLMJs: Option[Html] = None)(implicit webContext: WebContext)
+
+
+<!-- Ace Editor local files v1.32.6 -->
+<script type="text/javascript" src="@CustomDirAssets.versioned("javascripts/ace/ace-1.32.6.js")"></script>
+<script type="text/javascript" src="@CustomDirAssets.versioned("javascripts/ace/ext-language_tools-1.32.6.js")"></script>
+<script type="text/javascript" src="@CustomDirAssets.versioned("javascripts/ace/mode-python-1.32.6.js")"></script>
+<script type="text/javascript" src="@CustomDirAssets.versioned("javascripts/ace/mode-javascript-1.32.6.js")"></script>
+<script type="text/javascript" src="@CustomDirAssets.versioned("javascripts/ace/theme-monokai-1.32.6.js")"></script>
+<script type="text/javascript" src="@CustomDirAssets.versioned("javascripts/ace/theme-github-1.32.6.js")"></script>
+
+<style>
+        #ace-editor {
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            height: 300px;
+            font-size: 14px;
+        }
+
+        /* Make labels larger - only within scriptInputContainer */
+        #scriptInputContainer .control-label {
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        /* Make lead text smaller */
+        .lead {
+            font-size: 14px;
+        }
+
+        /* AI Prompt Modal */
+        .ai-prompt-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+        }
+
+        .ai-prompt-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            width: 500px;
+            max-width: 90%;
+        }
+
+        .ai-prompt-textarea {
+            width: 100%;
+            height: 120px;
+            margin: 10px 0;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-family: monospace;
+            resize: vertical;
+        }
+
+        /* AI Help Tooltip */
+        .ai-help-tooltip {
+            display: none;
+            position: absolute;
+            background: #333;
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 14px;
+            z-index: 1000;
+            max-width: 350px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .ai-help-tooltip::before {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            border: 5px solid transparent;
+            border-top-color: #333;
+        }
+</style>
+
+<script type="text/javascript">
+        let editor;
+
+        $(document).ready(function () {
+            const textarea = document.getElementById("code");
+
+            if (textarea) {
+                // Hide the original textarea
+                textarea.style.display = "none";
+
+                // Create a div for Ace Editor
+                const editorDiv = document.createElement("div");
+                editorDiv.id = "ace-editor";
+                textarea.parentNode.insertBefore(editorDiv, textarea.nextSibling);
+
+                // Initialize Ace Editor
+                editor = ace.edit("ace-editor");
+                editor.setTheme("ace/theme/github");
+//                editor.setTheme("ace/theme/monokai");
+
+                editor.session.setMode("ace/mode/python"); // Default to Python
+
+                // Enable autocompletion and suggestions
+                editor.setOptions({
+                    fontSize: "14px",
+                    showPrintMargin: false,
+                    tabSize: 4,
+                    useSoftTabs: true,
+                    enableBasicAutocompletion: true,
+                    enableLiveAutocompletion: true,
+                    enableSnippets: true,
+                    showLineNumbers: true,
+                    wrap: true
+                });
+
+                // --- GLOBAL INTERCEPTOR FOR ACCEPTING A COMPLETION ---
+                const Autocomplete = ace.require("ace/autocomplete").Autocomplete;
+                const Range = ace.require("ace/range").Range;
+                const origInsertMatch = Autocomplete.prototype.insertMatch;
+
+                editor.setValue(textarea.value || "# You can start typing Python or JavaScript here…\n", -1);
+
+                // Sync editor content with textarea
+                editor.session.on('change', function () {
+                    textarea.value = editor.getValue();
+                });
+
+                // Update mode based on language selection
+                $("#language").change(function () {
+                    const language = $(this).val();
+                    if (language === "python") {
+                        editor.session.setMode("ace/mode/python");
+                    } else if (language === "js") {
+                        editor.session.setMode("ace/mode/javascript");
+                    }
+                });
+
+                // Theme toggle functionality
+                $("#themeToggle").change(function () {
+                    const isDark = $(this).is(':checked');
+                    if (isDark) {
+                        editor.setTheme("ace/theme/monokai");
+                    } else {
+                        editor.setTheme("ace/theme/github");
+                    }
+                });
+
+                // Add Ctrl+Enter keyboard shortcut
+                editor.commands.addCommand({
+                    name: 'executeScript',
+                    bindKey: {win: 'Ctrl-Enter', mac: 'Command-Enter'},
+                    exec: function (editor) {
+                        $("#ajaxCallUpload").click();
+                    }
+                });
+
+                // Helper: call your backend (replace URL/headers to match your stack)
+                function callLLM({prompt, code, language}) {
+
+                    showMessageBottom(`Generating code with AI. Wait a sec...`);
+
+                    return new Promise((resolve, reject) => {
+                        @generateCodeWithLLMJs.getOrElse(Html("reject('Error: LLM integration not configured');"))
+                    });
+                }
+
+                const aiCompleter = {
+                    id: "ai-helper",
+
+                    getCompletions(editor, session, pos, prefix, callback) {
+                        const line = session.getLine(pos.row);
+                        const m = line.match(/^\s*(?:\/\/|#)\s*ai:\s*(.*)$/i);
+                        if (!m) return callback(null, []);
+
+                        // IMPORTANT: item.completer = aiCompleter
+                        callback(null, [{
+                            caption: "Generate with AI",
+                            value: "",                 // will be ignored by our interceptor
+                            meta: "LLM",
+                            score: 1e9,
+                            completer: aiCompleter     // <- lets us recognize our own item later
+                        }]);
+                    }
+                };
+                @if(generateCodeWithLLMJs.isDefined) {
+                    const langTools = ace.require("ace/ext/language_tools");
+                    langTools.addCompleter(aiCompleter);
+                }
+
+                Autocomplete.prototype.insertMatch = function (data, options) {
+                    const item = resolveSelectedItem(this, data);
+
+                    // If we can't resolve, fall back to default behavior
+                    if (!item) return origInsertMatch.apply(this, arguments);
+
+                    const isOurItem = item.completer && item.completer.id === "ai-helper";
+                    if (!isOurItem) {
+                        return origInsertMatch.apply(this, arguments);
+                    }
+
+                    // Handle OUR item: no default insertion
+                    const ed = this.editor;
+                    const session = ed.session;
+                    this.detach(); // close popup immediately
+
+                    (async () => {
+                        try {
+                            const row = ed.getCursorPosition().row;
+                            const line = session.getLine(row);
+                            const m = line.match(/^\s*(?:\/\/|#)\s*ai:\s*(.*)$/i);
+                            const prompt = (m && m[1] || "").trim();
+
+                            // Optional context
+                            const ctxRange = new Range(Math.max(0, row - 50), 0,
+                                    Math.min(session.getLength() - 1, row + 50), 1e9);
+                            const surrounding = session.getTextRange(ctxRange);
+                            const language =
+                                    (session.$mode && session.$mode.$id && session.$mode.$id.split("/").pop()) || "text";
+
+                            const generated = await callLLM({prompt, code: surrounding, language});
+
+                            // Replace the entire "// ai: ..." line
+                            session.replace(new Range(row, 0, row, line.length), generated);
+                            ed.clearSelection();
+                        } catch (e) {
+                            console.error(e);
+                            const row = ed.getCursorPosition().row;
+                            session.insert({row: row + 1, column: 0}, `// AI error: ${e.message}\n`);
+                        }
+                    })();
+
+                    // We handled it
+                    return;
+                };
+
+                function resolveSelectedItem(ac, maybeData) {
+                    if (maybeData) return maybeData; // happy path
+
+                    try {
+                        // Most builds: use popup.getData(row)
+                        if (ac.popup && typeof ac.popup.getData === "function") {
+                            const row = ac.popup.getRow();
+                            const item = ac.popup.getData(row);
+                            if (item) return item;
+                        }
+                        // Fallbacks across ace builds:
+                        const c = ac.completions;
+                        if (c) {
+                            const idx = ac.popup && typeof ac.popup.getRow === "function" ? ac.popup.getRow() : 0;
+                            if (Array.isArray(c.filtered) && c.filtered.length) return c.filtered[idx];
+                            if (Array.isArray(c.all) && c.all.length) return c.all[idx];
+                            if (Array.isArray(c.completions) && c.completions.length) return c.completions[idx];
+                        }
+                    } catch (e) {
+                        // swallow and fall through
+                    }
+                    return null;
+                }
+
+                // Strongly recommended so Ace doesn't auto-accept the only suggestion
+                if (editor.completer) editor.completer.setOptions({autoInsert: false});
+
+                // AI Prompt Modal functions
+                function showAIPromptModal(defaultPrompt = "", selectedCode = "") {
+                    $("#aiPromptTextarea").attr("placeholder", "e.g., " + defaultPrompt);
+                    $("#aiPromptTextarea").val("");
+                    $("#aiPromptModal").data('selectedCode', selectedCode);
+                    $("#aiPromptModal").show();
+                    $("#aiPromptTextarea").focus();
+                }
+
+                function hideAIPromptModal() {
+                    $("#aiPromptModal").hide();
+                }
+
+                async function executeAIPrompt() {
+                    const prompt = $("#aiPromptTextarea").val().trim();
+                    const selectedCode = $("#aiPromptModal").data('selectedCode') || "";
+
+                    if (!prompt) {
+                        showError("Please enter a prompt");
+                        return;
+                    }
+
+                    hideAIPromptModal();
+
+                    try {
+                        const generated = await callLLM({
+                            prompt,
+                            code: selectedCode,
+                            language: editor.session.$modeId?.split("/").pop() || "text"
+                        });
+
+                        if (selectedCode) {
+                            // Replace selected code
+                            editor.insert(generated);
+                        } else {
+                            // Insert at current cursor position
+                            const cursor = editor.getCursorPosition();
+                            editor.session.insert({row: cursor.row + 1, column: 0}, generated + "\n");
+                        }
+                    } catch (e) {
+                        console.error(e);
+                        const cursor = editor.getCursorPosition();
+                        editor.session.insert({row: cursor.row + 1, column: 0}, `// AI error: ${e.message}\n`);
+                    }
+                }
+
+                @if(generateCodeWithLLMJs.isDefined) {
+                    // 3) Keyboard command: show AI prompt modal
+                    editor.commands.addCommand({
+                        name: "invoke-ai-prompt-modal",
+                        bindKey: {win: "Ctrl-Shift-G", mac: "Command-Shift-G"},
+                        exec: function (editor) {
+                            const sel = editor.getSelectedText();
+                            const hasSel = sel && sel.length > 0;
+
+                            let defaultPrompt = "";
+                            if (hasSel) {
+                                defaultPrompt = "Improve this code";
+                            } else {
+                                defaultPrompt = "Generate code";
+                            }
+
+                            showAIPromptModal(defaultPrompt, hasSel ? sel : "");
+                        }
+                    });
+                }
+
+                // Modal event handlers
+                $(document).on('click', '#aiPromptExecute', executeAIPrompt);
+                $(document).on('click', '#aiPromptCancel', hideAIPromptModal);
+                $(document).on('click', '.ai-prompt-modal', function (e) {
+                    if (e.target === this) hideAIPromptModal();
+                });
+
+                // Enter key in textarea executes, Escape cancels
+                $(document).on('keydown', '#aiPromptTextarea', function (e) {
+                    if (e.key === 'Enter' && e.ctrlKey) {
+                        executeAIPrompt();
+                    } else if (e.key === 'Escape') {
+                        hideAIPromptModal();
+                    }
+                });
+
+                // AI Help tooltip functionality
+                let helpTooltip = null;
+
+                $("#aiHelpBtn").hover(
+                        function () {
+                            // Create tooltip
+                            helpTooltip = $(`
+                            <div class="ai-help-tooltip">
+                                <strong>🧠 AI Code Assistant Help</strong><br><br>
+                                <strong>✨ Auto-completion:</strong><br>
+                                • Type <code># ai: your prompt</code> (Python)<br>
+                                • Type <code>// ai: your prompt</code> (JavaScript)<br>
+                                • Press <code>Ctrl+Space</code> → Select "Generate with AI"<br><br>
+                                <strong>🔥 Quick AI Modal:</strong><br>
+                                • <strong>With selection:</strong> <code>Ctrl+Shift+G</code> to improve code<br>
+                                • <strong>No selection:</strong> <code>Ctrl+Shift+G</code> to generate new code<br><br>
+                                <strong>🎨 Theme:</strong> Toggle dark/light theme above
+                            </div>
+                        `);
+
+                            const btn = $(this);
+                            const offset = btn.offset();
+
+                            helpTooltip.css({
+                                position: 'absolute',
+                                top: offset.top - helpTooltip.outerHeight() - 15,
+                                left: offset.left - (helpTooltip.outerWidth() / 2) + (btn.outerWidth() / 2),
+                                display: 'block'
+                            });
+
+                            $('body').append(helpTooltip);
+                        },
+                        function () {
+                            // Remove tooltip
+                            if (helpTooltip) {
+                                helpTooltip.remove();
+                                helpTooltip = null;
+                            }
+                        }
+                );
+            }
+
+            $("#ajaxCallUpload").click(function (e) {
+                e.preventDefault();
+
+                // Get code from Ace editor
+                // const code = editor ? editor.getValue() : $("#code").val();
+                const language = $("#language").val();
+                const code = $("#code").val()
+
+                // Manually collect form data without form element
+                const formData = new FormData();
+
+                // Add basic fields
+                formData.append('language', $("#scriptInputContainer #language").val());
+                formData.append('code', $("#scriptInputContainer #code").val());
+
+                // Add CSRF token
+                const csrfToken = $('#scriptInputContainer input[name="csrfToken"]').val();
+                if (csrfToken) {
+                    formData.append('csrfToken', csrfToken);
+                }
+
+                // Collect all variable inputs
+                $('#scriptInputContainer input[name="inputVariable[]"]').each(function(index) {
+                    const varName = $(this).val();
+                    const varValue = $('#scriptInputContainer textarea[name="inputValue[]"]').eq(index).val() || '';
+                    formData.append('inputVariable[]', varName);
+                    formData.append('inputValue[]', varValue);
+                });
+
+                e.preventDefault();
+
+                if (!code || code.trim() === "") {
+                    showError("Please enter some code to execute.");
+                    hideMessages()
+                    return;
+                }
+
+                showMessageBottom(`Executing the ${language} script. Wait a sec...`)
+                hideErrors()
+
+                $.ajax({
+                    type: "POST",
+                    url: '@routes.AppController.runScript.url',
+                    headers: {'IsAjax': 'true'},
+                    processData: false,
+                    contentType: false,
+                    data: formData,
+                    success: function (data) {
+                        $("#outputDiv").html("");
+                        if (data.success) {
+                            showMessageBottom("Result:", data.result)
+                        } else {
+                            showErrorBottom(data.error)
+                        }
+                    },
+                    error: function (error) {
+                        hideMessages()
+                        showErrorResponse(error);
+                    }
+                });
+            });
+        });
+
+        // Variable input management
+        let variableRowCount = 1;
+
+        $(document).ready(function () {
+            // Add variable row
+            $("#addVariable").click(function () {
+                const newRow = $(`
+                    <div class="variable-row" data-row="${variableRowCount}">
+                        <div style="display: flex;
+                            align-items: center;
+                            gap: 10px;
+                            margin-bottom: 10px;">
+                            <input name="inputVariable[]" type="text" class="form-control variable-name" placeholder="e.g., myVariable" style="flex: 1;">
+                            <span style="font-weight: bold;">→</span>
+                            <textarea name="inputValue[]" class="form-control variable-value" placeholder="e.g., Hello World" rows="4" style="flex: 1; max-width: 100%; resize: vertical;"></textarea>
+                            <button type="button" class="btn btn-sm btn-danger remove-variable" style="padding: 5px 8px;">
+                                🗑️
+                            </button>
+                        </div>
+                    </div>
+                `);
+
+                $("#variableContainer").append(newRow);
+                variableRowCount++;
+                updateRemoveButtonStates();
+            });
+
+            // Remove variable row
+            $(document).on('click', '.remove-variable', function () {
+                const rowCount = $('.variable-row').length;
+                if (rowCount > 1) {
+                    $(this).closest('.variable-row').remove();
+                    updateRemoveButtonStates();
+                }
+            });
+
+            function updateRemoveButtonStates() {
+                const rows = $('.variable-row');
+                const rowCount = rows.length;
+
+                // Disable remove button if only one row exists
+                if (rowCount === 1) {
+                    rows.find('.remove-variable').prop('disabled', true);
+                } else {
+                    rows.find('.remove-variable').prop('disabled', false);
+                }
+            }
+
+            // Add Ctrl+Enter support for variable input fields
+            $(document).on('keydown', '#scriptInputContainer input[name="inputVariable[]"], #scriptInputContainer textarea[name="inputValue[]"]', function(e) {
+                if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                    e.preventDefault();
+                    $("#ajaxCallUpload").click();
+                }
+            });
+        });
+
+        function showMessageBottom(heading, message) {
+            const messageBlock = $('<div class="alert alert-dismissible alert-success" role="alert">');
+            messageBlock.append('<h5>' + heading + '</h5>');
+            if (message)
+                messageBlock.append('<pre>' + message + '</pre>');
+            $("#outputDiv").html(messageBlock);
+        }
+
+        function showErrorBottom(error) {
+            const errorBlock = $('<div class="alert alert-dismissible alert-danger" role="alert">');
+            errorBlock.append('<h5>Error:</h5>');
+            errorBlock.append('<pre>' + error + '</pre>');
+            $("#outputDiv").html(errorBlock);
+        }
+</script>
