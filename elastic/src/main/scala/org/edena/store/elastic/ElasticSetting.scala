@@ -29,15 +29,19 @@ case class ElasticSetting(
   fragmenter: Option[String] = None,        // simple or span, Only valid for the plain highlighter
 
   // fuzzy search
-  fuzzinessType: Option[String] = None,
-  fuzzinessBoost: Option[Double] = None,
-  fuzzinessTranspositions: Option[Boolean] = None,
-  fuzzinessMaxExpansions: Option[Int] = None,
-  fuzzinessPrefixLength: Option[Int] = None,
+  fuzzySearchSettings: FuzzySearchSettings = FuzzySearchSettings(),
 
   // deployment
   shards: Int = 5,
   replicas: Int = 0
+)
+
+case class FuzzySearchSettings(
+  `type`: Option[String] = None,
+  boost: Option[Double] = None,
+  transpositions: Option[Boolean] = None,
+  maxExpansions: Option[Int] = None,
+  prefixLength: Option[Int] = None
 )
 
 

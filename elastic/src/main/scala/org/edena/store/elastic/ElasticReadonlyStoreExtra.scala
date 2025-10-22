@@ -33,7 +33,8 @@ trait ElasticReadonlyStoreExtra[E, ID] {
     projection: Traversable[String] = Nil,
     limit: Option[Int] = None,
     skip: Option[Int] = None,
-    fuzzySearch: Boolean = false
+    fuzzySearch: Boolean = false,
+    fuzzySearchSettings: FuzzySearchSettings = FuzzySearchSettings()
   ): Future[Traversable[(ValueMap, Seq[String])]]
 
   def findAsValueMapFuzzy(
@@ -42,7 +43,8 @@ trait ElasticReadonlyStoreExtra[E, ID] {
     projection: Traversable[String] = Nil,
     limit: Option[Int] = None,
     skip: Option[Int] = None,
-    fuzzySearchField: Option[String] = None
+    fuzzySearchField: Option[String] = None,
+    fuzzySearchSettings: FuzzySearchSettings = FuzzySearchSettings()
   ): Future[Traversable[ValueMap]]
 
   def findAsValueMapFuzzyStream(
@@ -51,13 +53,16 @@ trait ElasticReadonlyStoreExtra[E, ID] {
     projection: Traversable[String] = Nil,
     limit: Option[Int] = None,
     skip: Option[Int] = None,
-    fuzzySearchField: Option[String] = None)(
+    fuzzySearchField: Option[String] = None,
+    fuzzySearchSettings: FuzzySearchSettings = FuzzySearchSettings()
+)(
     implicit system: ActorSystem, materializer: Materializer
   ): Future[Source[ValueMap, _]]
 
   def countFuzzy(
     criterion: Criterion = NoCriterion,
-    fuzzySearchField: Option[String]
+    fuzzySearchField: Option[String],
+    fuzzySearchSettings: FuzzySearchSettings = FuzzySearchSettings()
   ): Future[Int]
 }
 
@@ -116,9 +121,10 @@ trait ElasticReadonlyStoreExtraImpl[E, ID] extends ElasticReadonlyStoreExtra[E, 
     projection: Traversable[String],
     limit: Option[Int],
     skip: Option[Int],
-    fuzzySearch: Boolean
+    fuzzySearch: Boolean,
+    fuzzySearchSettings: FuzzySearchSettings
   ): Future[Traversable[(ValueMap, Seq[String])]] = {
-    val fuzzyQueryDef = if (fuzzySearch) toQueryFuzzy(criterion, highlightField) else toQuery(criterion)
+    val fuzzyQueryDef = if (fuzzySearch) toQueryFuzzy(criterion, highlightField, fuzzySearchSettings) else toQuery(criterion)
 
     // highlighting
     val addHighlightingDef = (searchDefinition: SearchRequest) =>
@@ -151,11 +157,12 @@ trait ElasticReadonlyStoreExtraImpl[E, ID] extends ElasticReadonlyStoreExtra[E, 
     projection: Traversable[String],
     limit: Option[Int],
     skip: Option[Int],
-    fuzzySearchField: Option[String]
+    fuzzySearchField: Option[String],
+    fuzzySearchSettings: FuzzySearchSettings
   ): Future[Traversable[ValueMap]] = {
     assert(projection.nonEmpty, "Projection expected for the 'findAsValueMapFuzzy' store/repo function.")
 
-    val fuzzyQueryDef = toFuzzyOrNormalQuery(criterion, fuzzySearchField)
+    val fuzzyQueryDef = toFuzzyOrNormalQuery(criterion, fuzzySearchField, fuzzySearchSettings)
 
     findAsValueMapAux(
       NoCriterion, sort, projection, limit, skip, identity(_), fuzzyQueryDef
@@ -168,12 +175,14 @@ trait ElasticReadonlyStoreExtraImpl[E, ID] extends ElasticReadonlyStoreExtra[E, 
     projection: Traversable[String],
     limit: Option[Int],
     skip: Option[Int],
-    fuzzySearchField: Option[String])(
+    fuzzySearchField: Option[String],
+    fuzzySearchSettings: FuzzySearchSettings
+)(
     implicit system: ActorSystem, materializer: Materializer
   ): Future[Source[ValueMap, _]] = {
     assert(projection.nonEmpty, "Projection expected for the 'findAsValueMapFuzzyStream' store/repo function.")
 
-    val fuzzyQueryDef = toFuzzyOrNormalQuery(criterion, fuzzySearchField)
+    val fuzzyQueryDef = toFuzzyOrNormalQuery(criterion, fuzzySearchField, fuzzySearchSettings)
 
     findAsValueMapStreamAux(
       NoCriterion, sort, projection, limit, skip, fuzzyQueryDef
@@ -182,35 +191,38 @@ trait ElasticReadonlyStoreExtraImpl[E, ID] extends ElasticReadonlyStoreExtra[E, 
 
   override def countFuzzy(
     criterion: Criterion,
-    fuzzySearchField: Option[String]
+    fuzzySearchField: Option[String],
+    fuzzySearchSettings: FuzzySearchSettings
   ): Future[Int] =
     countAux(
-      additionalQueryDef = toFuzzyOrNormalQuery(criterion, fuzzySearchField)
+      additionalQueryDef = toFuzzyOrNormalQuery(criterion, fuzzySearchField, fuzzySearchSettings)
     )
 
   private def toFuzzyOrNormalQuery(
     criterion: Criterion,
-    fuzzyField: Option[String]
+    fuzzyField: Option[String],
+    fuzzySearchSettings: FuzzySearchSettings
   ) =
     fuzzyField match {
-      case Some(field) => toQueryFuzzy(criterion, field)
+      case Some(field) => toQueryFuzzy(criterion, field, fuzzySearchSettings)
       case None => toQuery(criterion)
     }
 
   // if fuzzy search is required, consider equals criteria used for a highlight field as fuzzy
   protected def toQueryFuzzy(
     criterion: Criterion,
-    fuzzyField: String
+    fuzzyField: String,
+    fuzzySearchSettings: FuzzySearchSettings
   ): Option[Query] =
     criterion match {
       case c: And =>
-        c.criteria.flatMap(toQueryFuzzy(_, fuzzyField)) match {
+        c.criteria.flatMap(toQueryFuzzy(_, fuzzyField, fuzzySearchSettings)) match {
           case Nil => None
           case queries => Some(ElasticDsl.must(queries))
         }
 
       case c: Or =>
-        c.criteria.flatMap(toQueryFuzzy(_, fuzzyField)) match {
+        c.criteria.flatMap(toQueryFuzzy(_, fuzzyField, fuzzySearchSettings)) match {
           case Nil => None
           case queries => Some(ElasticDsl.should(queries))
         }
@@ -218,12 +230,13 @@ trait ElasticReadonlyStoreExtraImpl[E, ID] extends ElasticReadonlyStoreExtra[E, 
       case NoCriterion => None
 
       case EqualsCriterion(fieldName, value) if fieldName == fuzzyField =>
+        val defaultSettings = setting.fuzzySearchSettings
         val query = FuzzyQuery(fuzzyField, value)
-          .setIfDefined(_.fuzziness(_: String), setting.fuzzinessType)
-          .setIfDefined(_.boost(_: Double), setting.fuzzinessBoost)
-          .setIfDefined(_.transpositions(_: Boolean), setting.fuzzinessTranspositions)
-          .setIfDefined(_.maxExpansions(_: Int), setting.fuzzinessMaxExpansions)
-          .setIfDefined(_.prefixLength(_: Int), setting.fuzzinessPrefixLength)
+          .setIfDefined(_.fuzziness(_: String), fuzzySearchSettings.`type`.orElse(defaultSettings.`type`))
+          .setIfDefined(_.boost(_: Double), fuzzySearchSettings.boost.orElse(defaultSettings.boost))
+          .setIfDefined(_.transpositions(_: Boolean), fuzzySearchSettings.transpositions.orElse(defaultSettings.transpositions))
+          .setIfDefined(_.maxExpansions(_: Int), fuzzySearchSettings.maxExpansions.orElse(defaultSettings.maxExpansions))
+          .setIfDefined(_.prefixLength(_: Int), fuzzySearchSettings.prefixLength.orElse(defaultSettings.prefixLength))
         Some(query)
 
       case c: ValueCriterion[_] =>

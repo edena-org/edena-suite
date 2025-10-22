@@ -13,6 +13,7 @@ import akka.NotUsed
 import akka.actor.ActorSystem
 import akka.stream.Materializer
 import akka.stream.scaladsl.Source
+import com.sksamuel.elastic4s.fields.ObjectField
 import com.sksamuel.elastic4s.requests.TypesApi
 import com.sksamuel.elastic4s.requests.searches.SearchRequest
 import com.sksamuel.elastic4s.requests.searches.queries.term.{TermQuery, TermsQuery}
@@ -21,7 +22,7 @@ import com.sksamuel.elastic4s.{ElasticClient, Index, IndexAndType, Indexes, Resp
 import org.elasticsearch.client.ResponseException
 import com.sksamuel.elastic4s.requests.searches.{SearchHit, SearchResponse}
 import com.sksamuel.elastic4s.requests.searches.queries._
-import com.sksamuel.elastic4s.requests.mappings.FieldDefinition
+import com.sksamuel.elastic4s.requests.mappings.{FieldDefinition, NestedField}
 import com.sksamuel.elastic4s.{ElasticDsl, HttpClient}
 import com.sksamuel.elastic4s.requests.common.{RefreshPolicy => ElasticRefreshPolicy}
 import org.edena.core.store.ValueMapAux.ValueMap
@@ -57,6 +58,56 @@ abstract class ElasticReadonlyStore[E, ID](
   protected val client: ElasticClient
 
   protected def stringId(id: ID) = id.toString
+
+  // override if needed to customize field definitions
+  protected def fieldDefs: Iterable[FieldDefinition] = Nil
+
+  // Automatically derived from fieldDefs - finds all nested fields (not object fields)
+  // Supports multi-level nesting: Set("addresses", "addresses.city")
+  private lazy val nestedFieldNames: Set[String] = extractNestedFieldNames(fieldDefs)
+
+  // Extract nested field names from field definitions by checking type
+  // Distinguishes "nested" from "object" field mappings
+  private def extractNestedFieldNames(
+    fields: Iterable[FieldDefinition],
+    parentPath: String = ""
+  ): Set[String] = {
+    fields.flatMap { field =>
+      val currentPath = if (parentPath.isEmpty) field.name else s"$parentPath.${field.name}"
+
+      field match {
+        case nestedField: NestedField =>
+          // This is a nested field - add it to the set
+          val currentFieldSet = Set(currentPath)
+
+          // Recursively process nested sub-fields
+          val nestedFieldSet = extractNestedFieldNames(nestedField.fields, currentPath)
+
+          currentFieldSet ++ nestedFieldSet
+
+        case objectField: ObjectField =>
+          // This is an object field (not nested) - don't add to set, just recurse
+          extractNestedFieldNames(objectField.fields, currentPath)
+
+        case _ =>
+          // Primitive field type
+          Set.empty[String]
+      }
+    }.toSet
+  }
+
+  // Get all nested path segments for a field path
+  // E.g., "addresses.city.name" -> List("addresses", "addresses.city")
+  private def getNestedPaths(fieldPath: String): List[String] = {
+    if (!fieldPath.contains(".")) {
+      List.empty
+    } else {
+      val segments = fieldPath.split("\\.").toList
+      segments.init.scanLeft("")((acc, segment) =>
+        if (acc.isEmpty) segment else s"$acc.$segment"
+      ).tail.filter(nestedFieldNames.contains)
+    }
+  }
 
   def get(id: ID): Future[Option[E]] =
     client execute {
@@ -385,11 +436,13 @@ abstract class ElasticReadonlyStore[E, ID](
         RangeQuery(fieldName) lte toDBValue(c.value).toString
     }
 
-    if (fieldName.contains(".")) {
-      val path = fieldName.takeWhile(!_.equals('.'))
-      NestedQuery(path, qDef)
-    } else
-      qDef
+    // Wrap in NestedQuery for each nested level (supports multi-level nesting)
+    // E.g., "addresses.city.name" with nested "addresses" and "addresses.city"
+    // becomes: NestedQuery("addresses", NestedQuery("addresses.city", qDef))
+    val nestedPaths = getNestedPaths(fieldName)
+    nestedPaths.foldRight(qDef) { (path, query) =>
+      NestedQuery(path, query)
+    }
   }
 
   protected def toDBValue(value: Any): Any =
@@ -434,9 +487,6 @@ abstract class ElasticReadonlyStore[E, ID](
       checkError(response, "createIndex")
       ()
     }
-
-  // override if needed to customize field definitions
-  protected def fieldDefs: Iterable[FieldDefinition] = Nil
 
   protected def existsIndex: Future[Boolean] =
     client execute {
