@@ -4,7 +4,7 @@ import akka.stream.Materializer
 import net.codingwell.scalaguice.InjectorExtensions._
 import org.edena.core.util.parallelize
 import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach, FlatSpec, Matchers}
-import play.api.libs.json.JsObject
+import play.api.libs.json.{JsObject, Json}
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContext, Future}
@@ -46,6 +46,7 @@ class GraalJSPoolTest extends FlatSpec
     val jsonResult = graalJsPool.evalToJson(
       """
         |var data = {"answer": x + 1, "input": x};
+        |console.log("Generated data: " + JSON.stringify(data));
         |JSON.stringify(data);
         |""".stripMargin,
       bindings = Map("x" -> input)
@@ -86,6 +87,46 @@ class GraalJSPoolTest extends FlatSpec
     val result = graalJsPool.evalToString("undefined_variable + 5")
     result.isLeft should be(true)
     result.left.get should include("Script execution error")
+  }
+
+  it should "handle JSON Strings as inputs" in {
+    val json = Json.obj(
+      "key1" -> "value1",
+      "key2" -> 123,
+      "flag" -> false,
+      "key3" -> Json.obj(
+        "nestedKey1" -> true,
+        "nestedKey2" -> Json.arr(1, 2, 3)
+      )
+    )
+    val result = graalJsPool.evalToString(
+      """
+        |x.key1 + " and " + x.key3.nestedKey2[1];
+        |""".stripMargin,
+      Map("x" -> json.toString())
+    )
+    result.isRight should be(true)
+    result.right.get should include("value1 and 2")
+  }
+
+  it should "handle JSONs as inputs" in {
+    val json = Json.obj(
+      "key1" -> "value1",
+      "key2" -> 123,
+      "flag" -> false,
+      "key3" -> Json.obj(
+        "nestedKey1" -> true,
+        "nestedKey2" -> Json.arr(1, 2, 3)
+      )
+    )
+    val result = graalJsPool.evalToString(
+      """
+        |x.key1 + " and " + x.key3.nestedKey2[1];
+        |""".stripMargin,
+      Map("x" -> json)
+    )
+    result.isRight should be(true)
+    result.right.get should include("value1 and 2")
   }
 
   it should "handle invalid JSON in evalToJson" in {
@@ -134,6 +175,40 @@ class GraalJSPoolTest extends FlatSpec
       val json = jsonResult.right.get.asInstanceOf[JsObject]
       (json \ "result").as[Int] should be(input * 2)
       (json \ "iteration").as[Int] should be(i)
+    }
+
+    val duration = System.currentTimeMillis() - startTime
+    println(s"Completed $repetitions concurrent JavaScript evaluations in ${duration}ms")
+  }
+
+  it should "handle concurrent execution efficiently with missing inputs" in {
+    val repetitions = 100
+    val parallelism = 20
+
+    val startTime = System.currentTimeMillis()
+
+    val futures = parallelize(1 to repetitions, Some(parallelism)) { i =>
+      Future {
+        val input = i % 1000
+        val result = graalJsPool.evalToJson(
+          """
+            |const data = {"result": x * 2, "iteration": iter};
+            |JSON.stringify(data);
+            |""".stripMargin,
+          bindings = Map("x" -> "", "iter" -> "")
+        )
+        (input, i, result)
+      }
+    }
+
+    val results = Await.result(futures, 30.seconds)
+
+    results.foreach { case (input, i, jsonResult) =>
+      // jsonResult.isRight should be(true)
+      // val error = jsonResult.left.get
+
+      println(jsonResult)
+      // error should include("Script execution error")
     }
 
     val duration = System.currentTimeMillis() - startTime
@@ -248,5 +323,33 @@ class GraalJSPoolTest extends FlatSpec
         // Expected - process is not defined
         error should include("Script execution error")
     }
+  }
+
+  it should "not leak bindings between executions" in {
+    // First execution with bindings
+    val result1 = graalJsPool.evalToString(
+      "typeof mySecret !== 'undefined' ? mySecret : 'NOT_FOUND'",
+      Map("mySecret" -> "SECRET_VALUE_123")
+    )
+    result1 should be(Right("SECRET_VALUE_123"))
+
+    // Second execution without bindings - should not see previous bindings
+    val result2 = graalJsPool.evalToString(
+      "typeof mySecret !== 'undefined' ? mySecret : 'NOT_FOUND'"
+    )
+    result2 should be(Right("NOT_FOUND"))
+
+    // Third execution with different bindings
+    val result3 = graalJsPool.evalToString(
+      "typeof mySecret !== 'undefined' ? mySecret : 'NOT_FOUND'",
+      Map("mySecret" -> "DIFFERENT_SECRET")
+    )
+    result3 should be(Right("DIFFERENT_SECRET"))
+
+    // Fourth execution without bindings again
+    val result4 = graalJsPool.evalToString(
+      "typeof mySecret !== 'undefined' ? mySecret : 'NOT_FOUND'"
+    )
+    result4 should be(Right("NOT_FOUND"))
   }
 }

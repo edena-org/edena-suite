@@ -2,9 +2,6 @@ package org.edena.scripting
 
 import net.codingwell.scalaguice.ScalaModule
 import com.google.inject.Provides
-import com.typesafe.config.Config
-import org.edena.core.util.LoggingSupport
-import org.edena.scripting.bridge.{FsBridge, HttpBridge}
 import org.graalvm.polyglot.{Context, Engine, HostAccess, PolyglotAccess}
 import org.graalvm.polyglot.io.IOAccess
 

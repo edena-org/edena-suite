@@ -125,7 +125,11 @@ trait JsAdminPoolHelper extends LoggingSupport {
         shimDir.foreach(dir => eb.option("js.commonjs-require-cwd", dir.toString))
       },
       extendContextBuilder = Some { (ctxb: Context#Builder, index: Int) =>
-        ctxb.allowPolyglotAccess(PolyglotAccess.ALL)
+        ctxb
+          .allowPolyglotAccess(PolyglotAccess.ALL)
+          .option("js.polyglot-builtin", "true")
+          .option("js.ecmascript-version", "2022")
+         // .option("js.v8-compat", "true") // Node/V8-like quirks
       },
       extendContext = Some { (ctx: Context) =>
         bridges.foreach { case (name, bridge) =>

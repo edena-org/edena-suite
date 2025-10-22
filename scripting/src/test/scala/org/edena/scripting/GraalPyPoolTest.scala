@@ -178,11 +178,53 @@ class GraalPyPoolTest
     result.right.get.toDouble should be < 8.0
   }
 
+  it should "handle multi-line json concurrently" in {
+    val repetitions = 100
+    val parallelism = 10
+
+    val startTime = System.currentTimeMillis()
+
+    val futures = parallelize(1 to repetitions, Some(parallelism)) { i =>
+      Future {
+        val result = graalPyPool.evalToJson(
+          """
+            |output_json = {
+            |   "first": input_1,
+            |   "second": input_2,
+            |   "third": input_3
+            |}
+            |
+            |json.dumps(output_json, indent=2, ensure_ascii=False)
+            |""".stripMargin,
+          Map(
+            "input_1" -> s"value$i",
+            "input_2" -> (100 + i),
+            "input_3" -> Json.obj("nestedKey" -> s"nestedValue$i")
+          )
+        )
+        (i, result)
+      }
+    }
+
+    val results = Await.result(futures, 30.seconds)
+
+    results.foreach { case (i, result) =>
+      result.isRight should be(true)
+      result.right.get should be(
+        Json.obj(
+          "first" -> s"value$i",
+          "second" -> (100 + i),
+          "third" -> Json.obj("nestedKey" -> s"nestedValue$i")
+        )
+      )
+    }
+
+    val duration = System.currentTimeMillis() - startTime
+    println(s"Completed $repetitions concurrent multi-line JSON evaluations in ${duration}ms")
+  }
+
   it should "handle JSON processing and data manipulation" in {
     val code = """
-                 |# Parse sample data from JSON string
-                 |sample_data = json.loads(sample_data_str)
-                 |
                  |# Process data
                  |result = {
                  |    'original_count': len(sample_data),
@@ -204,7 +246,7 @@ class GraalPyPoolTest
       )
     )
 
-    graalPyPool.evalToJson(code, Map("sample_data_str" -> sampleData.toString())) match {
+    graalPyPool.evalToJson(code, Map("sample_data" -> sampleData)) match {
       case Right(json) =>
         val obj = json.as[JsObject]
         (obj \ "original_count").as[Int] should be(3)
@@ -397,5 +439,73 @@ class GraalPyPoolTest
         // Expected to fail due to script execution error or IO restrictions
         error should include("Script execution error")
     }
+  }
+
+  it should "handle JSON Strings as inputs" in {
+    val json = Json.obj(
+      "key1" -> "value1",
+      "key2" -> 123,
+      "flag" -> false,
+      "key3" -> Json.obj(
+        "nestedKey1" -> true,
+        "nestedKey2" -> Json.arr(1, 2, 3)
+      )
+    )
+    val result = graalPyPool.evalToString(
+      """
+        |x['key1'] + " and " + str(x['key3']['nestedKey2'][1])
+        |""".stripMargin,
+      Map("x" -> json.toString())
+    )
+    result.isRight should be(true)
+    result.right.get should include("value1 and 2")
+  }
+
+  it should "handle JSONs as inputs" in {
+    val json = Json.obj(
+      "key1" -> "value1",
+      "key2" -> 123,
+      "flag" -> false,
+      "key3" -> Json.obj(
+        "nestedKey1" -> true,
+        "nestedKey2" -> Json.arr(1, 2, 3)
+      )
+    )
+    val result = graalPyPool.evalToString(
+      """
+        |x['key1'] + " and " + str(x['key3']['nestedKey2'][1])
+        |""".stripMargin,
+      Map("x" -> json)
+    )
+    result.isRight should be(true)
+    result.right.get should include("value1 and 2")
+  }
+
+  it should "not leak bindings between executions" in {
+    // First execution with bindings
+    val result1 = graalPyPool.evalToString(
+      "'NOT_FOUND' if 'my_secret' not in dir() else my_secret",
+      Map("my_secret" -> "SECRET_VALUE_123")
+    )
+    result1 should be(Right("SECRET_VALUE_123"))
+
+    // Second execution without bindings - should not see previous bindings
+    val result2 = graalPyPool.evalToString(
+      "'NOT_FOUND' if 'my_secret' not in dir() else my_secret"
+    )
+    result2 should be(Right("NOT_FOUND"))
+
+    // Third execution with different bindings
+    val result3 = graalPyPool.evalToString(
+      "'NOT_FOUND' if 'my_secret' not in dir() else my_secret",
+      Map("my_secret" -> "DIFFERENT_SECRET")
+    )
+    result3 should be(Right("DIFFERENT_SECRET"))
+
+    // Fourth execution without bindings again
+    val result4 = graalPyPool.evalToString(
+      "'NOT_FOUND' if 'my_secret' not in dir() else my_secret"
+    )
+    result4 should be(Right("NOT_FOUND"))
   }
 }

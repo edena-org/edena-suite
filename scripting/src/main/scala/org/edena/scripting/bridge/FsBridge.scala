@@ -27,7 +27,8 @@ final class FsBridge(
   }
 
   @HostAccess.Export
-  def readFileUtf8(path: String): String = Files.readString(guard(path), UTF_8)
+  def readFileUtf8(path: String): String =
+    Files.readString(guard(path), UTF_8)
 
   @HostAccess.Export
   def writeFileUtf8(
@@ -49,13 +50,40 @@ final class FsBridge(
   def exists(path: String): Boolean = Files.exists(guard(path))
 
   @HostAccess.Export
-  def readdir(path: String): util.List[String] = {
+  def readdir(path: String): JSArray[String] = {
     val dir = guard(path)
     if (!Files.isDirectory(dir)) throw new IOException(s"Not a directory: $dir")
-    val it = Files.list(dir)
+
+    val files = Files.list(dir)
     try {
-      it.map(_.getFileName.toString).collect(java.util.stream.Collectors.toList())
-    } finally it.close()
+      val result = files.iterator().asScala.map(_.getFileName.toString).toArray
+      new JSArray(result)
+    } finally {
+      files.close()
+    }
+  }
+
+  @HostAccess.Export
+  def readdirWithFileTypes(path: String): JSArray[Dirent] = {
+    val dir = guard(path)
+    if (!Files.isDirectory(dir)) throw new IOException(s"Not a directory: $dir")
+
+    val files = Files.list(dir)
+    try {
+      val result = files.iterator().asScala.map { p =>
+        val fileName = p.getFileName.toString
+        val attrs = Files.readAttributes(p, classOf[BasicFileAttributes], LinkOption.NOFOLLOW_LINKS)
+        new Dirent(
+          nameVal = fileName,
+          isFileVal = attrs.isRegularFile,
+          isDirVal = attrs.isDirectory,
+          isSymLinkVal = attrs.isSymbolicLink
+        )
+      }.toArray
+      new JSArray(result)
+    } finally {
+      files.close()
+    }
   }
 
   @HostAccess.Export
@@ -77,3 +105,48 @@ final class FsStat(
   @HostAccess.Export val isDir: Boolean,
   @HostAccess.Export val mtimeMs: Long
 )
+
+final class Dirent(
+  private val nameVal: String,
+  private val isFileVal: Boolean,
+  private val isDirVal: Boolean,
+  private val isSymLinkVal: Boolean
+) {
+  @HostAccess.Export
+  def name(): String = nameVal
+
+  @HostAccess.Export
+  def isFile(): Boolean = isFileVal
+
+  @HostAccess.Export
+  def isDirectory(): Boolean = isDirVal
+
+  @HostAccess.Export
+  def isSymbolicLink(): Boolean = isSymLinkVal
+
+  @HostAccess.Export
+  def isBlockDevice(): Boolean = false
+
+  @HostAccess.Export
+  def isCharacterDevice(): Boolean = false
+
+  @HostAccess.Export
+  def isFIFO(): Boolean = false
+
+  @HostAccess.Export
+  def isSocket(): Boolean = false
+}
+
+final class JSArray[T](private val array: Array[T]) {
+  @HostAccess.Export
+  def length: Int = array.length
+
+  @HostAccess.Export
+  def get(index: Int): T = array(index)
+
+  @HostAccess.Export
+  def slice(start: Int): Array[T] = array.slice(start, array.length)
+
+  @HostAccess.Export
+  def slice(start: Int, end: Int): Array[T] = array.slice(start, end)
+}

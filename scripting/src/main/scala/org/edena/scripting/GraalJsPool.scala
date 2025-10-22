@@ -5,10 +5,13 @@ import com.typesafe.config.Config
 import org.edena.core.util.ConfigImplicits.ConfigExt
 import org.graalvm.polyglot._
 import org.graalvm.polyglot.proxy.ProxyExecutable
+import play.api.libs.json.{JsArray, JsObject, JsValue, Json}
 
+import java.util.UUID
 import java.util.concurrent.CompletableFuture
 import javax.inject.Inject
 import scala.concurrent.ExecutionContext
+import scala.jdk.CollectionConverters.CollectionHasAsScala
 
 final private class GraalJsPoolFactoryImpl @Inject() (
   appConfig: Config,
@@ -32,7 +35,13 @@ final private class GraalJsPoolFactoryImpl @Inject() (
       )
     )
 
-    new GraalJsPool(configFinal, extendEngine, extendContextBuilder, extendContext, coordinatedShutdown)
+    new GraalJsPool(
+      configFinal,
+      extendEngine,
+      extendContextBuilder,
+      extendContext,
+      coordinatedShutdown
+    )
   }
 }
 
@@ -45,13 +54,13 @@ final private class GraalJsPool(
 )(
   implicit ec: ExecutionContext
 ) extends GraalScriptPoolImpl(
-  language = "js",
-  config,
-  extendEngine,
-  extendContextBuilder,
-  extendContext,
-  coordinatedShutdown
-) {
+      language = "js",
+      config,
+      extendEngine,
+      extendContextBuilder,
+      extendContext,
+      coordinatedShutdown
+    ) {
 
   // Common JavaScript globals to preserve during reset
   private val preservedGlobals: Seq[String] = Seq(
@@ -71,12 +80,34 @@ final private class GraalJsPool(
     "setTimeout",
     "setInterval",
     "clearTimeout",
-    "clearInterval"
+    "clearInterval",
+    "Polyglot", // so Polyglot.import keeps working
+    "fsBridge", // if you expose it globally
+    "httpBridge"
   )
   // --------------------------------------------------------------------------
 
   // Implement abstract methods from GraalScriptPool
   protected def resetContext(ctx: Context): Unit = {
+    // Clean up old bindings
+    val bindings = ctx.getBindings(language)
+    val existingKeys = bindings.getMemberKeys.asScala.toSet
+    // Known JavaScript variables that may appear during reset - these can be safely ignored
+    val knownJsVariables = Set("globalKeys", "preserved")
+
+    existingKeys.foreach { key =>
+      try {
+        bindings.removeMember(key)
+      } catch {
+        case _: UnsupportedOperationException =>
+          // Ignore non-removable or non-existent members (e.g., JavaScript global variables)
+          // Only log if it's not a known JavaScript variable to reduce noise
+          if (!knownJsVariables.contains(key)) {
+            logger.warn(s"Could not remove binding '$key' (this is usually harmless)")
+          }
+      }
+    }
+
     // JavaScript context reset - clear user-defined variables but keep built-in globals
     val preservedList = preservedGlobals.map(g => s"'$g'").mkString(", ")
     val reset =
@@ -95,15 +126,17 @@ final private class GraalJsPool(
   protected def warmupContext(ctx: Context): Unit = {
     // JavaScript doesn't need explicit imports, but we can pre-compile common patterns
     // This helps with JIT compilation
+    // Using an IIFE (Immediately Invoked Function Expression) to avoid polluting global scope
     val warmupCode =
       """
         |// Warmup common JavaScript operations
-        |var _warmup = {
-        |    json: JSON.stringify({test: "warmup"}),
-        |    math: Math.random(),
-        |    date: new Date().toISOString()
-        |};
-        |delete _warmup;
+        |(function() {
+        |    var _warmup = {
+        |        json: JSON.stringify({test: "warmup"}),
+        |        math: Math.random(),
+        |        date: new Date().toISOString()
+        |    };
+        |})();
         |""".stripMargin
     ctx.eval(language, warmupCode)
   }
@@ -113,13 +146,16 @@ final private class GraalJsPool(
     bindings: Map[String, Any] = Map.empty,
     ctx: Context
   ): String = {
-    val languageBindings = ctx.getBindings(language)
-    bindings.foreach { case (k, v) => languageBindings.putMember(k, v) }
-
-    //    val v = ctx.eval(language, code)
-    val v = evalJsIsolatedAwait(ctx, code)
+    val finalCode = substituteBindings(code, bindings, ctx)
+    val v = evalJsIsolatedAwait(ctx, finalCode)
     if (v.isString) v.asString() else v.toString
   }
+
+  override protected def parseJSONScript(
+    varName: String,
+    tempVarName: String
+  ): String =
+    s"const $varName = JSON.parse($tempVarName)"
 
   private def evalJsIsolatedAwait(
     ctx: Context,

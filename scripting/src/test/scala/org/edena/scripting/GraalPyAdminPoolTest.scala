@@ -156,4 +156,43 @@ class GraalPyAdminPoolTest
     }
   }
 
+  it should "handle JSON Strings as inputs" in {
+    val json = Json.obj(
+      "key1" -> "value1",
+      "key2" -> 123,
+      "flag" -> false,
+      "key3" -> Json.obj(
+        "nestedKey1" -> true,
+        "nestedKey2" -> Json.arr(1, 2, 3)
+      )
+    )
+    val result = graalPyPool.evalToString(
+      """
+        |x['key1'] + " and " + str(x['key3']['nestedKey2'][1])
+        |""".stripMargin,
+      Map("x" -> json.toString())
+    )
+    result.isRight should be(true)
+    result.right.get should include("value1 and 2")
+  }
+
+  it should "handle JSONs as inputs" in {
+    val json = Json.obj(
+      "key1" -> "value1",
+      "key2" -> 123,
+      "flag" -> false,
+      "key3" -> Json.obj(
+        "nestedKey1" -> true,
+        "nestedKey2" -> Json.arr(1, 2, 3)
+      )
+    )
+    val result = graalPyPool.evalToString(
+      """
+        |x['key1'] + " and " + str(x['key3']['nestedKey2'][1])
+        |""".stripMargin,
+      Map("x" -> json)
+    )
+    result.isRight should be(true)
+    result.right.get should include("value1 and 2")
+  }
 }
