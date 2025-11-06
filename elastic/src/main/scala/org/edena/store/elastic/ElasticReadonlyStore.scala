@@ -13,15 +13,18 @@ import akka.NotUsed
 import akka.actor.ActorSystem
 import akka.stream.Materializer
 import akka.stream.scaladsl.Source
-import com.sksamuel.elastic4s.fields.{ElasticField, ObjectField, NestedField}
+import com.sksamuel.elastic4s.api.TypesApi
+import com.sksamuel.elastic4s.fields.{ElasticField, NestedField, ObjectField}
 import com.sksamuel.elastic4s.requests.searches.SearchRequest
 import com.sksamuel.elastic4s.requests.searches.sort.{FieldSort, SortOrder}
 import com.sksamuel.elastic4s.{ElasticClient, Index, IndexAndType, Indexes, Response}
 import org.elasticsearch.client.ResponseException
 import com.sksamuel.elastic4s.requests.searches.{SearchHit, SearchResponse}
-import com.sksamuel.elastic4s.requests.searches.queries.Query
+import com.sksamuel.elastic4s.requests.searches.queries.{ExistsQuery, NestedQuery, Query, RangeQuery, RegexQuery}
 import com.sksamuel.elastic4s.{ElasticDsl, HttpClient}
 import com.sksamuel.elastic4s.requests.common.{RefreshPolicy => ElasticRefreshPolicy}
+import com.sksamuel.elastic4s.requests.searches.queries.compound.BoolQuery
+import com.sksamuel.elastic4s.requests.searches.term.{TermQuery, TermsQuery}
 import org.edena.core.store.ValueMapAux.ValueMap
 import org.reactivestreams.Publisher
 import org.edena.core.DefaultTypes.Seq
@@ -45,7 +48,8 @@ abstract class ElasticReadonlyStore[E, ID](
   val setting: ElasticSetting
 ) extends ReadonlyStore[E, ID]
   with ElasticSerializer[E]
-  with ElasticHandlers {
+  with ElasticHandlers
+  with TypesApi {
 
   protected val index = Index(indexName)
   protected val unboundLimit = Integer.MAX_VALUE
@@ -396,40 +400,40 @@ abstract class ElasticReadonlyStore[E, ID](
 
     val qDef = criterion match {
       case c: EqualsCriterion[T] =>
-        termQuery(fieldName, toDBValue(c.value))
+        TermQuery(fieldName, toDBValue(c.value))
 
       case c: EqualsNullCriterion =>
-        boolQuery().not(existsQuery(fieldName))
+        BoolQuery().not(ExistsQuery(fieldName))
 
       case c: RegexEqualsCriterion =>
-        regexQuery(fieldName, toDBValue(c.value).toString)
+        RegexQuery(fieldName, toDBValue(c.value).toString)
 
       case c: RegexNotEqualsCriterion =>
-        boolQuery().not(regexQuery(fieldName, toDBValue(c.value).toString))
+        BoolQuery().not(RegexQuery(fieldName, toDBValue(c.value).toString))
 
       case c: NotEqualsCriterion[T] =>
-        boolQuery().not(termQuery(fieldName, toDBValue(c.value)))
+        BoolQuery().not(TermQuery(fieldName, toDBValue(c.value)))
 
       case c: NotEqualsNullCriterion =>
-        existsQuery(fieldName)
+        ExistsQuery(fieldName)
 
       case c: InCriterion[V] =>
-        termsQuery(fieldName, c.value.map(value => toDBValue(value).toString))
+        TermsQuery(fieldName, c.value.map(value => toDBValue(value).toString))
 
       case c: NotInCriterion[V] =>
-        boolQuery().not(termsQuery(fieldName, c.value.map(value => toDBValue(value).toString)))
+        BoolQuery().not(TermsQuery(fieldName, c.value.map(value => toDBValue(value).toString)))
 
       case c: GreaterCriterion[T] =>
-        rangeQuery(fieldName) gt toDBValue(c.value).toString
+        RangeQuery(fieldName) gt toDBValue(c.value).toString
 
       case c: GreaterEqualCriterion[T] =>
-        rangeQuery(fieldName) gte toDBValue(c.value).toString
+        RangeQuery(fieldName) gte toDBValue(c.value).toString
 
       case c: LessCriterion[T] =>
-        rangeQuery(fieldName) lt toDBValue(c.value).toString
+        RangeQuery(fieldName) lt toDBValue(c.value).toString
 
       case c: LessEqualCriterion[T] =>
-        rangeQuery(fieldName) lte toDBValue(c.value).toString
+        RangeQuery(fieldName) lte toDBValue(c.value).toString
     }
 
     // Wrap in nestedQuery for each nested level (supports multi-level nesting)
@@ -437,7 +441,7 @@ abstract class ElasticReadonlyStore[E, ID](
     // becomes: nestedQuery("addresses", nestedQuery("addresses.city", qDef))
     val nestedPaths = getNestedPaths(fieldName)
     nestedPaths.foldRight(qDef) { (path, query) =>
-      nestedQuery(path, query)
+      NestedQuery(path, query)
     }
   }
 
