@@ -11,8 +11,10 @@ import org.apache.http.impl.nio.client.HttpAsyncClientBuilder
 import org.apache.http.impl.client.BasicCredentialsProvider
 import org.apache.http.auth.UsernamePasswordCredentials
 import org.apache.http.client.config.RequestConfig
+
 import javax.inject.Provider
 import org.edena.core.store.EdenaDataStoreException
+import org.edena.core.util.LoggingSupport
 
 /**
   * IOC provider of an Elastic client using the application config, which must be provided (overridden).
@@ -20,7 +22,7 @@ import org.edena.core.store.EdenaDataStoreException
   * @since 2018
   * @author Peter Banda
   */
-trait ElasticClientProvider extends Provider[ElasticClient] {
+trait ElasticClientProvider extends Provider[ElasticClient] with LoggingSupport {
 
   protected def config: Config
 
@@ -43,14 +45,23 @@ trait ElasticClientProvider extends Provider[ElasticClient] {
     val connectionRequestTimeout = options.get("connection_request.timeout").map(_.toInt).getOrElse(600000)
     val connectionTimeout = options.get("connection.timeout").map(_.toInt).getOrElse(600000)
     val socketTimeout = options.get("socket.timeout").map(_.toInt).getOrElse(600000)
+    val username = options.get("username")
+    val password = options.get("password")
 
-    //    val callback = new HttpClientConfigCallback {
-    //      override def customizeHttpClient(httpClientBuilder: HttpAsyncClientBuilder): HttpAsyncClientBuilder = {
-    //        val creds = new BasicCredentialsProvider()
-    //        creds.setCredentials(AuthScope.ANY, new UsernamePasswordCredentials("sammy", "letmein"))
-    //        httpClientBuilder.setDefaultCredentialsProvider(creds)
-    //      }
-    //    }
+    val callback: HttpClientConfigCallback =
+      (username, password).zipped.headOption.map { case (username, password) =>
+        logger.info(s"Using username '$username' with password for Elasticsearch authentication")
+
+        new HttpClientConfigCallback {
+          override def customizeHttpClient(httpClientBuilder: HttpAsyncClientBuilder): HttpAsyncClientBuilder = {
+            val creds = new BasicCredentialsProvider()
+            creds.setCredentials(AuthScope.ANY, new UsernamePasswordCredentials(username, password))
+            httpClientBuilder.setDefaultCredentialsProvider(creds)
+          }
+        }
+      }.getOrElse(
+        NoOpHttpClientConfigCallback
+      )
 
     val endpoint = ElasticNodeEndpoint("http", elasticConfig.host, elasticConfig.port, None)
 
@@ -61,8 +72,7 @@ trait ElasticClientProvider extends Provider[ElasticClient] {
         .setConnectionRequestTimeout(connectionRequestTimeout)
         .setConnectTimeout(connectionTimeout)
         .setSocketTimeout(socketTimeout),
-
-      httpClientConfigCallback = NoOpHttpClientConfigCallback
+      httpClientConfigCallback = callback
     )
 
     client
