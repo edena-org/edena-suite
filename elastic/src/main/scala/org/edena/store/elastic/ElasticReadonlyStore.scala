@@ -25,6 +25,8 @@ import com.sksamuel.elastic4s.{ElasticDsl, HttpClient}
 import com.sksamuel.elastic4s.requests.common.{RefreshPolicy => ElasticRefreshPolicy}
 import com.sksamuel.elastic4s.requests.searches.queries.compound.BoolQuery
 import com.sksamuel.elastic4s.requests.searches.term.{TermQuery, TermsQuery}
+import com.sksamuel.elastic4s.requests.cluster.ClusterHealthRequest
+import com.sksamuel.elastic4s.requests.common.HealthStatus
 import org.edena.core.store.ValueMapAux.ValueMap
 import org.reactivestreams.Publisher
 import org.edena.core.DefaultTypes.Seq
@@ -475,18 +477,22 @@ abstract class ElasticReadonlyStore[E, ID](
     count(EqualsCriterion(identityName, id)).map(_ > 0)
 
   protected def createIndex: Future[_] =
-    client execute {
-      ElasticDsl.createIndex(indexName)
-        .shards(setting.shards)
-        .replicas(setting.replicas)
-        .mapping(ElasticDsl.properties(fieldDefs.toSeq))
-        .indexSetting("max_result_window", unboundLimit)
-        .indexSetting("mapping.total_fields.limit", setting.indexFieldsLimit)
-//        .indexSetting("mapping.single_type", setting.indexSingleTypeMapping) // indexSetting("_all", false)
-    } map { response =>
-      checkError(response, "createIndex")
-      ()
-    }
+    for {
+      createResponse <- client execute {
+        ElasticDsl.createIndex(indexName)
+          .shards(setting.shards)
+          .replicas(setting.replicas)
+          .mapping(ElasticDsl.properties(fieldDefs.toSeq))
+          .indexSetting("max_result_window", unboundLimit)
+          .indexSetting("mapping.total_fields.limit", setting.indexFieldsLimit)
+      }
+      _ = checkError(createResponse, "createIndex")
+      // Wait for the index shards to become available (yellow status = primary shards allocated)
+      healthResponse <- client execute {
+        ElasticDsl.clusterHealth(indexName).waitForStatus(HealthStatus.Yellow).timeout("60s")
+      }
+      _ = checkError(healthResponse, "waitForIndexHealth")
+    } yield ()
 
   protected def existsIndex: Future[Boolean] =
     client execute {

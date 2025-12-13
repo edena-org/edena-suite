@@ -6,7 +6,6 @@ object Dependencies {
   object Versions {
     val akka = "2.6.21"
     val scalaTest = "3.0.8" // originally "3.0.0"
-//    val playJson = "2.8.2" // Updated for Play 2.8.x compatibility
     val playJson = "2.10.6" // Updated for Play 2.9.x compatibility
 
     // Guice 5.1.0 was specifically released to provide proper Java 17 support
@@ -16,11 +15,10 @@ object Dependencies {
     val guiceAssistedinject = "5.1.0"
 
     // JSON
-//    val jackson = "2.13.3"
     val jackson = "2.14.3"
 
     // ES
-    val elastic4s = "7.17.2" // Stable release compatible with ES 7.17.x
+    val elastic4s = "8.11.0" // Upgraded to ES 8.x - compatible with Akka 2.6.x, Play JSON 2.10.x, Jackson 2.14.x
 
     // MONGO
     // reactivemongo-akkastream uses akka-stream 2.5.23
@@ -47,10 +45,6 @@ object Dependencies {
     val breeze = "2.1.0"
 
     // PLAY
-//    val play = "2.8.22"  // "com.typesafe.play" %% "play" % "2.8.22" - akka 2.6.21
-//    val deadbolt = "2.8.2"  // updated for Play 2.8.x and Scala 2.13
-//    val webjars = "2.8.0"
-
     val play = "2.9.6"
     val deadbolt = "2.9.0"
     val webjars = "2.9.1"
