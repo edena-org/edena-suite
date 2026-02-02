@@ -17,8 +17,7 @@ object UserPlayJsonProducer
 
   private val fullConfig = ConfigFactory.load()
   private val producerConfig = getTransactionalProducerConfig(fullConfig, "kafka.producer")
-
-  private val serde = fullConfig.getConfig("kafka.serde").asJavaMap
+  private val serdeConfig = fullConfig.getConfig("kafka.serde").asJavaMap
 
   private val topic = "users-test"
   private val numPartitions = 4
@@ -27,7 +26,7 @@ object UserPlayJsonProducer
   val keySerializer: UUIDSerializer = new UUIDSerializer()
 
   val valueSerializer: Serializer[User] = new PlayJsonSchemaSerializer[User]
-  valueSerializer.configure(serde, false)
+  valueSerializer.configure(serdeConfig, false)
 
   private val producer =
     new KafkaProducer(producerConfig, keySerializer, valueSerializer)

@@ -125,7 +125,7 @@ private class AkkaKafkaConsumer[K, V: Format](
     val resolutionPart = if (dlqTopic.isDefined) {
       s"Pushing to a DLQ topic ${dlqTopic.get}."
     } else {
-      "No DQL topic define, skipping."
+      "No DQL topic defined, skipping."
     }
 
     logger.error(
