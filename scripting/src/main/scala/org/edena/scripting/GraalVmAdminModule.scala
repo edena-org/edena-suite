@@ -54,7 +54,11 @@ final class GraalVmAdminModule extends ScalaModule with JsAdminPoolHelper {
         ctxb.allowCreateThread(true)
         ctxb.allowNativeAccess(true)
         ctxb.allowCreateProcess(true)
-        ctxb.option("python.SysPrefix", venvRoot + s"/ctx-${index + 1}")
+        ctxb.allowAllAccess(true) // for custom packages this must be activated
+        ctxb.option("python.Executable", venvRoot + s"/ctx-${index + 1}/bin/graalpy")
+        // Ensure site-packages are added
+        ctxb.option("python.ForceImportSite", "true")
+        // ctxb.option("python.SysPrefix", venvRoot + s"/ctx-${index + 1}")
       }
     )
   }

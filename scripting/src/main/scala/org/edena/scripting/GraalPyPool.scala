@@ -31,12 +31,15 @@ final private class GraalPyPoolFactoryImpl @Inject() (
       )
     )
 
+    val useNewReset = appConfig.optionalBoolean("graalvm.python.use_new_reset").getOrElse(true)
+
     new GraalPyPool(
       configFinal,
       extendEngine,
       extendContextBuilder,
       extendContext,
-      coordinatedShutdown
+      coordinatedShutdown,
+      useNewReset
     )
   }
 }
@@ -46,7 +49,8 @@ final private class GraalPyPool(
   extendEngine: Option[Engine#Builder => Unit],
   extendContextBuilder: Option[(Context#Builder, Int) => Unit],
   extendContext: Option[Context => Unit],
-  coordinatedShutdown: CoordinatedShutdown
+  coordinatedShutdown: CoordinatedShutdown,
+  useNewReset: Boolean
 )(
   implicit ec: ExecutionContext
 ) extends GraalScriptPoolImpl(
@@ -77,6 +81,31 @@ final private class GraalPyPool(
 
   // Implement abstract methods from GraalScriptPool
   protected def resetContext(ctx: Context): Unit = {
+    if (useNewReset) {
+      resetContextNew(ctx)
+    } else {
+      resetContextOld(ctx)
+    }
+  }
+
+  // New implementation: Python-only cleanup (safer, avoids context corruption)
+  private def resetContextNew(ctx: Context): Unit = {
+    val preservedModules = preImport.map(s => s"'$s'").mkString(", ")
+    val reset =
+      s"""g = globals()
+         |preserved = {'__name__', '__doc__', '__package__', '__loader__', '__spec__', '__builtins__', $preservedModules}
+         |for k in list(g.keys()):
+         |    if k not in preserved:
+         |        try:
+         |            del g[k]
+         |        except:
+         |            pass
+         |""".stripMargin
+    ctx.eval(language, reset)
+  }
+
+  // Old implementation: Two-phase cleanup (may cause context corruption)
+  private def resetContextOld(ctx: Context): Unit = {
     // Clean up old bindings, but skip Python built-in functions
     val bindings = ctx.getBindings(language)
     val existingKeys = bindings.getMemberKeys.asScala.toSet

@@ -11,8 +11,8 @@ import org.slf4j.LoggerFactory
 import scala.concurrent.{ExecutionContext, Future}
 
 object AkkaKafkaUserRobustConsumerExample extends App with ClientConfig {
-  implicit val system       = ActorSystem("AkkaKafkaUserRobustConsumerExample")
-  implicit val materializer = Materializer
+  implicit val system: ActorSystem = ActorSystem("AkkaKafkaUserRobustConsumerExample")
+  implicit val materializer: Materializer = Materializer(system)
   implicit val ec: ExecutionContext = system.dispatcher
 
   private val logger = Logger(LoggerFactory.getLogger(getClass))
@@ -20,16 +20,17 @@ object AkkaKafkaUserRobustConsumerExample extends App with ClientConfig {
   private val fullConfig = ConfigFactory.load()
   private val consumerConfig = fullConfig.getConfig("kafka.consumer").toMap
   private val topic = "users-test"
-
   private val dlqTopic = Some(topic + "-dlq")
 
   val consumer = AkkaKafkaConsumer.ofUUIDKey[User](
-    consumerConfig,
+    topics = Seq(topic),
+    dlqTopic = dlqTopic,
+    config = consumerConfig,
     parallelism = 2
     // partitionParallelism auto-detected from topic
   )
 
-  consumer.run(Seq(topic), dlqTopic) { record =>
+  consumer.run { record =>
     Future {
       val user = record.value
       logger.info(s"User received - partition ${record.partition()}. Name: ${user.name}, Email: ${user.email} ")

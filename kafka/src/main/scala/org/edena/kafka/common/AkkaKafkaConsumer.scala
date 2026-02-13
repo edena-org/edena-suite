@@ -12,7 +12,7 @@ import org.apache.kafka.clients.consumer.{
   ConsumerRecord,
   ConsumerConfig => KafkaConsumerConfig
 }
-import org.apache.kafka.clients.producer.ProducerRecord
+import org.apache.kafka.clients.producer.{ProducerConfig, ProducerRecord}
 import org.apache.kafka.common.serialization._
 import org.edena.kafka.serializer.{PlayJsonSchemaDeserializer, PlayJsonSerializer}
 import org.slf4j.LoggerFactory
@@ -23,6 +23,8 @@ import scala.concurrent.{ExecutionContext, Future}
 import scala.jdk.CollectionConverters._
 
 private class AkkaKafkaConsumer[K, V: Format](
+  topics: Seq[String],
+  dlqTopic: Option[String],
   parallelism: Int,
   partitionParallelism: Option[Int],
   keyDeserializer: Deserializer[K],
@@ -54,15 +56,22 @@ private class AkkaKafkaConsumer[K, V: Format](
       system,
       keySerializer = keySerializer,
       valueSerializer = valueSerializer
-    )
+    ).withProperties(flattenStringMap(config))
+
+  // DLQ producer created lazily and only if dlqTopic is defined
+  // Uses unique client.id suffix to avoid JMX MBean registration conflicts
+  private lazy val dlqSink = dlqTopic.map { topic =>
+    val baseClientId = config.getOrElse(ProducerConfig.CLIENT_ID_CONFIG, "kafka-producer").toString
+    val dlqProducerSettings = producerSettings
+      .withProperty(ProducerConfig.CLIENT_ID_CONFIG, s"$baseClientId-$topic")
+    val dlqProducer = dlqProducerSettings.createKafkaProducer()
+    Producer.plainSink(dlqProducerSettings.withProducer(dlqProducer))
+  }
 
   // uses akka.kafka.committer settings from application.conf
   private val committerSettings = CommitterSettings(system)
 
   override def run(
-    topics: Seq[String],
-    dlqTopic: Option[String]
-  )(
     processRecord: ConsumerRecord[K, V] => Future[Unit]
   ): Unit = {
     // Auto-detect partition count if not explicitly set
@@ -95,7 +104,7 @@ private class AkkaKafkaConsumer[K, V: Format](
           processRecord(msg.record).map(_ =>
             msg.committableOffset
           ).recoverWith {
-            case ex => handleException(ex, msg, dlqTopic)
+            case ex => handleException(ex, msg)
           }
         }
 
@@ -115,10 +124,9 @@ private class AkkaKafkaConsumer[K, V: Format](
     processingStream.onComplete(_ => system.terminate())
   }
 
-  protected def handleException(
+  private def handleException(
     ex: Throwable,
-    msg: CommittableMessage[K, V],
-    dlqTopic: Option[String]
+    msg: CommittableMessage[K, V]
   ): Future[CommittableOffset] = {
     val record = msg.record
 
@@ -133,15 +141,12 @@ private class AkkaKafkaConsumer[K, V: Format](
       ex
     )
 
-    dlqTopic.map { topic =>
-      // We'll produce to DLQ
+    dlqSink.zip(dlqTopic).map { case (sink, topic) =>
+      // Produce to DLQ using shared producer
       Source
         .single(new ProducerRecord(topic, record.key(), record.value))
-        .runWith(Producer.plainSink(producerSettings))
-        .map { result =>
-          // If produce to DLQ succeeded, skip or commit offset
-          msg.committableOffset
-        }
+        .runWith(sink)
+        .map(_ => msg.committableOffset)
     }.getOrElse(
       Future.successful(msg.committableOffset)
     )
@@ -156,6 +161,8 @@ object AkkaKafkaConsumer {
   private val uuidSerializer = new UUIDSerializer
 
   def apply[K, V: Format](
+    topics: Seq[String],
+    dlqTopic: Option[String],
     keyDeserializer: Deserializer[K],
     keySerializer: Serializer[K],
     config: Map[String, AnyRef],
@@ -164,23 +171,27 @@ object AkkaKafkaConsumer {
   )(
     implicit system: ActorSystem, ec: ExecutionContext
   ): KafkaAsyncConsumer[K, V] =
-    new AkkaKafkaConsumer[K, V](parallelism, partitionParallelism, keyDeserializer, keySerializer, config)
+    new AkkaKafkaConsumer[K, V](topics, dlqTopic, parallelism, partitionParallelism, keyDeserializer, keySerializer, config)
 
   def ofStringKey[V: Format](
+    topics: Seq[String],
+    dlqTopic: Option[String],
     config: Map[String, AnyRef],
     parallelism: Int = 1,
     partitionParallelism: Option[Int] = None
   )(
     implicit system: ActorSystem, ec: ExecutionContext
   ): KafkaAsyncConsumer[String, V] =
-    apply(stringDeserializer, stringSerializer, config, parallelism, partitionParallelism)
+    apply(topics, dlqTopic, stringDeserializer, stringSerializer, config, parallelism, partitionParallelism)
 
   def ofUUIDKey[V: Format](
+    topics: Seq[String],
+    dlqTopic: Option[String],
     config: Map[String, AnyRef],
     parallelism: Int = 1,
     partitionParallelism: Option[Int] = None
   )(
     implicit system: ActorSystem, ec: ExecutionContext
   ): KafkaAsyncConsumer[java.util.UUID, V] =
-    apply(uuidDeserializer, uuidSerializer, config, parallelism, partitionParallelism)
+    apply(topics, dlqTopic, uuidDeserializer, uuidSerializer, config, parallelism, partitionParallelism)
 }
