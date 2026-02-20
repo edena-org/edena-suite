@@ -4,7 +4,7 @@ import akka.actor.ActorSystem
 import akka.stream.Materializer
 import com.typesafe.config.ConfigFactory
 import com.typesafe.scalalogging.Logger
-import org.edena.kafka.common.{AkkaKafkaConsumer, ClientConfig}
+import org.edena.kafka.common.{AkkaKafkaRecordConsumer, ClientConfig}
 import org.edena.kafka.examples.JsonFormats._
 import org.slf4j.LoggerFactory
 
@@ -22,7 +22,7 @@ object AkkaKafkaArticleRobustConsumerExample extends App with ClientConfig {
   private val topic = "scala-articles-avro"
   private val dlqTopic = Some(topic + "-dlq")
 
-  val consumer = AkkaKafkaConsumer.ofStringKey[Article](
+  val consumer = AkkaKafkaRecordConsumer.ofStringKey[Article](
     topics = Seq(topic),
     dlqTopic = dlqTopic,
     config = consumerConfig
