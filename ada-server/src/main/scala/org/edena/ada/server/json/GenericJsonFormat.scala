@@ -43,6 +43,11 @@ object GenericJson {
     explicitFormats: Map[String, Format[_]] = Map()
   ): Format[Any] = {
     val format = typ match {
+      // optional - must come before optionalMatches cases to avoid matching inner type
+      case t if t <:< typeOf[Option[_]] =>
+        implicit val innerFormat = genericFormat(t.typeArgs.head, mirror)
+        Format.optionWithNull(innerFormat)
+
       // float
       case t if t optionalMatches typeOf[Float] =>
         implicitly[Format[Float]]
@@ -96,12 +101,6 @@ object GenericJson {
       case t if t optionalSubMatches typeOf[Enum[_]] =>
         val clazz = typeToClass(t, mirror)
         JavaEnumFormat.applyClassUnsafe(clazz)
-
-      // optional
-      case t if t <:< typeOf[Option[_]] =>
-        implicit val innerFormat = genericFormat(t.typeArgs.head, mirror)
-        Format.optionWithNull(innerFormat)
-//        new OptionFormat[Any]
 
       // seq
       case t if t optionalSubMatches typeOf[scala.collection.Seq[_]] =>

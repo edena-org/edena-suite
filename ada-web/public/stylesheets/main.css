@@ -505,6 +505,7 @@ a.carousel-control.right{
     -webkit-border-radius: 0 6px 6px 6px;
     -moz-border-radius: 0 6px 6px;
     border-radius: 0 6px 6px 6px;
+    min-width: 250px;
 }
 
 .dropdown-submenu:hover>.dropdown-menu {
@@ -674,4 +675,29 @@ a.carousel-control.right{
     background-color: #666666;
     border-radius: 50%;
     display: inline-block;
+}
+
+.form-section {
+    background-color: #f9f9f9;
+    border: 1px solid #e3e3e3;
+    border-radius: 4px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.section-header {
+    font-size: 16px;
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #ddd;
+}
+
+.help-block {
+    color: #666;
+    font-size: 12px;
+    font-style: italic;
+    margin-top: 5px;
+    margin-bottom: 10px;
 }

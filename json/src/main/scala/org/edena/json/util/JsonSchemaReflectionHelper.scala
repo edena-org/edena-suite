@@ -86,6 +86,10 @@ trait JsonSchemaReflectionHelper {
       case t if t.isCaseClass() =>
         caseClassAsJsonSchema(t, mirror, dateAsNumber, explicitTypes)
 
+      // Option[T] - unwrap and recurse (for case classes, Either, etc. not caught above)
+      case t if t <:< typeOf[Option[_]] =>
+        asJsonSchema(t.typeArgs.head, mirror, dateAsNumber, explicitTypes)
+
       // otherwise
       case _ =>
         val typeName =

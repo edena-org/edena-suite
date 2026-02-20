@@ -61,8 +61,15 @@ class GraalPyAdminPoolTest
       |import encodings.idna
       |
       |try:
-      |    # Make HTTP request to a working JSON API
-      |    with urllib.request.urlopen('https://postman-echo.com/get?foo=bar') as response:
+      |    # Create request with proper headers to avoid 403 Forbidden
+      |    url = 'https://httpbin.org/get?foo=bar'
+      |    headers = {
+      |        'User-Agent': 'Mozilla/5.0 (Python urllib) GraalPy Test'
+      |    }
+      |    req = urllib.request.Request(url, headers=headers)
+      |
+      |    # Make HTTP request
+      |    with urllib.request.urlopen(req) as response:
       |        if response.status == 200:
       |            data = response.read().decode('utf-8')
       |            result = {

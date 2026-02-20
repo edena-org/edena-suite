@@ -18,6 +18,7 @@ Edena Suite is a comprehensive data discovery and analytics platform built with 
 - **elastic/elastic-json**: Elasticsearch integration
 - **mongo**: MongoDB integration
 - **ignite**: Apache Ignite in-memory data grid
+- **kafka**: Apache Kafka producer/consumer with Schema Registry support
 - **store-json**: Unified JSON storage abstraction
 - **scripting**: GraalVM-based JavaScript and Python script execution
 - **ml-spark**: Apache Spark ML integration
@@ -29,7 +30,7 @@ Edena Suite is a comprehensive data discovery and analytics platform built with 
 - **Play Framework**: 2.9.6
 - **Apache Spark**: 3.5.4
 - **MongoDB**: ReactiveMongo 1.1.0-RC12
-- **Elasticsearch**: Elastic4S 7.17.2 (with backward compatibility helpers)
+- **Elasticsearch**: Elastic4S 8.15.4 (ES 8.x compatible, Akka 2.6.x, Play JSON 2.10.x, Jackson overridden to 2.14.x)
 - **Apache Ignite**: 2.14.0
 - **GraalVM**: For polyglot scripting (JavaScript, Python)
 - **Akka**: 2.6.21
@@ -86,7 +87,7 @@ sbt reload                 # Reload build configuration
 ### Module Dependencies
 The project follows a clear dependency hierarchy:
 - `ada-web` depends on `ada-server` and `play`
-- `ada-server` depends on storage modules (`elastic-json`, `mongo`, `ignite`) and `ml-spark`
+- `ada-server` depends on storage modules (`elastic-json`, `mongo`, `ignite`, `kafka`) and `ml-spark`
 - Storage modules depend on `core` and `json`
 - All modules use centralized dependencies from `project/Dependencies.scala`
 
@@ -100,6 +101,7 @@ The project follows a clear dependency hierarchy:
 - **MongoDB**: Primary document storage with ReactiveMongo
 - **Elasticsearch**: Full-text search and document indexing
 - **Apache Ignite**: Distributed caching and fast data access
+- **Apache Kafka**: Event streaming with Akka Streams consumers, Schema Registry serialization, and DLQ support
 - Unified JSON storage interface for backend flexibility
 
 ### Machine Learning

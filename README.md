@@ -46,13 +46,13 @@ MongoDB integration with ReactiveMongo
 
 ### - elastic
 Elasticsearch integration
-- **Elastic4S**: 7.10.8
+- **Elastic4S**: 8.11.0 (ES 8.x compatible)
 - **Apache Commons Lang3**: 3.5
 - Depends on: core
 
 ### - elastic-json
 Elasticsearch JSON storage implementation
-- **Elastic4S**: 7.10.8
+- **Elastic4S**: 8.11.0
 - **Jackson**: 2.14.3
 - Depends on: store-json, elastic
 

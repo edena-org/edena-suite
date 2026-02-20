@@ -12,7 +12,8 @@
 	saveCall : Call,
 	listCall : Call,
 	bottomResources: Option[Html] = None,
-	formArgs: Seq[(Symbol, String)] = Nil
+	formArgs: Seq[(Symbol, String)] = Nil,
+	withFieldsetWrapper: Boolean = true
 )(
 	implicit context: WebContext
 )
@@ -26,10 +27,15 @@
 	<div class="row">
 		<div class="col-md-12">
 		    @helper.form(action = saveCall, formArgs: _*) {
-			    <fieldset>
+				@if(withFieldsetWrapper) {
+					<fieldset>
+						@CSRF.formField
+						@elements
+					</fieldset>
+				} else {
 					@CSRF.formField
 					@elements
-			    </fieldset>
+				}
 
 				<hr/>
 			    <div class="actions pull-right">

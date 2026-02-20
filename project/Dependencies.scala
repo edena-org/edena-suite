@@ -18,7 +18,7 @@ object Dependencies {
     val jackson = "2.14.3"
 
     // ES
-    val elastic4s = "8.11.0" // Upgraded to ES 8.x - compatible with Akka 2.6.x, Play JSON 2.10.x, Jackson 2.14.x
+    val elastic4s = "8.15.4" // Upgraded to ES 8.x - compatible with Akka 2.6.x, Play JSON 2.10.x, Jackson overridden to 2.14.x
 
     // MONGO
     // reactivemongo-akkastream uses akka-stream 2.5.23
