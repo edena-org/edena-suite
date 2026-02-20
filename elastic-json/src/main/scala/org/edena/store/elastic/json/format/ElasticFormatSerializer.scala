@@ -41,7 +41,7 @@ trait ElasticFormatSerializer[E] extends ElasticSerializer[E] {
   }
 
   // override if needed
-  protected def isArray(fieldName: String) = false
+  protected def isMultiValued(fieldName: String) = false
 
   // get result
   override protected def serializeGetResult(response: GetResponse): Option[E] =
@@ -93,9 +93,10 @@ trait ElasticFormatSerializer[E] extends ElasticSerializer[E] {
     fields.map { case (fieldName, value) =>
 
       val finalValue =
-        if (!isArray(fieldName))
+        if (!isMultiValued(fieldName))
           value match {
-            case list: List[_] => list.head
+            case list: List[_] if list.nonEmpty => list.head
+            case list: List[_] => null
             case _ => value
           }
         else

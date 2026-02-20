@@ -20,9 +20,9 @@ import com.sksamuel.elastic4s.requests.searches.sort.{FieldSort, SortOrder}
 import com.sksamuel.elastic4s.{ElasticClient, Index, IndexAndType, Indexes, Response}
 import org.elasticsearch.client.ResponseException
 import com.sksamuel.elastic4s.requests.searches.{SearchHit, SearchResponse}
-import com.sksamuel.elastic4s.requests.searches.queries.{ExistsQuery, NestedQuery, Query, RangeQuery, RegexQuery}
+import com.sksamuel.elastic4s.requests.searches.queries.{ExistsQuery, InnerHit => QueriesInnerHit, NestedQuery, Query, RangeQuery, RegexQuery}
 import com.sksamuel.elastic4s.{ElasticDsl, HttpClient}
-import com.sksamuel.elastic4s.requests.common.{RefreshPolicy => ElasticRefreshPolicy}
+import com.sksamuel.elastic4s.requests.common.{FetchSourceContext, RefreshPolicy => ElasticRefreshPolicy}
 import com.sksamuel.elastic4s.requests.searches.queries.compound.BoolQuery
 import com.sksamuel.elastic4s.requests.searches.term.{TermQuery, TermsQuery}
 import com.sksamuel.elastic4s.requests.cluster.ClusterHealthRequest
@@ -100,7 +100,7 @@ abstract class ElasticReadonlyStore[E, ID](
 
   // Get all nested path segments for a field path
   // E.g., "addresses.city.name" -> List("addresses", "addresses.city")
-  private def getNestedPaths(fieldPath: String): List[String] = {
+  protected def getNestedPaths(fieldPath: String): List[String] = {
     if (!fieldPath.contains(".")) {
       List.empty
     } else {
@@ -444,6 +444,29 @@ abstract class ElasticReadonlyStore[E, ID](
     val nestedPaths = getNestedPaths(fieldName)
     nestedPaths.foldRight(qDef) { (path, query) =>
       NestedQuery(path, query)
+    }
+  }
+
+  /**
+   * Wraps a query in NestedQuery layers when the given field paths reside under nested mappings.
+   * Returns the query unchanged when fields are not nested (safe for existing behavior).
+   */
+  protected def wrapQueryForNestedFields(
+    query: Query,
+    fieldPaths: Seq[String],
+    withInnerHits: Boolean = false,
+    innerHitSourceExcludes: Set[String] = Set.empty
+  ): Query = {
+    val allNestedPaths = fieldPaths.flatMap(getNestedPaths).distinct.sorted
+    allNestedPaths.foldRight(query: Query) { (path, q) =>
+      val nq = NestedQuery(path, q)
+      if (withInnerHits) {
+        val ih = QueriesInnerHit(path + "_ft")
+        val ihWithExcludes = if (innerHitSourceExcludes.nonEmpty)
+          ih.fetchSource(FetchSourceContext(fetchSource = true, excludes = innerHitSourceExcludes))
+        else ih
+        nq.inner(ihWithExcludes)
+      } else nq
     }
   }
 

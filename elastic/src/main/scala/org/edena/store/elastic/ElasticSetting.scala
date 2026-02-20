@@ -44,6 +44,45 @@ case class FuzzySearchSettings(
   prefixLength: Option[Int] = None
 )
 
+/**
+ * Settings for full-text search in hybrid queries.
+ *
+ * @param searchType Type of full-text search (match, match_phrase, multi_match)
+ * @param operator Boolean operator for terms: And requires all terms, Or requires any (default: Or)
+ * @param fuzziness Fuzziness for typo tolerance: "AUTO", "0", "1", "2" (optional)
+ * @param prefixLength Minimum prefix length for fuzzy matching (optional)
+ * @param maxExpansions Maximum number of fuzzy expansions (optional)
+ * @param minimumShouldMatch Minimum number of terms that should match, e.g., "2", "75%" (optional)
+ * @param analyzer Text analyzer to use (optional)
+ * @param boost Boost factor for full-text score (optional)
+ */
+case class FullTextSearchSettings(
+  searchType: FullTextSearchType.Value = FullTextSearchType.Match,
+  operator: Option[FullTextOperator.Value] = None,
+  fuzziness: Option[String] = None,
+  prefixLength: Option[Int] = None,
+  maxExpansions: Option[Int] = None,
+  minimumShouldMatch: Option[String] = None,
+  analyzer: Option[String] = None,
+  boost: Option[Double] = None
+)
+
+/**
+ * Types of full-text search queries.
+ */
+object FullTextSearchType extends Enumeration {
+  val Match = Value("match")              // Standard full-text search
+  val MatchPhrase = Value("match_phrase") // Phrase matching (order matters)
+  val MultiMatch = Value("multi_match")   // Search across multiple fields
+}
+
+/**
+ * Boolean operators for full-text search term matching.
+ */
+object FullTextOperator extends Enumeration {
+  val And = Value("and") // All terms must match
+  val Or = Value("or")   // Any term can match (default)
+}
 
 object RefreshPolicy extends Enumeration {
   val None = Value("none")

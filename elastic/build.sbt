@@ -6,11 +6,11 @@ name := "edena-store-elastic"
 description := "Provides a convenient access layer for Elastic Search based on Elastic4S library."
 
 libraryDependencies ++= Seq(
-  "com.sksamuel.elastic4s" %% "elastic4s-core" % Versions.elastic4s, // exclude("com.vividsolutions" ,"jts"), // jts is LGPL licensed (up to version 1.14)
-  "com.sksamuel.elastic4s" %% "elastic4s-client-esjava" % Versions.elastic4s,
-  "com.sksamuel.elastic4s" %% "elastic4s-client-akka" % Versions.elastic4s,
-  //  "com.sksamuel.elastic4s" %% "elastic4s-http" % Versions.elastic4s,
-  "com.sksamuel.elastic4s" %% "elastic4s-http-streams" % Versions.elastic4s,
+  "nl.gn0s1s" %% "elastic4s-core" % Versions.elastic4s, // exclude("com.vividsolutions" ,"jts"), // jts is LGPL licensed (up to version 1.14)
+  "nl.gn0s1s" %% "elastic4s-client-esjava" % Versions.elastic4s,
+  "nl.gn0s1s" %% "elastic4s-client-akka" % Versions.elastic4s,
+  //  "nl.gn0s1s" %% "elastic4s-http" % Versions.elastic4s,
+  "nl.gn0s1s" %% "elastic4s-http-streams" % Versions.elastic4s,
   "com.sksamuel.exts" %% "exts" % "1.61.1", // Utilities library (Logging, StringOption, etc.)
 //  "javax.inject" % "javax.inject" % "1",
   "org.apache.commons" % "commons-lang3" % "3.5",

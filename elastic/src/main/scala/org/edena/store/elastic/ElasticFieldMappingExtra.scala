@@ -131,4 +131,34 @@ object ElasticFieldMappingExtra {
       field.copy(coerce = Some(value))
     }
   }
+
+  /**
+   * Implicit class to add `similarity`, `dims`, and `index` methods to DenseVectorField.
+   * Usage:
+   *   - `DenseVectorField("embedding", 768) similarity VectorSimilarity.Cosine`
+   *   - `DenseVectorField("embedding", 768) index true`
+   *
+   * Note: The similarity metric is set at index mapping time, not query time.
+   */
+  implicit class DenseVectorFieldExtensions(field: DenseVectorField) {
+    import com.sksamuel.elastic4s.fields.{Cosine, DotProduct, L2Norm, MaxInnerProduct}
+
+    def similarity(value: VectorSimilarity.Value): DenseVectorField = {
+      val es4sSimilarity = value match {
+        case VectorSimilarity.Cosine => Cosine
+        case VectorSimilarity.L2Norm => L2Norm
+        case VectorSimilarity.DotProduct => DotProduct
+        case VectorSimilarity.MaxInnerProduct => MaxInnerProduct
+      }
+      field.copy(similarity = Some(es4sSimilarity))
+    }
+
+    def dims(value: Int): DenseVectorField = {
+      field.copy(dims = Some(value))
+    }
+
+    def index(value: Boolean): DenseVectorField = {
+      field.copy(index = Some(value))
+    }
+  }
 }

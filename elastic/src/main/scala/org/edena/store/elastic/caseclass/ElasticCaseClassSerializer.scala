@@ -25,7 +25,7 @@ trait ElasticCaseClassSerializer[E] extends ElasticSerializer[E] with HasDynamic
   protected val namedFieldTypes = caseClassToFlatFieldTypes[E]()
 
   protected val arrayFieldNames = namedFieldTypes.filter(_._2.isArray).map(_._1).toSet
-  protected def isArray(fieldName: String) = arrayFieldNames.contains(fieldName)
+  protected def isMultiValued(fieldName: String) = arrayFieldNames.contains(fieldName)
 
   private val treatConcreteClassName = false
   private val concreteClassFieldName = "concreteClass"
@@ -152,7 +152,7 @@ trait ElasticCaseClassSerializer[E] extends ElasticSerializer[E] with HasDynamic
     fields.map { case (fieldName, value) =>
 
       val finalValue =
-        if (!isArray(fieldName))
+        if (!isMultiValued(fieldName))
           value match {
             case list: List[_] => list.head
             case _ => value
