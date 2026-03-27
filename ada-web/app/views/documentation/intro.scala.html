@@ -39,33 +39,24 @@
         <p>
             Moreover, one of Ada's main functionalities is to produce dynamic and personalized <it>views</it>
             containing filters, statistical widgets, and tables, which can be saved and shared among the users.
-            This makes Ada an ideal tool for a collaborative reporting.
+            This makes Ada an ideal tool for collaborative reporting.
         </p>
     }
 
     @section(Some("section_data"), Some("Data")) {
         <p>
-            Ada has been originally developed for <a href="http://parkinson.lu">NCER-PD project</a>, for which it manages anonymized clinical data,
-            biosample meta information provided by <a href="http://www.ibbl.lu">IBBL</a>, and
-            kinetic data from <a href="http://parkinsonmpower.org">mPower mobile application</a>
-            and <a href="http://www.egait.de">eGAIT shoe sensors</a>.
+            Ada supports diverse data sources from clinical, research, and experimental origins.
+            It is designed to handle heterogeneous data sets of varying sizes and structures, making it suitable for a wide range of data exploration and analysis tasks.
         </p>
-
 
         <p>
-            Besides NCER-PD, the main instance of Ada currently harbours around 1300 data sets from diverse studies including <a href="http://www.denopa.de">DeNoPa</a>, <a href="http://www.ppmi-info.org">PPMI</a>, TREND, GBA, ADNI, and mPower.
-            Furthermore, Ada facilitates robust access control through LDAP authentication, and in-house user management with fine-grained permissions.
-            With a convenient user management UI, admins can simply specify which data sets are a user allowed to access and which actions on the data set he/she is allowed to perform.
+            Ada facilitates robust access control through LDAP/OIDC authentication, and in-house user management with fine-grained permissions.
+            With a convenient user management UI, admins can simply specify which data sets a user is allowed to access and which actions on the data set he/she is allowed to perform.
         </p>
     } {
-        <div class="panel panel-warning">
-            <div class="panel-heading"><strong>Note</strong></div>
-            <div class="panel-body">Although, Ada has been primarily designed for Biomedicine, there is nothing preventing it to be used for other domains. For instance, we successfully imported and analyzed data sets for wine types, car acceptability, mushroom traits, and poker card combinations.</div>
-        </div>
-
-        <div class="panel panel-success">
-            <div class="panel-heading"><strong>Did you know?</strong></div>
-            <div class="panel-body">The first version of Ada 0.0.1 was released Oct 2015. What a journey!</div>
+        <div class="card border-warning">
+            <div class="card-header"><strong>Note</strong></div>
+            <div class="card-body">Although Ada has been primarily designed for Biomedicine, there is nothing preventing it from being used for other domains. For instance, we successfully imported and analyzed data sets for wine types, car acceptability, mushroom traits, and poker card combinations.</div>
         </div>
     }
 
@@ -80,9 +71,9 @@
     @imageSection(Some("section_import"), Some("Import/Export"), Some("images/carousel/in-out2.gif")) {
         <p>
             The data set import adapters currently support three file formats:
-            CSV, JSON, and tranSMART data and mapping files, and three secured RESTful APIs:
-            <a href="https://www.project-redcap.org">REDCap</a>,
-            <a href="https://www.synapse.org">Synapse</a>, and eGait.
+            CSV, JSON, and tranSMART data and mapping files, and two secured RESTful APIs:
+            <a href="https://www.project-redcap.org">REDCap</a> and
+            <a href="https://www.synapse.org">Synapse</a>.
         </p>
 
         <p>

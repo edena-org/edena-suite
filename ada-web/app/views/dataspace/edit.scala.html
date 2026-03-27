@@ -19,11 +19,11 @@
 )
 
 @showDataSetsButton = {
-    <a class="btn btn-default" id="showDataSets" href="@dataSpaceMetaInfoRoutes.showDataSetIds(id)">Show data set ids</a>
+    <a class="btn btn-secondary" id="showDataSets" href="@dataSpaceMetaInfoRoutes.showDataSetIds(id)">Show data set ids</a>
 }
 
 @layout.edit(
-    "Study",
+    "Data Space",
     "dataSpaceMetaInfo",
 	form.errors,
     elements(form, nestedDataSpaceCount, nestedDataSetCount, dataSetIdSizeMap, Some(id)),

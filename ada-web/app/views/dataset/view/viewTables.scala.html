@@ -5,11 +5,13 @@
 @import org.edena.ada.web.controllers.dataset.DataSetRouter
 @import org.edena.ada.web.controllers.dataset.DataSetWebContext
 @import org.edena.ada.web.controllers.dataset.DataSetWebContext._
+@import org.edena.ada.server.models.DataSetSetting
 
 @(
     dataViewId: BSONObjectID,
     viewParts: Seq[TableViewData],
-    tableRowSelection: Boolean = false
+    tableRowSelection: Boolean = false,
+    setting: DataSetSetting
 )(
     implicit dataSetWebContext: DataSetWebContext
 )
@@ -23,7 +25,8 @@
                     viewPart.filter,
                     viewPart.tableFields,
                     false,
-                    tableRowSelection
+                    tableRowSelection,
+                    Some(setting)
                 )
             </div>
         </td>

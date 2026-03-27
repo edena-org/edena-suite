@@ -29,11 +29,10 @@
 
 @showChoice(value: FilterShowFieldStyle.Value, text: String) = {
     <li>
-        <label class="radio-inline"><input type="radio" name="showChoice" value="@value.id" @if(showFieldStyle.getOrElse(FilterShowFieldStyle.NamesAndLabels) == value) {checked="checked"}>
-            <h5 style="padding-left: 10px">
-                @text
-            </h5>
-        </label>
+        <div class="form-check">
+            <input class="form-check-input" type="radio" name="showChoice" value="@value.id" id="showChoice_@value.id" @if(showFieldStyle.getOrElse(FilterShowFieldStyle.NamesAndLabels) == value) {checked="checked"}>
+            <label class="form-check-label" for="showChoice_@value.id">@text</label>
+        </div>
     </li>
 }
 
@@ -41,18 +40,20 @@
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
                 <h4 class="modal-title">Add/Edit Condition</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
             </div>
             <form onsubmit="return false;">
-                <div class="modal-body">
+                <div class="modal-body px-4">
                     <input id="conditionIndex" type="hidden" value=""/>
+
                     @if(categoriesOrCall.isDefined) {
-                        <div id="@{categoricalTreeId}-FilterDiv" class="row collapse">
+                        <div id="@{categoricalTreeId}-FilterDiv" class="collapse mb-2">
                             @categoricalTree(categoricalTreeId, categoriesOrCall.get, Some(categoryTreeNodeSelectedJsFun))
                             <hr/>
                         </div>
                     }
+
                     <div class="condition-modal-form-row">
                         <div class="condition-modal-field-input">
                             <input id="fieldNameTypeahead" class="typeahead" type="text" placeholder="Field Name or Label">
@@ -69,27 +70,25 @@
                             <input id="value" class="conditionValue" placeholder="Condition"/>
                         </div>
                         <div class="condition-modal-btns">
-                            <a id="showChoicesButton" class="btn btn-sm btn-default" data-toggle="collapse" data-target="#@{filterElementId}-showChoicesPanel" data-toggle="tooltip" title="Field Name/Label Display Options">
-                                <span class="glyphicon glyphicon-wrench" aria-hidden="true"></span>
+                            <a id="showChoicesButton" class="btn btn-sm btn-secondary" data-toggle="collapse" data-target="#@{filterElementId}-showChoicesPanel" title="Field Name/Label Display Options">
+                                <span class="bi bi-gear" aria-hidden="true"></span>
                             </a>
                             @if(categoriesOrCall.isDefined) {
-                                <a id="showCategoryTreeButton" class="btn btn-sm btn-default" data-toggle="collapse" data-target="#@{categoricalTreeId}-FilterDiv" data-toggle="tooltip" title="Show Category Tree">
-                                    <span class="glyphicon glyphicon-leaf" aria-hidden="true"></span>
+                                <a id="showCategoryTreeButton" class="btn btn-sm btn-secondary" data-toggle="collapse" data-target="#@{categoricalTreeId}-FilterDiv" title="Show Category Tree">
+                                    <span class="bi bi-diagram-3" aria-hidden="true"></span>
                                 </a>
                             }
                         </div>
                     </div>
 
-                    <div class="row">
-                        <div class="col-md-12" style="margin-left:10px">
-                            <span id="fieldInfo" class="help-block"></span>
-                        </div>
+                    <div class="mt-1 ml-1">
+                        <span id="fieldInfo" class="help-block"></span>
                     </div>
-                    <div id="@{filterElementId}-showChoicesPanel" class="row collapse">
-                        <hr/>
-                        <div class="well">
+
+                    <div id="@{filterElementId}-showChoicesPanel" class="collapse mt-2">
+                        <div class="card card-body">
                             What do you want to show?
-                            <ul class="list-unstyled">
+                            <ul class="list-unstyled mb-0">
                                 @showChoice(FilterShowFieldStyle.NamesOnly, "Field names only")
                                 @showChoice(FilterShowFieldStyle.LabelsOnly, "Field labels only")
                                 @showChoice(FilterShowFieldStyle.LabelsAndNamesOnlyIfLabelUndefined, "Field labels, and names only if label undefined")
@@ -99,7 +98,7 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
                     <button type="submit" id="submitButton" class="btn btn-primary" data-dismiss="modal">Confirm</button>
                 </div>
             </form>

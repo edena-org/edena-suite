@@ -16,7 +16,7 @@
 }
 
 @if(fieldName.isDefined) {
-    <th class="col header @if(orderByFieldName == fieldName.get) {glyphicon glyphicon-chevron-down} @if(orderByFieldName == "-" + fieldName.get) {glyphicon glyphicon-chevron-up}">
+    <th class="col header @if(orderByFieldName == fieldName.get) {bi bi-chevron-down} @if(orderByFieldName == "-" + fieldName.get) {bi bi-chevron-up}">
         @link
     </th>
 } else {

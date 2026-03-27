@@ -41,7 +41,7 @@
 }
 
 @badge(text: Int) = {
-    <span class="badge badge-success"><b><h5>@text</h5></b></span>
+    <span class="badge badge-secondary">@text</span>
 }
 
 @dataSpaceTable = {
@@ -81,12 +81,13 @@
 }
 
 @layout.show(
-    dataSpaceMetaInfo.name + " Study",
+    dataSpaceMetaInfo.name + " Data Space",
     elements,
     None,
     if(isAdmin) Some(dataSpaceMetaInfoRoutes.edit(dataSpaceMetaInfo._id.get)) else None,
     None,
     Some(datasetMenu(dataSpaceMetaInfos)),
     None,
-    isFullDisplayName = true
+    isFullDisplayName = true,
+    showMessageBox = false
 )

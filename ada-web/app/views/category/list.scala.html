@@ -27,13 +27,13 @@
     <input id="categoryName" name="categoryName" value="" title="Category Name">
 }
 @buttons = {
-    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
     <button type="button" id="submitButton" onclick="addCategory();" data-dismiss="modal" class="btn btn-primary">OK</button>
 }
 
 @actions = {
-    <div class="row">
-        <div class="col-md-9">
+    <div class="d-flex align-items-start">
+        <div class="flex-grow-1">
             @filterWithJs(
                 Filter(conditions),
                 categoryRouter.plainList,
@@ -44,15 +44,15 @@
                 showFieldStyle = Some(FilterShowFieldStyle.LabelsOnly)
             )
         </div>
-        <div class="pull-right">
+        <div class="ml-auto d-flex align-items-center" style="gap: 6px; padding-top: 10px;">
             <a class="btn btn-info btn-sm" id="collapseAll" href="#" data-toggle="tooltip" title="Collapse All" onclick="$('#treeDiv').tree('collapseAll');return false;">
-                <span class="glyphicon glyphicon-resize-small" aria-hidden="true"></span>
+                <span class="bi bi-fullscreen-exit" aria-hidden="true"></span>
             </a>
             <a class="btn btn-info btn-sm" id="expandAll" href="#" data-toggle="tooltip" title="Expand All" onclick="$('#treeDiv').tree('expandAll');return false;">
-                <span class="glyphicon glyphicon-resize-full" aria-hidden="true"></span>
+                <span class="bi bi-fullscreen" aria-hidden="true"></span>
             </a>
             <a class="btn btn-info btn-sm" data-toggle="modal" data-target="#addCategoryModal" title="Add New">
-                <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
+                <span class="bi bi-plus-circle" aria-hidden="true"></span>
             </a>
         </div>
         @modal("addCategoryModal", "Add New Category", modalBody, None, Some(buttons))

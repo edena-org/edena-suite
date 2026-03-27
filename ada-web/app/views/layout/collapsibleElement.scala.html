@@ -1,21 +1,12 @@
 @(element: Html)
 
-<div align="middle">
-    <div class="well">
-        <div class="row">
-            <span id="arrowUp" class="glyphicon glyphicon-arrow-up"></span>
-        </div>
-        <div class="row">
-            <button id="showHideTableButton" type="button" class="btn btn-default btn-sm" data-toggle="collapse" data-target="#table-panel">
-                Hide Table</button>
-        </div>
-        <div class="row">
-            <span id="arrowDown" class="glyphicon glyphicon-arrow-down" style="display:none"></span>
-        </div>
-    </div>
+<div class="text-center my-2">
+    <button id="showHideTableButton" type="button" class="btn btn-outline-secondary btn-sm" data-toggle="collapse" data-target="#table-panel">
+        <span id="tableToggleIcon" class="bi bi-chevron-up"></span> Hide Table
+    </button>
 </div>
 
-<div id="table-panel" class="collapse in">
+<div id="table-panel" class="collapse show">
     @element
 </div>
 
@@ -23,13 +14,11 @@
         var tableShown = true
         $('#showHideTableButton').on('click', function() {
             if (tableShown) {
-                $('#arrowUp').hide();
-                $('#arrowDown').show();
-                $('#showHideTableButton').html("Show Table");
+                $('#tableToggleIcon').removeClass('bi-chevron-up').addClass('bi-chevron-down');
+                $('#showHideTableButton').html('<span id="tableToggleIcon" class="bi bi-chevron-down"></span> Show Table');
             } else {
-                $('#arrowUp').show();
-                $('#arrowDown').hide();
-                $('#showHideTableButton').html("Hide Table");
+                $('#tableToggleIcon').removeClass('bi-chevron-down').addClass('bi-chevron-up');
+                $('#showHideTableButton').html('<span id="tableToggleIcon" class="bi bi-chevron-up"></span> Hide Table');
             }
             tableShown = !tableShown;
         });

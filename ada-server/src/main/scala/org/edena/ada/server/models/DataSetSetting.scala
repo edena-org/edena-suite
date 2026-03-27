@@ -24,7 +24,8 @@ case class DataSetSetting(
   customControllerClassName: Option[String] = None,
   description: Option[String] = None,
   widgetEngineClassName: Option[String] = None,
-  customStorageCollectionName: Option[String] = None
+  customStorageCollectionName: Option[String] = None,
+  getListItemURL: Option[String] = None
 ) {
   def this(
     dataSetId: String,
@@ -66,6 +67,7 @@ object DataSetSetting {
       description = Option(pojo.getDescription),
       widgetEngineClassName = Option(pojo.getWidgetEngineClassName),
       customStorageCollectionName = Option(pojo.getCustomStorageCollectionName),
+      getListItemURL = Option(pojo.getGetListItemURL),
 
       extraNavigationItems = originalItem.map(_.extraNavigationItems).getOrElse(Nil),
       extraExportActions = originalItem.map(_.extraExportActions).getOrElse(Nil),
@@ -94,6 +96,7 @@ object DataSetSetting {
     pojo.setDescription(dataSetSetting.description.orNull)
     pojo.setWidgetEngineClassName(dataSetSetting.widgetEngineClassName.orNull)
     pojo.setCustomStorageCollectionName(dataSetSetting.customStorageCollectionName.orNull)
+    pojo.setGetListItemURL(dataSetSetting.getListItemURL.orNull)
     // Preserve original item for complex fields
     pojo.setOriginalItem(dataSetSetting)
     pojo

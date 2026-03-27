@@ -235,13 +235,13 @@
 }
 
 @anovaChiSquareButtons = {
-    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
     <button type="button" id="submitButton" class="btn btn-primary" data-dismiss="modal" onclick="selectFeaturesAsAnovaChiSquare(); return false;">OK</button>
 }
 
 @extraFieldButtons =  {
     <a id="anovaChiSquareFieldSelectionButton" class="btn btn-info btn-sm" data-toggle="modal" data-target="#anovaChiSquareFeatureSelectionModal" title="ANOVA/Chi-Square Feature Selection">
-        <span class="glyphicon glyphicon-minus" aria-hidden="true"></span>ANOVA/Chi-&#9724;
+        <span class="bi bi-dash" aria-hidden="true"></span>ANOVA/Chi-&#9724;
     </a>
     @modal("anovaChiSquareFeatureSelectionModal", "ANOVA/Chi-Square Feature Selection", anovaChiSquareModalBody(4), None, Some(anovaChiSquareButtons))
 }

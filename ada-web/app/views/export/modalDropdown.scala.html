@@ -12,9 +12,9 @@
 <div class="dropdown">
     <button class="btn btn-info btn-sm dropdown-toggle" type="button" id="dropdownMenu2" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
         Export
-        <span class="caret"></span>
+        
     </button>
-    <ul class="dropdown-menu">
+    <ul class="dropdown-menu dropdown-menu-right">
         @{menuItemModals.map { _ match {
             case Left((name, caption, _)) => menuItem(name, caption)
             case Right(html) => html

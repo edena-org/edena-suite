@@ -32,12 +32,17 @@ libraryDependencies ++= Seq(
   "com.typesafe.play" %% "play-ahc-ws" % Versions.play,               // WS to wrap Standalone WS
 
   "org.scalaz" %% "scalaz-core" % Versions.scalazCore,
+
   "org.webjars" % "typeaheadjs" % "0.11.1",                         // typeahead (autocompletion)
-  "org.webjars" % "html5shiv" % "3.7.0",
-  "org.webjars" % "respond" % "1.4.2",
   "org.webjars.npm" % "bootstrap-select" % "1.13.2",                // bootstrap select element
-  "org.webjars.bower" % "plotly.js" % "1.54.1",                     // plotly
-  "org.webjars" % "highcharts" % "6.2.0",                           // highcharts
+  "org.webjars.npm" % "bootstrap-icons" % "1.11.3",                 // bootstrap icons (replaces glyphicons)
+
+  // charting
+  "org.webjars.npm" % "plotly.js-dist" % "2.35.3",                  // plotly
+  "org.webjars" % "highcharts" % "11.1.0",                          // highcharts — proprietary license, commercial use requires paid Highsoft license
+  "org.webjars.npm" % "apexcharts" % "4.4.0",                       // apexcharts
+  "org.webjars.npm" % "echarts" % "5.5.1",                          // echarts (Apache 2.0)
+
   "org.webjars.bower" % "d3" % "3.5.16",
   "org.webjars.bower" % "Autolinker.js" % "0.25.0",                 // to convert links to a-href elements
   "org.webjars" % "jquery-ui" % "1.11.1",
@@ -160,7 +165,7 @@ licenseOverrides := {
     | DepModuleInfo("net.java.dev.jna", "jna", _) // both jna and jna-platform libs have a dual LGPL / Apache 2.0 license, we choose Apache 2.0
     | DepModuleInfo("net.java.dev.jna", "jna-platform", _)
     | DepModuleInfo("cglib", "cglib-nodep", _)
-    | DepModuleInfo("org.webjars", "bootswatch-united", "3.3.4+1")
+    | DepModuleInfo("org.webjars", "bootswatch-united", "4.2.1")
   =>
     LicenseInfo(LicenseCategory.Apache, "Apache License v2.0", "http://www.apache.org/licenses/LICENSE-2.0")
 

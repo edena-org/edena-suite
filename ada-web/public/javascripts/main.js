@@ -146,11 +146,11 @@ function prependTrollboxMessage(author, timeCreated, text, isAdmin, fadeIn) {
     } else {
       messageBlock = $('<div class="alert alert-dismissable" data-toggle="tooltip" data-placement="top" title="Published at: ' + timeCreated + '">')
     }
-    messageBlock.append('<span class="glyphicon glyphicon-user"></span>&nbsp;')
+    messageBlock.append('<span class="bi bi-person-circle"></span>&nbsp;')
     messageBlock.append('<strong>' + author + ':</strong> &nbsp;')
   } else {
     messageBlock = $('<div class="alert alert-dismissable alert-info" data-toggle="tooltip" data-placement="top" title="Published at: ' + timeCreated + '">')
-    messageBlock.append('<span class="glyphicon glyphicon-king"></span>&nbsp;')
+    messageBlock.append('<span class="bi bi-crown"></span>&nbsp;')
     messageBlock.append('<strong>Ada:</strong> &nbsp;')
   }
   messageBlock.append(text)
@@ -559,14 +559,14 @@ function updateFilterValueElement(filterElement, data) {
     })
 
     var multiple = (isInNinType) ? "multiple" : ""
-    newValueElement = $("<select id='value' " + multiple + " class='selectpicker float-left show-menu-arrow form-control conditionValue'>")
+    newValueElement = $("<select id='value' " + multiple + " class='selectpicker show-menu-arrow form-control conditionValue'>")
     if (!isInNinType)
       newValueElement.append("<option value=''>[undefined]</option>")
     $.each(data.allowedValues, function (index, keyValue) {
       newValueElement.append("<option value='" + keyValue[0] + "'>" + keyValue[1] + "</option>")
     });
   } else {
-    newValueElement = $("<input id='value' class='float-left conditionValue' placeholder='Condition'/>")
+    newValueElement = $("<input id='value' class='conditionValue' placeholder='Condition'/>")
   }
   var oldValueElement = filterElement.find("#addEditConditionModal .conditionValue")
   var oldValue = oldValueElement.val()
@@ -585,14 +585,14 @@ function updateFilterValueElement(filterElement, data) {
 }
 
 function updatePlusMinusIcon(element) {
-  var iconPlus = element.find("span.glyphicon-plus:first");
-  var iconMinus = element.find("span.glyphicon-minus:first");
-  if (iconPlus.length) {
-    iconPlus.removeClass("glyphicon-plus");
-    iconPlus.addClass("glyphicon-minus");
+  var iconCollapsed = element.find("span.bi-chevron-right:first");
+  var iconExpanded = element.find("span.bi-chevron-down:first");
+  if (iconCollapsed.length) {
+    iconCollapsed.removeClass("bi-chevron-right");
+    iconCollapsed.addClass("bi-chevron-down");
   } else {
-    iconMinus.removeClass("glyphicon-minus");
-    iconMinus.addClass("glyphicon-plus");
+    iconExpanded.removeClass("bi-chevron-down");
+    iconExpanded.addClass("bi-chevron-right");
   }
 }
 

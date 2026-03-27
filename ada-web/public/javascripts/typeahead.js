@@ -234,10 +234,10 @@ function populateFieldTypeaheadAux({typeaheadElement, fieldNameElement, source, 
                     nameBadge = '';
                     break;
                 case 2:
-                    nameBadge = '<span class="label label-info label-filter">name</span>';
+                    nameBadge = '<span class="badge badge-info label-filter">name</span>';
                     break;
                 case 3:
-                    nameBadge = '<span class="label label-info label-filter">name</span>';
+                    nameBadge = '<span class="badge badge-info label-filter">name</span>';
                     break;
             }
             switch (showOption) {
@@ -248,10 +248,10 @@ function populateFieldTypeaheadAux({typeaheadElement, fieldNameElement, source, 
                     labelBadge = '';
                     break;
                 case 2:
-                    labelBadge = '<span class="label label-success label-filter">label</span>';
+                    labelBadge = '<span class="badge badge-success label-filter">label</span>';
                     break;
                 case 3:
-                    labelBadge = '<span class="label label-success label-filter">label</span>';
+                    labelBadge = '<span class="badge badge-success label-filter">label</span>';
                     break;
             }
             if (item.isLabel)

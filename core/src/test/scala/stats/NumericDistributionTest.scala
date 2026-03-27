@@ -96,6 +96,44 @@ class NumericDistributionTest extends AsyncFlatSpec with Matchers {
     arrayCalc.runFlow(streamOptions, streamOptions)(arrayInputSource).map(checkResult)
   }
 
+  "Distributions" should "match the static example with custom bin edges" in {
+    // edges: [0, 1, 3, 5, 8] => 4 bins: [0,1), [1,3), [3,5), [5,8]
+    val inputs: Seq[Option[Double]] = values1.map(Some(_))
+    val inputSource = Source.fromIterator(() => inputs.toIterator)
+
+    // values1 = 0.5, 0.5, 1.5, 2, 0.6, 2.4, 2.6, 3, 5, 7.5, 1.1, 2
+    // [0,1): 0.5, 0.5, 0.6 => 3
+    // [1,3): 1.5, 2, 2.4, 2.6, 1.1, 2 => 6
+    // [3,5): 3 => 1
+    // [5,8]: 5, 7.5 => 2
+    val edges = Seq(0.0, 1.0, 3.0, 5.0, 8.0)
+    val expectedCustomResult = Seq(
+      BigDecimal(0.0) -> 3,
+      BigDecimal(1.0) -> 6,
+      BigDecimal(3.0) -> 1,
+      BigDecimal(5.0) -> 2
+    )
+
+    def checkResult(result: Traversable[(BigDecimal, Int)]) = {
+      result.size should be (expectedCustomResult.size)
+
+      result.toSeq.zip(expectedCustomResult).foreach { case ((value1, count1), (value2, count2)) =>
+        value1 should be (value2)
+        count1 should be (count2)
+      }
+
+      result.map(_._2).sum should be (inputs.size)
+    }
+
+    // standard calculation
+    val standardOptions = NumericDistributionOptions(edges.length - 1, customBinEdges = Some(edges))
+    Future(calc.fun(standardOptions)(inputs)).map(checkResult)
+
+    // streamed calculations
+    val streamOptions = NumericDistributionFlowOptions(edges.length - 1, edges.head, edges.last, customBinEdges = Some(edges))
+    calc.runFlow(streamOptions, streamOptions)(inputSource).map(checkResult)
+  }
+
   "Distributions" should "match each other (double)" in {
     val inputs = for (_ <- 1 to randomInputSize) yield {
        if (Random.nextDouble() < 0.2) None else Some(Random.nextInt(20).toDouble)

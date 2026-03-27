@@ -14,11 +14,12 @@ libraryDependencies += guice
 
 libraryDependencies ++= Seq(
   "com.typesafe.play" %% "play" % Versions.play,
+
   "be.objectify" %% "deadbolt-scala" % Versions.deadbolt, // Deadbolt (authentication)
   "org.webjars" %% "webjars-play" % Versions.webjars,  // Temporarily disabled due to WebJarExtractor issue
   "org.webjars" % "webjars-locator-core" % "0.59",      // WebJar extractor
-  "org.webjars" % "bootstrap" % "3.3.7",                // Bootstrap
-  "org.webjars" % "bootswatch-united" % "3.3.4+1"       // Bootstrap
+  "org.webjars" % "bootstrap" % "4.6.2",                // Bootstrap
+  "org.webjars" % "bootswatch-united" % "4.2.1"         // Bootstrap
 )
 
 // some of the libs' licenses are not included hence we need to provide them (override) manually
@@ -34,7 +35,7 @@ licenseOverrides := {
     | DepModuleInfo("com.google.inject", "guice", _)
     | DepModuleInfo("com.google.inject.extensions", _, _)
     | DepModuleInfo("cglib", "cglib-nodep", _)
-    | DepModuleInfo("org.webjars", "bootswatch-united", "3.3.4+1") =>
+    | DepModuleInfo("org.webjars", "bootswatch-united", "4.2.1") =>
   LicenseInfo(LicenseCategory.Apache, "Apache License v2.0", "http://www.apache.org/licenses/LICENSE-2.0")
 
   // javax.transaction has a dual GPL2 / CDDL license, we choose CDDL

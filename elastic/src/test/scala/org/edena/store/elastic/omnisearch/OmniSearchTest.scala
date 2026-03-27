@@ -2,13 +2,14 @@ package org.edena.store.elastic.omnisearch
 
 import akka.actor.ActorSystem
 import akka.stream.Materializer
+import akka.stream.scaladsl.Sink
 import org.edena.core.store.Criterion._
 import org.edena.core.store.ValueMapAux._
 import org.edena.store.elastic.{ElasticBaseTest, FullTextSearchSettings, FullTextSearchType, KnnSearchSettings}
 import org.edena.store.elastic.knn.{Article, ArticleStoreModule, ArticleStoreTypes}
 import org.scalatest.{AsyncFlatSpec, BeforeAndAfterAll, Matchers}
 
-import scala.concurrent.Await
+import scala.concurrent.{Await, Future}
 import scala.concurrent.duration._
 
 /**
@@ -361,6 +362,162 @@ class OmniSearchTest extends AsyncFlatSpec
       }
 
       succeed
+    }
+  }
+
+  // ==================== Streaming Tests ====================
+
+  it should "stream with kNN only" in {
+    println("\n11. Test - stream kNN only")
+
+    for {
+      source <- store.findAsValueMapOmniStream(
+        vectorField = Some("embedding"),
+        knnQueryVector = Some(queryVector),
+        knnSettings = KnnSearchSettings(k = 5),
+        projection = Seq("title", "category")
+      )
+      results <- source.runWith(Sink.seq)
+    } yield {
+      println(s"Streamed ${results.size} results:")
+      results.foreach { result =>
+        println(s"  Score: ${result.score.formatted("%.4f")}, " +
+          s"Title: ${result.valueMap.getOrElse("title", "N/A")}")
+      }
+
+      results should have size 5
+      results.head.valueMap.getAs[String]("category") shouldBe Some("tech")
+    }
+  }
+
+  it should "stream with criterion only (no kNN)" in {
+    println("\n12. Test - stream criterion only")
+
+    for {
+      source <- store.findAsValueMapOmniStream(
+        criterion = "category" #== "tech",
+        projection = Seq("title", "category")
+      )
+      results <- source.runWith(Sink.seq)
+    } yield {
+      println(s"Streamed ${results.size} results:")
+      results.foreach { result =>
+        println(s"  Title: ${result.valueMap.getOrElse("title", "N/A")}")
+      }
+
+      results should have size 5
+      all(results.map(_.valueMap.getAs[String]("category"))) shouldBe Some("tech")
+    }
+  }
+
+  it should "stream with all three components" in {
+    println("\n13. Test - stream ALL THREE: criterion + full-text + kNN")
+
+    for {
+      source <- store.findAsValueMapOmniStream(
+        criterion = "category" #== "tech",
+        fullTextQuery = Some("learning"),
+        fullTextFields = Seq("title", "content"),
+        fullTextSettings = FullTextSearchSettings(
+          searchType = FullTextSearchType.MultiMatch,
+          boost = Some(0.3)
+        ),
+        vectorField = Some("embedding"),
+        knnQueryVector = Some(queryVector),
+        knnSettings = KnnSearchSettings(k = 10, boost = Some(0.5)),
+        queryBoost = Some(0.2),
+        projection = Seq("title", "category", "content")
+      )
+      // Use Source.take(n) to cap total results in streaming (scroll iterates all matches)
+      results <- source.take(5).runWith(Sink.seq)
+    } yield {
+      println(s"Streamed ${results.size} results (take 5):")
+      results.foreach { result =>
+        println(s"  Score: ${result.score.formatted("%.4f")}, " +
+          s"Category: ${result.valueMap.getOrElse("category", "N/A")}, " +
+          s"Title: ${result.valueMap.getOrElse("title", "N/A")}")
+      }
+
+      results.size should be <= 5
+      results.nonEmpty shouldBe true
+    }
+  }
+
+  it should "stream results matching non-stream results" in {
+    println("\n14. Test - stream vs non-stream consistency")
+
+    for {
+      nonStreamResults <- store.findAsValueMapOmni(
+        vectorField = Some("embedding"),
+        knnQueryVector = Some(queryVector),
+        knnSettings = KnnSearchSettings(k = 5),
+        projection = Seq("title", "category")
+      )
+      source <- store.findAsValueMapOmniStream(
+        vectorField = Some("embedding"),
+        knnQueryVector = Some(queryVector),
+        knnSettings = KnnSearchSettings(k = 5),
+        projection = Seq("title", "category")
+      )
+      streamResults <- source.runWith(Sink.seq)
+    } yield {
+      println(s"Non-stream: ${nonStreamResults.size}, Stream: ${streamResults.size}")
+
+      streamResults should have size nonStreamResults.size
+      // Same titles returned (order may differ with scroll)
+      val nonStreamTitles = nonStreamResults.map(_.valueMap.getOrElse("title", "")).toSet
+      val streamTitles = streamResults.map(_.valueMap.getOrElse("title", "")).toSet
+      streamTitles shouldBe nonStreamTitles
+    }
+  }
+
+  // ==================== Source.take cancellation ====================
+
+  it should "stop scrolling early when Source.take is applied" in {
+    println("\n15. Test - verify Source.take cancels scroll")
+
+    // Generate 50 extra articles to have 60 total
+    val extraArticles = (1 to 50).map { i =>
+      Article(
+        title = s"Bulk Article $i",
+        content = s"Content for bulk article number $i with some filler text.",
+        category = if (i % 3 == 0) "tech" else if (i % 3 == 1) "science" else "sports",
+        rating = 3.0 + (i % 20) * 0.1,
+        embedding = Article.randomNormalizedVector(seed = 1000 + i)
+      )
+    }
+
+    val takeLimit = 5
+    val scrollBatch = 3
+    val counter = new java.util.concurrent.atomic.AtomicInteger(0)
+
+    for {
+      // Save extra articles and wait for indexing
+      _ <- store.save(extraArticles)
+      _ <- Future { Thread.sleep(1500) }
+
+      source <- store.findAsValueMapOmniStream(
+        projection = Seq("title"),
+        scrollBatchSize = Some(scrollBatch)
+      )
+      results <- source
+        .map { result =>
+          val count = counter.incrementAndGet()
+          println(s"  Element emitted: #$count - ${result.valueMap.getOrElse("title", "N/A")}")
+          result
+        }
+        .take(takeLimit)
+        .runWith(Sink.seq)
+    } yield {
+      val emitted = counter.get()
+      println(s"Total emitted: $emitted, Total taken: ${results.size}")
+      println(s"Total articles: ${testArticles.size + extraArticles.size}, scrollBatchSize: $scrollBatch, take: $takeLimit")
+      println(s"Expected: emitted should be ~$takeLimit, NOT all ${testArticles.size + extraArticles.size}")
+
+      results should have size takeLimit
+      // If scroll cancels properly, emitted should be close to takeLimit,
+      // definitely not all 60 articles. Allow some slack for buffering.
+      emitted should be <= (takeLimit + scrollBatch)
     }
   }
 

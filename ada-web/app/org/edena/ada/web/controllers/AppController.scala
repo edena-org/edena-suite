@@ -57,7 +57,7 @@ class AppController @Inject() (
       }
     } yield {
       user.map { user =>
-        logger.info("Studies accessed by " + user.userId)
+        logger.info("Data Sets accessed by " + user.userId)
         val dataSpacesNum = metaInfos.map(dataSpaceService.countDataSpacesNumRecursively).sum
         val dataSetsNum = metaInfos.map(dataSpaceService.countDataSetsNumRecursively).sum
         val userFirstName = user.name.split(" ", -1).head.capitalize

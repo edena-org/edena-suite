@@ -4,7 +4,7 @@
 * Generate input according twitter bootsrap rules *
 **************************************************@
 <div class="form-group @if(hasError) {has-error}">
-  <label for="@key" class="col-sm-@labelGridWidth control-label">@label</label>
+  <label for="@key" class="col-sm-@labelGridWidth col-form-label">@label</label>
   <div class="col-sm-@{12 - labelGridWidth}">
     <input class="form-control" type="text" value="@value" readonly="true"/>
     <span class="help-block">@helpText.getOrElse("")</span>

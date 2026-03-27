@@ -23,23 +23,23 @@
 
 <hr/>
 
-<div class="panel panel-default">
-	<div class="panel-body">
+<div class="card">
+	<div class="card-body">
 		@inputText("runnableSpec", "name", form)
 		@if(inputFields.isEmpty) {
-			<a class="pull-right" href="#scheduleSetting" data-toggle="collapse">Show Schedule</a>
+			<a class="float-right" href="#scheduleSetting" data-toggle="collapse">Show Schedule</a>
 		}
 	</div>
 </div>
 
 @inputFields.map { inputs =>
-	<div class="panel panel-default">
-		<div class="panel-heading">Input</div>
-		<div class="panel-body">
+	<div class="card">
+		<div class="card-header">Input</div>
+		<div class="card-body">
 			<div id="input-div">
 				@inputs
 			</div>
-			<a class="pull-right" href="#scheduleSetting" data-toggle="collapse">Show Schedule</a>
+			<a class="float-right" href="#scheduleSetting" data-toggle="collapse">Show Schedule</a>
 		</div>
 	</div>
 }.getOrElse("")

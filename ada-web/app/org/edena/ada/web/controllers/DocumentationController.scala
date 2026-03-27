@@ -50,6 +50,9 @@ class DocumentationController @Inject() (
   def dataSetImport =
     showHtml("dataSetImport", documentation.dataSetImport()(_))
 
+  def dataSetTransformation =
+    showHtml("dataSetTransformation", documentation.dataSetTransformation()(_))
+
   def technology =
     showHtml("technology", documentation.technology()(_))
 

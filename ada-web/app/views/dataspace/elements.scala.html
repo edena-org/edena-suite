@@ -26,7 +26,7 @@
 }
 
 @buttons(dataSetId: String) = {
-    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
     <button type="button" id="submitButton" class="btn btn-primary" onclick="deleteDataSetAction(this, '@dataSetId'); return false;">OK</button>
 }
 
@@ -46,8 +46,8 @@
 }
 
 @deleteButton(dataSetInfo: DataSetMetaInfo) = {
-    <a class="btn btn-sm btn-default"  data-toggle="modal" data-target="#deleteModal@{dataSetInfo._id.get.stringify}">
-        <span class="glyphicon glyphicon-trash" aria-hidden="true"></span>
+    <a class="btn btn-sm btn-secondary"  data-toggle="modal" data-target="#deleteModal@{dataSetInfo._id.get.stringify}">
+        <span class="bi bi-trash" aria-hidden="true"></span>
     </a>
     @if(id.isDefined) {
         @modal("deleteModal" + dataSetInfo._id.get.stringify, "What do you want to do?", deleteModalInner, None, Some(buttons(dataSetInfo.id)))
@@ -88,7 +88,7 @@
 }
 
 @badge(text: Int) = {
-    <span class="badge badge-success"><b><h5>@text</h5></b></span>
+    <span class="badge badge-secondary">@text</span>
 }
 
 @inputText("dataSpaceMetaInfo", "name", form)

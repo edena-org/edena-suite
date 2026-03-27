@@ -29,81 +29,72 @@
 }
 
 @addCustomDataSetPermissionModalBody = {
-    <div class="row">
+    @dataSetSelection("addCustomDataSetPermissionModal")
 
-        @dataSetSelection("addCustomDataSetPermissionModal")
+    @labelValue("dataSetPermission", "Controller", false, None, None, 4) {
+        <select id="permission-controller" name="permission-controller" class="form-control" onchange="updateActionItems()">
+            <option value="" selected>ALL</option>
+            <option value="dataSet">dataSet</option>
+            <option value="field">field</option>
+            <option value="category">category</option>
+            <option value="filter">filter</option>
+            <option value="dataview">dataview</option>
+            <option value="classificationRun">classificationRun</option>
+            <option value="regressionRun">regressionRun</option>
+            <option value="temporalClassificationRun">temporalClassificationRun</option>
+            <option value="temporalRegressionRun">temporalRegressionRun</option>
+        </select>
+    }
 
-        @labelValue("dataSetPermission", "Controller") {
-            <select id="permission-controller" name="permission-controller" class="form-control" onchange="updateActionItems()">
-                <option value="" selected>ALL</option>
-                <option value="dataSet">dataSet</option>
-                <option value="field">field</option>
-                <option value="category">category</option>
-                <option value="filter">filter</option>
-                <option value="dataview">dataview</option>
-                <option value="classificationRun">classificationRun</option>
-                <option value="regressionRun">regressionRun</option>
-                <option value="temporalClassificationRun">temporalClassificationRun</option>
-                <option value="temporalRegressionRun">temporalRegressionRun</option>
+    <div id="permission-actionDiv" style="display:none">
+        @labelValue("dataSetPermission", "Action", false, None, None, 4) {
+            <select id="permission-action" name="permission-action" class="form-control">
+                <option value=""></option>
             </select>
         }
-
-        <div id="permission-actionDiv" style="display:none">
-            @labelValue("dataSetPermission", "Action") {
-                <select id="permission-action" name="permission-action" class="form-control">
-                    <option value=""></option>
-                </select>
-            }
-        </div>
     </div>
 }
 
 @addViewOnlyDataSetPermissionsModalBody = {
-    <div class="row">
-        @dataSetSelection("addViewOnlyDataSetPermissionsModal")
-    </div>
+    @dataSetSelection("addViewOnlyDataSetPermissionsModal")
 }
 
 @addStandardDataSetPermissionsModalBody = {
-    <div class="row">
-        @dataSetSelection("addStandardDataSetPermissionsModal")
-    </div>
+    @dataSetSelection("addStandardDataSetPermissionsModal")
 }
 
 @addRunnableModalBody = {
-    <div class="row">
-        @labelValue("runnablePermission", "Runnable") {
-            @typeahead("classNameTypeahead", "className", placeholder = "Runnable Name")
-        }
-    </div>
+    @labelValue("runnablePermission", "Runnable", false, None, None, 4) {
+        @typeahead("classNameTypeahead", "className", placeholder = "Runnable Name")
+    }
 }
 
 @addCustomDataSetPermissionModalButtons = {
-    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
     <button type="button" class="btn btn-primary">OK</button>
 }
 
 @addViewOnlyDataSetPermissionsModalButtons = {
-    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
     <button type="button" class="btn btn-primary" onclick="addViewOnlyPermissions(); return false;">OK</button>
 }
 
 @addStandardDataSetPermissionsModalButtons = {
-    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
     <button type="button" class="btn btn-primary" onclick="addStandardPermissions(); return false;">OK</button>
 }
 
 @addRunnablePermissionModalButtons = {
-    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
     <button type="button" class="btn btn-primary" onclick="addRunnablePermission(); return false;">OK</button>
 }
 
 @extraButtons = {
     <span class="dropdown">
         <a class="btn btn-info btn-sm dropdown-toggle" data-toggle="dropdown" href="#" title="Add Data Set Permission(s)">
-            <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
+            <span class="bi bi-plus-circle" aria-hidden="true"></span>
             DS
-            <span class="caret"></span>
+            
         </a>
         <ul class="dropdown-menu">
             <li>
@@ -123,7 +114,7 @@
             </li>
         </ul>
         <a class="btn btn-info btn-sm" href="#" data-toggle="modal" data-target="#addRunnablePermissionModal" title="Add Runnable Permission">
-            <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
+            <span class="bi bi-plus-circle" aria-hidden="true"></span>
             RN
         </a>
         @modal("addViewOnlyDataSetPermissionsModal", "Add View-Only Data Set Permissions", addViewOnlyDataSetPermissionsModalBody, None, Some(addViewOnlyDataSetPermissionsModalButtons))

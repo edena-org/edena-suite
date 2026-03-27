@@ -20,43 +20,64 @@ private[calc] class GroupNumericDistributionCountsCalc[G] extends Calculator[Gro
   private val maxGroups = Int.MaxValue
   private val normalCalc = NumericDistributionCountsCalc.apply
 
-  override def fun(options: OPT) =
-    _.toGroupMap.map { case (group, values) =>
-      (group, normalCalc.fun(options)(values))
+  override def fun(options: OPT) = { inputs =>
+    val grouped = inputs.toGroupMap
+
+    val effectiveOptions = if (options.sharedMinMax && options.customBinEdges.isEmpty) {
+      val allDefinedValues = inputs.collect { case (_, Some(v)) => v }
+      if (allDefinedValues.nonEmpty) {
+        val globalMin = allDefinedValues.min
+        val globalMax = allDefinedValues.max
+        val stepSize = calcStepSize(options.binCount, globalMin, globalMax, options.specialBinForMax)
+        val edges = (0 to options.binCount).map(i => globalMin + (stepSize * i).toDouble)
+        options.copy(customBinEdges = Some(edges))
+      } else {
+        options
+      }
+    } else {
+      options
     }
 
-  override def flow(options: FLOW_OPT) = {
-    val stepSize = calcStepSize(
-      options.binCount,
-      options.min,
-      options.max,
-      options.specialBinForMax
-    )
+    grouped.map { case (group, values) =>
+      (group, normalCalc.fun(effectiveOptions)(values))
+    }
+  }
 
-    val minBg = BigDecimal(options.min)
-    val max = options.max
+  override def flow(options: FLOW_OPT) = {
+    val bucketIndexFn: Double => Int = options.customBinEdges match {
+      case Some(edges) =>
+        val edgesBd = edges.map(BigDecimal(_))
+        calcCustomBucketIndex(edgesBd)
+
+      case None =>
+        val stepSize = calcStepSize(options.binCount, options.min, options.max, options.specialBinForMax)
+        val minBg = BigDecimal(options.min)
+        calcBucketIndex(stepSize, options.binCount, minBg, options.max)
+    }
 
     val flatFlow = Flow[IN].collect { case (g, Some(x)) => (g, x)}
 
     val groupBucketIndexFlow = Flow[(Option[G], Double)]
       .groupBy(maxGroups, _._1)
       .map { case (group, value) =>
-        group -> calcBucketIndex(
-          stepSize, options.binCount, minBg, max)(value)
+        group -> bucketIndexFn(value)
       }.mergeSubstreams
 
     flatFlow.via(groupBucketIndexFlow).via(countFlow(maxGroups)).via(seqFlow)
   }
 
   override def postFlow(options: FLOW_OPT) = { elements =>
-    val stepSize = calcStepSize(
-      options.binCount,
-      options.min,
-      options.max,
-      options.specialBinForMax
-    )
+    val binCount = options.customBinEdges.map(_.length - 1).getOrElse(options.binCount)
 
-    val minBg = BigDecimal(options.min)
+    val (xValues: Seq[BigDecimal]) = options.customBinEdges match {
+      case Some(edges) =>
+        edges.init.map(BigDecimal(_))
+
+      case None =>
+        val stepSize = calcStepSize(options.binCount, options.min, options.max, options.specialBinForMax)
+        val minBg = BigDecimal(options.min)
+        (0 until options.binCount).map(index => minBg + (index * stepSize))
+    }
 
     val groupIndexCounts = elements.map { case ((group, index), count) => (group, (index, count))}.toGroupMap
 
@@ -64,10 +85,9 @@ private[calc] class GroupNumericDistributionCountsCalc[G] extends Calculator[Gro
       val indexCountMap = counts.toMap
 
       val xValueCounts =
-        for (index <- 0 to options.binCount - 1) yield {
+        for (index <- 0 until binCount) yield {
           val count = indexCountMap.get(index).getOrElse(0)
-          val xValue = minBg + (index * stepSize)
-          (xValue, count)
+          (xValues(index), count)
         }
       (group, xValueCounts)
     }

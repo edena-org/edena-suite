@@ -10,7 +10,7 @@
   valueElement : Any
 )
 
-<div class="form-group @if(hasError) {has-error}">
+<div class="form-group row @if(hasError) {has-error}">
   <div class="col-sm-@labelGridWidth">
     <label for="@key" class="control-label">@label</label>
     @helpModalContent.map(helpModal(_, Some(label.toString)))

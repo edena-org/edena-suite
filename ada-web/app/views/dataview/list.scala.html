@@ -25,31 +25,24 @@
 )
 
 @actions = {
-    <div class="row">
-        <div class="col-md-10">
+    <div class="d-flex align-items-start">
+        <div class="flex-grow-1">
             @filterWithJs(
                 Filter(conditions),
                 dataViewRouter.plainList,
                 Left(Seq(Field("name", None)))
             )
         </div>
-
-        <div class="pull-right">
-            <ul class="list-inline">
-                <li>
-                    <a class="btn btn-success btn-sm pull-right" href="@dataViewRouter.create" data-toggle="tooltip" title="Add New View">
-                        <span class="glyphicon glyphicon-plus"></span>
-                    </a>
-                </li>
-                <li>
-                    <a class="btn btn-success btn-sm pull-right" href="#" data-toggle="modal" data-target="#dataViewSelectionModal" title="Copy View">
-                        <span class="glyphicon glyphicon-duplicate"></span>
-                    </a>
-                </li>
-            </ul>
-            @dataViewSelectionModal("dataViewSelectionModal", dataViewRouter, Some(dataViewRouter.copy(BSONObjectID.generate)))
+        <div class="ml-auto d-flex align-items-center" style="gap: 6px; padding-top: 10px;">
+            <a class="btn btn-info btn-sm" href="@dataViewRouter.create" data-toggle="tooltip" title="Add New View">
+                <span class="bi bi-plus-circle"></span>
+            </a>
+            <a class="btn btn-info btn-sm" href="#" data-toggle="modal" data-target="#dataViewSelectionModal" title="Copy View">
+                <span class="bi bi-files"></span>
+            </a>
         </div>
     </div>
+    @dataViewSelectionModal("dataViewSelectionModal", dataViewRouter, Some(dataViewRouter.copy(BSONObjectID.generate)))
 }
 
 @table = {

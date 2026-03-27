@@ -73,7 +73,7 @@ dataSetImport.dataView.distributionCalcFieldNames.label = Distribution Calc Fiel
 dataSetImport.dataView.elementGridWidth.label = Element Grid Width
 dataSetImport.dataView.useOptimizedRepoChartCalcMethod.label = Optimized Per Chart Repo Calc
 
-dataSetImport.dataSpaceName.label = Study Name
+dataSetImport.dataSpaceName.label = Data Space Name
 dataSetImport.eol.label = Specific EOL
 dataSetImport.path.label = Server-side Path
 
@@ -151,7 +151,7 @@ user.permission-dataSetId.label = Data Set
 login.id = User Id
 login.password = Password
 
-dataSets.menu = Studies
+dataSets.menu = Data Sets
 ml.menu = ML
 admin.menu = Admin
 links.menu = Links

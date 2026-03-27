@@ -32,8 +32,8 @@ $.widget( "custom.ada_charts", {
 
         var exportButton =
             '<div id="exportMenu" class="dropdown" style="display:none; position: absolute; right: 15px; top: -15px; z-index: 10">\
-                <button class="btn btn-default btn-sm dropdown-toggle" type="button" id="dropdownMenu2" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">\
-                    <span class="glyphicon glyphicon-align-justify" aria-hidden="true"></span>\
+                <button class="btn btn-secondary btn-sm dropdown-toggle" type="button" id="dropdownMenu2" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">\
+                    <span class="bi bi-list" aria-hidden="true"></span>\
                 </button>\
                 <ul class="dropdown-menu">\
                     <li><a id="pngExportButton" href="#">PNG</a></li>\

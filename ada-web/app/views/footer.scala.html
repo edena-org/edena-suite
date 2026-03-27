@@ -14,7 +14,7 @@
         @configuration.underlying.optionalObjectList("footer.logos").map { configObjects =>
             <ul class="list-inline">
             @configObjects.map(_.toConfig).map { logoConfig =>
-                <li>
+                <li class="list-inline-item">
                     <a target="_blank" href="@{logoConfig.getString("url")}">
                         <img @if(logoConfig.hasPath("height")) {height="@logoConfig.getInt("height") px" } src="@CustomDirAssets.versioned(logoConfig.getString("logo"))"/>
                     </a>

@@ -7,11 +7,12 @@
     count: Long,
     actions: Option[Html],
     table: Option[Html] = None,
-    widgets: Option[Html] = None,
+    widgetsAndFilters: Option[Html] = None,
     sideBar: Option[Html] = None,
     topContentBar: Option[Html] = None,
     topResources: Option[Html] = None,
-    bottomResources: Option[Html] = None
+    bottomResources: Option[Html] = None,
+    showCollapsibleTableSeparator: Boolean = true
 )(
     implicit context: WebContext
 )
@@ -28,14 +29,18 @@
         <div id="actions">
             @actions.get
         </div>
-        <hr/>
+        @if(widgetsAndFilters.isDefined && showCollapsibleTableSeparator) {
+            <hr/>
+        }
     }
 
-    @if(widgets.isDefined){
-        @widgets.get
+    @if(widgetsAndFilters.isDefined){
+        @widgetsAndFilters.get
 
-        @if(table.isDefined && count > 0) {
+        @if(table.isDefined && count > 0 && showCollapsibleTableSeparator) {
             @collapsibleElement(table.get)
+        } else if(table.isDefined) {
+            @table.get
         }
     } else {
         @table

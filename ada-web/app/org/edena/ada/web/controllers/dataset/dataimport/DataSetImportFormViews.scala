@@ -39,8 +39,39 @@ abstract protected[controllers] class DataSetImportFormViews[E <: DataSetImport:
   private implicit val storageTypeFormatter = EnumFormatter(StorageType)
   private implicit val widgetGenerationMethodFormatter = EnumFormatter(WidgetGenerationMethod)
 
+  // Custom apply/unapply to stay within Play's 22-field mapping limit (_id excluded, always None)
+  private val dataSetSettingApply = (
+    dataSetId: String, keyFieldName: String,
+    exportOrderByFieldName: Option[String], defaultScatterXFieldName: Option[String],
+    defaultScatterYFieldName: Option[String], defaultDistributionFieldName: Option[String],
+    defaultCumulativeCountFieldName: Option[String], filterShowFieldStyle: Option[FilterShowFieldStyle.Value],
+    filterShowNonNullCount: Boolean, displayItemName: Option[String], storageType: StorageType.Value,
+    mongoAutoCreateIndexForProjection: Boolean, cacheDataSet: Boolean,
+    ownerId: Option[BSONObjectID], showSideCategoricalTree: Boolean,
+    extraNavigationItems: Seq[NavigationItem], extraExportActions: Seq[Link],
+    customControllerClassName: Option[String], description: Option[String],
+    widgetEngineClassName: Option[String], customStorageCollectionName: Option[String],
+    getListItemURL: Option[String]
+  ) => DataSetSetting(
+    _id = None, dataSetId, keyFieldName, exportOrderByFieldName, defaultScatterXFieldName,
+    defaultScatterYFieldName, defaultDistributionFieldName, defaultCumulativeCountFieldName,
+    filterShowFieldStyle, filterShowNonNullCount, displayItemName, storageType,
+    mongoAutoCreateIndexForProjection, cacheDataSet, ownerId, showSideCategoricalTree,
+    extraNavigationItems, extraExportActions, customControllerClassName, description,
+    widgetEngineClassName, customStorageCollectionName, getListItemURL
+  )
+
+  private val dataSetSettingUnapply = (s: DataSetSetting) => Some((
+    s.dataSetId, s.keyFieldName, s.exportOrderByFieldName, s.defaultScatterXFieldName,
+    s.defaultScatterYFieldName, s.defaultDistributionFieldName,
+    s.defaultCumulativeCountFieldName, s.filterShowFieldStyle,
+    s.filterShowNonNullCount, s.displayItemName, s.storageType,
+    s.mongoAutoCreateIndexForProjection, s.cacheDataSet, s.ownerId, s.showSideCategoricalTree,
+    s.extraNavigationItems, s.extraExportActions, s.customControllerClassName,
+    s.description, s.widgetEngineClassName, s.customStorageCollectionName, s.getListItemURL
+  ))
+
   protected val dataSetSettingMapping: Mapping[DataSetSetting] = mapping(
-    "id" -> ignored(Option.empty[BSONObjectID]),
     "dataSetId" -> nonEmptyText,
     "keyFieldName" -> default(nonEmptyText, JsObjectIdentity.name),
     "exportOrderByFieldName" -> optional(text),
@@ -61,8 +92,9 @@ abstract protected[controllers] class DataSetImportFormViews[E <: DataSetImport:
     "customControllerClassName" -> optional(text),
     "description" -> optional(text),
     "widgetEngineClassName" -> optional(text),
-    "customStorageCollectionName" -> optional(text)
-  )(DataSetSetting.apply)(DataSetSetting.unapply)
+    "customStorageCollectionName" -> optional(text),
+    "getListItemURL" -> ignored(Option.empty[String])
+  )(dataSetSettingApply)(dataSetSettingUnapply)
 
   protected val dataViewMapping: Mapping[DataView] = mapping(
     "tableColumnNames" -> of[Seq[String]],

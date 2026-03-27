@@ -16,54 +16,51 @@
     widgetGridElementWidth: Int,
     dataSetSetting: DataSetSetting,
     canEditView: Boolean = false,
-    dataSpaceMetaInfos: Traversable[DataSpaceMetaInfo]
+    dataSpaceMetaInfos: Traversable[DataSpaceMetaInfo],
+    hasWidgets: Boolean
 )(
     implicit context: DataSetWebContext
 )
 
 @actions = {
-    <ul class="list-inline">
-        <li>
-            @viewExportDropdown(dataViewId, dataSetName, dataSetSetting.filterShowFieldStyle, dataSetSetting.extraExportActions)
-        </li>
-        <li>
-            <div class="dropdown">
-                <button class="btn btn-info btn-sm dropdown-toggle" type="button" id="dropdownMenu2" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    <span class="glyphicon glyphicon-wrench" aria-hidden="true"></span>
-                    <span class="caret"></span>
-                </button>
-                <ul class="dropdown-menu">
-                    @if(canEditView) {
-                        <li>
-                            <a href="@{dataViewRouter.getAndShowView(dataViewId)}">
-                                Edit View
-                            </a>
-                        </li>
-                        <li>
-                            <a href="#" onclick="saveFilterToView('@{dataViewId.stringify}')">
-                                Save Filter To View
-                            </a>
-                        </li>
-                    }
+    <div class="d-flex align-items-center" style="gap: 6px;">
+        @viewExportDropdown(dataViewId, dataSetName, dataSetSetting.filterShowFieldStyle, dataSetSetting.extraExportActions)
+        <div class="dropdown">
+            <button class="btn btn-info btn-sm dropdown-toggle" type="button" id="dropdownMenu2" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                <span class="bi bi-gear" aria-hidden="true"></span>
+
+            </button>
+            <ul class="dropdown-menu dropdown-menu-right">
+                @if(canEditView) {
                     <li>
-                        <a href="#" onclick="addNewColumn()">
-                            Add New Filter
+                        <a href="@{dataViewRouter.getAndShowView(dataViewId)}">
+                            Edit View
                         </a>
                     </li>
                     <li>
-                        <a href="#" onclick="removeColumnRight()">
-                            Remove Filter
+                        <a href="#" onclick="saveFilterToView('@{dataViewId.stringify}')">
+                            Save Filter To View
                         </a>
                     </li>
-                    <li>
-                        <a href="#" onclick="setFullWidth()">
-                            Set Full Width
-                        </a>
-                    </li>
-                </ul>
-            </div>
-        </li>
-    </ul>
+                }
+                <li>
+                    <a href="#" onclick="addNewColumn()">
+                        Add New Filter
+                    </a>
+                </li>
+                <li>
+                    <a href="#" onclick="removeColumnRight()">
+                        Remove Filter
+                    </a>
+                </li>
+                <li>
+                    <a href="#" onclick="setFullWidth()">
+                        Set Full Width
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
 }
 
 @extraBottomResources = {
@@ -98,5 +95,6 @@
     actions,
     Some(extraBottomResources),
     tableRowSelection = false,
-    dataSpaceMetaInfos
+    dataSpaceMetaInfos,
+    hasWidgets
 )

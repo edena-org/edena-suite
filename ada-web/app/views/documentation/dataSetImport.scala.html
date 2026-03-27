@@ -10,8 +10,8 @@
 
     @section(rightPanelOffset = 0) {
         <p>
-            To create, edit, delete, schedule, or execute a data set import, go to <i>Admin&rarr;Data Set Imports</i>. Ada currently provides six data import adapters,
-            three file-based: CSV, JSON, and tranSMART; and three RESTful-based: REDCap, Synapse, and eGaIT.
+            To create, edit, delete, schedule, or execute a data set import, go to <i>Admin&rarr;Data Set Imports</i>. Ada currently provides five data import adapters,
+            three file-based: CSV, JSON, and tranSMART; and two RESTful-based: REDCap and Synapse.
         </p>
 
         <p>
@@ -30,12 +30,12 @@
     } {
         <div class="row">
             <div class="col-md-5">
-                <img class="img-responsive" src="@CustomDirAssets.versioned("images/documentation/data_set_imports.png")"/>
+                <img class="img-fluid" src="@CustomDirAssets.versioned("images/documentation/data_set_imports.png")"/>
             </div>
             <div class="col-md-7">
-                <div class="panel panel-warning">
-                    <div class="panel-heading"><strong>Note</strong></div>
-                    <div class="panel-body">Data sets can be imported only by admins! If you have data that you believe should be imported to (a specific instance of) Ada, <a href="@routes.AppController.contact">contact your admin</a>.</div>
+                <div class="card border-warning">
+                    <div class="card-header"><strong>Note</strong></div>
+                    <div class="card-body">Data sets can be imported only by admins! If you have data that you believe should be imported to (a specific instance of) Ada, <a href="@routes.AppController.contact">contact your admin</a>.</div>
                 </div>
             </div>
         </div>
@@ -45,7 +45,7 @@
         <p>
             This panel specifies the data set's identity info:
             <ul>
-                <li><b>Data space name</b> usually corresponds to the study or project name and is manifested as a navigation tree node where a data set will be imported to.</b></li>
+                <li><b>Data space name</b> usually corresponds to the data space or project name and is manifested as a navigation tree node where a data set will be imported to.</b></li>
                 <li><b>Data set name</b> is the display name of a data set (can be changed later).</b></li>
                 <li><b>Data set id</b> is the unique data set identifier, which is automatically generated as <code>&lt;data_space_name&gt;.&lt;data_set_name&gt;</code> but can be overridden if needed.
                     This identifier cannot be changed once a data set is imported.</b></li>
@@ -72,8 +72,7 @@
         ("section_json", "JSON"),
         ("section_transmart", "tranSMART"),
         ("section_redcap", "REDCap"),
-        ("section_synapse", "Synapse"),
-        ("section_egait", "eGAIT")
+        ("section_synapse", "Synapse")
     )
 
     @imageSection(id = Some("section_csv"), caption = Some("CSV"), picPath = Some("images/documentation/data_set_import-csv_specifics_2.png"), picOffset = 0) {
@@ -144,7 +143,7 @@
         </p>
     }
 
-    @imageSection(id = Some("section_synapse"), caption = Some("Synapse"), picPath = Some("images/documentation/data_set_import-synapse_specifics_2.png"), picOffset = 0) {
+    @imageSection(id = Some("section_synapse"), caption = Some("Synapse"), picPath = Some("images/documentation/data_set_import-synapse_specifics_2.png"), picOffset = 0, withLine = false) {
         <p>
             RESTful-based import for <a href="https://www.synapse.org">Synapse</a>, <a href="http://sagebionetworks.org">Sage Bionetworks</a>'s data provenance system, specified as
             <ul>
@@ -154,19 +153,5 @@
                 <li><b>Bulk Download Group Number</b></li>
             </ul>
         </p>
-    }
-
-    @imageSection(id = Some("section_egait"), caption = Some("eGaIT"), picPath = Some("images/documentation/data_set_import-egait_specifics_2.png"), picOffset = 0, withLine = false) {
-        <p>
-            RESTful-based import for an <a href="http://www.egait.de">eGaIT</a> server storing shoe-sensor data specified as
-            <ul>
-                <li><b>Import Raw Data</b></li>
-            </ul>
-        </p>
-
-        <div class="panel panel-warning">
-            <div class="panel-heading"><strong>Note</strong></div>
-            <div class="panel-body">Due to the fact that eGaIT company does not exist anymore, this data set import adapter will be soon dereleased.</div>
-        </div>
     }
 }

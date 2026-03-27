@@ -12,33 +12,31 @@
 
 @layout.main(title = "Ada Login", extraMessages = Some(formErrors("login", form.errors))) {
 
-    <div class="page-header">
-        <h1>Login</h1>
-    </div>
+    <style>.content { background-color: transparent !important; box-shadow: none !important; border: none !important; }</style>
+    <div style="margin-top: 10px; max-width: 360px;">
+        <div class="mb-4">
+            <h4 style="font-weight: 300; color: #334155;">Sign in to Ada</h4>
+        </div>
 
-    <div class="row">
-        @helper.form(routes.AuthController.authenticate){
-            <div class="login well well-lg col-md-6">
-
-                <div class="form-group">
-                    <label form="user"> User ID: <br></label>
+        <div style="background: #fff; border: 1.5px solid #E2E8F0; border-radius: 14px; padding: 28px; box-shadow: 0 1px 4px rgba(0,0,0,.06);">
+            @helper.form(routes.AuthController.authenticate){
+                <div class="form-group" style="display: block; background: transparent; padding: 0;">
+                    <label for="id" style="font-size: 13px; color: #64748B;">User ID</label>
                     <input type="text" class="form-control" id="id" name="id" value="" placeholder="User login">
                 </div>
 
-                <div class="form-group">
-                    <label form="password"> Password: <br></label>
+                <div class="form-group" style="display: block; background: transparent; padding: 0; margin-top: 16px;">
+                    <label for="password" style="font-size: 13px; color: #64748B;">Password</label>
                     <input type="password" class="form-control" id="password" name="password" value="" placeholder="Password">
                 </div>
 
                 @CSRF.formField
 
-                <div class="col-md-12 row">
-                    <input type="submit" id="submit" value="Login" class="btn btn-primary btn-sm btn-block">
-                </div>
-            </div>
-        }
-    </div>
-    <div class="row">
-        Don't have an account? <a href="@routes.AppController.contact">Request one.</a>
+                <input type="submit" id="submit" value="Login" class="btn btn-primary btn-block mt-3">
+            }
+        </div>
+        <div class="mt-3" style="font-size: 13px; color: #64748B;">
+            Don't have an account? <a href="@routes.AppController.contact">Request one.</a>
+        </div>
     </div>
 }

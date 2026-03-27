@@ -2,7 +2,7 @@ name := "edena-suite"
 
 organization in ThisBuild := "org.edena"
 scalaVersion in ThisBuild := "2.13.11" // "2.12.15"
-version in ThisBuild := "1.1.0.RC.22"
+version in ThisBuild := "1.1.0.RC.71"
 isSnapshot in ThisBuild := false
 
 // Dependency override groups

@@ -14,38 +14,38 @@
 
 @(setting: DataSetSetting)(implicit context: DataSetWebContext)
 
-@listItemWithPermission(call: Call, text: String, permissionControllerName: ControllerName.Value, permissionActionName: String, matchPrefixDepth : Option[Int] = None) = {
+@listItemWithPermission(call: Call, text: String, permissionControllerName: ControllerName.Value, permissionActionName: String, matchPrefixDepth : Option[Int] = None, linkClass: String = "") = {
     @restrictOrPattern(Array(SecurityRole.admin), DataSetPermission(context.dataSetId, permissionControllerName, permissionActionName)) {
-        @listItem(call, text, matchPrefixDepth, URLType.GET)
+        @listItem(call, text, matchPrefixDepth, URLType.GET, linkClass)
     }
 }
 
-@listItem(call: Call, text: String, matchPrefixDepth: Option[Int] = None, urlType: URLType.Value = URLType.GET) = {
-    @listItemAux(call.url, text, matchPrefixDepth, urlType)
+@listItem(call: Call, text: String, matchPrefixDepth: Option[Int] = None, urlType: URLType.Value = URLType.GET, linkClass: String = "") = {
+    @listItemAux(call.url, text, matchPrefixDepth, urlType, linkClass)
 }
 
-@plainLink(url: String, text: String) = {
-    <a href="@url">@text</a>
+@plainLink(url: String, text: String, linkClass: String = "") = {
+    <a class="@linkClass" href="@url">@text</a>
 }
 
-@onClickLink(url: String, text: String, method: String) = {
-    <a href="#" onclick="submit('@method', '@url', getQueryParams('@url'))">@text</a>
+@onClickLink(url: String, text: String, method: String, linkClass: String = "") = {
+    <a class="@linkClass" href="#" onclick="submit('@method', '@url', getQueryParams('@url'))">@text</a>
 }
 
-@listItemAux(url: String, text: String, matchPrefixDepth: Option[Int] = None, urlType: URLType.Value) = {
-    <li @if(matchesCorePath(url, toRequest.uri, matchPrefixDepth, configuration.getOptional[String]("play.http.context"))) { class="active"}>
+@listItemAux(url: String, text: String, matchPrefixDepth: Option[Int] = None, urlType: URLType.Value, linkClass: String = "") = {
+    <li class="nav-item @if(matchesCorePath(url, toRequest.uri, matchPrefixDepth, configuration.getOptional[String]("play.http.context"))) { active }">
         @{urlType match {
-            case URLType.GET => plainLink(url, text)
-            case URLType.POST => onClickLink(url, text, "post")
-            case URLType.DELETE => onClickLink(url, text, "delete")
-            case URLType.PUT => onClickLink(url, text, "put")
+            case URLType.GET => plainLink(url, text, linkClass)
+            case URLType.POST => onClickLink(url, text, "post", linkClass)
+            case URLType.DELETE => onClickLink(url, text, "delete", linkClass)
+            case URLType.PUT => onClickLink(url, text, "put", linkClass)
         }}
     </li>
 }
 
 @extraDropDown(menu: Menu) = {
-    <li class="dropdown">
-        <a class="dropdown-toggle" data-toggle="dropdown" href="#">@menu.header<span class="caret"></span></a>
+    <li class="nav-item dropdown">
+        <a class="nav-link dropdown-toggle" data-toggle="dropdown" href="#">@menu.header</a>
         <ul class="dropdown-menu">
             @menu.links.map(extraNavItem)
         </ul>
@@ -63,13 +63,13 @@
 }
 
 <ul id="dataSetSubMenu" class="nav nav-tabs">
-    <li id="viewsDiv" class="dropdown">
-        <a class="dropdown-toggle" data-toggle="dropdown" href="#">Views<span class="caret"></span></a>
+    <li id="viewsDiv" class="nav-item dropdown">
+        <a class="nav-link dropdown-toggle" data-toggle="dropdown" href="#">Views</a>
         <ul id="viewsDropdownDiv" class="dropdown-menu">
         </ul>
     </li>
-    <li class="dropdown">
-        <a class="dropdown-toggle" data-toggle="dropdown" href="#">Analytics<span class="caret"></span></a>
+    <li class="nav-item dropdown">
+        <a class="nav-link dropdown-toggle" data-toggle="dropdown" href="#">Analytics</a>
         <ul class="dropdown-menu">
             @listItemWithPermission(dataSetRouter.getDistribution(Left(Nil)), "Distribution", ControllerName.dataSet, "getDistribution", Some(2))
             @listItemWithPermission(dataSetRouter.getCumulativeCount(Left(Nil)), "Cumulative Count", ControllerName.dataSet, "getCumulativeCount", Some(2))
@@ -81,10 +81,10 @@
             @listItemWithPermission(dataSetRouter.getComparison(Nil), "Comparison", ControllerName.dataSet, "getComparison", Some(2))
             @listItemWithPermission(dataSetRouter.getIndependenceTest(Left(Nil)), "Independence Test", ControllerName.dataSet, "getIndependenceTest", Some(2))
             @listItemWithPermission(dataSetRouter.getTable(Left(Nil)), "Table / Export", ControllerName.dataSet, "getTable", Some(2))
-            <li role="separator" class="divider"></li>
+            <div class="dropdown-divider"></div>
 
             <li class="dropdown-submenu">
-                <a href="#" class="dropdown-toggle" data-toggle="dropdown">ML Classification</a>
+                <a href="#" class="dropdown-item dropdown-toggle" data-toggle="dropdown">ML Classification</a>
                 <ul class="dropdown-menu">
                     @listItemWithPermission(standardClassificationRunRouter.plainList, "Standard", ControllerName.classificationRun, "find", Some(2))
                     @listItemWithPermission(temporalClassificationRunRouter.plainList, "Temporal", ControllerName.temporalClassificationRun, "find", Some(2))
@@ -92,7 +92,7 @@
             </li>
 
             <li class="dropdown-submenu">
-                <a href="#" class="dropdown-toggle" data-toggle="dropdown">ML Regression</a>
+                <a href="#" class="dropdown-item dropdown-toggle" data-toggle="dropdown">ML Regression</a>
                 <ul class="dropdown-menu">
                     @listItemWithPermission(standardRegressionRunRouter.plainList, "Standard", ControllerName.regressionRun, "find", Some(2))
                     @listItemWithPermission(temporalRegressionRunRouter.plainList, "Temporal", ControllerName.temporalRegressionRun, "find", Some(2))
@@ -100,15 +100,15 @@
             </li>
 
             @listItemWithPermission(dataSetRouter.getClusterization, "ML Clustering", ControllerName.dataSet, "getClusterization", Some(2))
-            <li role="separator" class="divider"></li>
+            <div class="dropdown-divider"></div>
             @listItemWithPermission(dataSetRouter.getSeriesProcessingSpec, "Series Processing", ControllerName.dataSet, "getSeriesProcessingSpec", Some(2))
             @listItemWithPermission(dataSetRouter.getSeriesTransformationSpec, "Series Transformation", ControllerName.dataSet, "getSeriesTransformationSpec", Some(2))
         </ul>
     </li>
-    @listItemWithPermission(dictionaryRouter.plainList, "Dictionary", ControllerName.field, "find", Some(2))
-    @listItemWithPermission(categoryRouter.plainList, "Categorical Tree", ControllerName.category, "find", Some(2))
-    <li class="dropdown">
-        <a class="dropdown-toggle" data-toggle="dropdown" href="#">Setting<span class="caret"></span></a>
+    @listItemWithPermission(dictionaryRouter.plainList, "Dictionary", ControllerName.field, "find", Some(2), "nav-link")
+    @listItemWithPermission(categoryRouter.plainList, "Categorical Tree", ControllerName.category, "find", Some(2), "nav-link")
+    <li class="nav-item dropdown">
+        <a class="nav-link dropdown-toggle" data-toggle="dropdown" href="#">Setting</a>
         <ul class="dropdown-menu">
             @deadboltRestricts.restrict(roles = List(Array(SecurityRole.admin))) {
                 @listItem(dataSetSettingRoutes.editForDataSet(context.dataSetId), "General", Some(2))
@@ -129,8 +129,8 @@
 
         function removeEmpty(menuClass) {
             $("#dataSetSubMenu " + menuClass).each(function () {
-                var liCount = $(this).find("li").size()
-                var separatorCount = $(this).find("li.divider").size()
+                var liCount = $(this).find("li").length
+                var separatorCount = $(this).find("li.divider").length
                 if (liCount - separatorCount == 0) {
                     $(this).remove()
                 } else {
@@ -138,7 +138,7 @@
                         if ($(item).hasClass("divider")) {
                             var prev = $(item).prev()
                             var next = $(item).next()
-                            if (next.size() == 0 || next.hasClass("divider")) {
+                            if (next.length == 0 || next.hasClass("divider")) {
                                 $(item).remove()
                             }
                         }
@@ -148,7 +148,7 @@
         }
 
         $("li.dropdown-submenu").each(function () {
-            if ($(this).find("li.active").size() > 0)
+            if ($(this).find("li.active").length > 0)
                 $(this).addClass("active")
         });
     })

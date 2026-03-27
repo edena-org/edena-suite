@@ -341,6 +341,7 @@ GET         /documentation/regression                                           
 GET         /documentation/clusterization                                           org.edena.ada.web.controllers.DocumentationController.mlClusterization()
 GET         /documentation/userManagement                                           org.edena.ada.web.controllers.DocumentationController.userManagement()
 GET         /documentation/dataSetImport                                            org.edena.ada.web.controllers.DocumentationController.dataSetImport()
+GET         /documentation/dataSetTransformation                                   org.edena.ada.web.controllers.DocumentationController.dataSetTransformation()
 GET         /documentation/technology                                               org.edena.ada.web.controllers.DocumentationController.technology()
 
 # HTML Snippets

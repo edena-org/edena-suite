@@ -314,7 +314,7 @@ abstract class ElasticReadonlyStore[E, ID](
       )
     }
 
-  private def createSearchDefinition(
+  protected def createSearchDefinition(
     criterion: Criterion,
     sort: Seq[Sort] = Nil,
     projection: Traversable[String] = Nil,

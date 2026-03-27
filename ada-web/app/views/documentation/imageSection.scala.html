@@ -12,7 +12,7 @@
 )
 
 @imageAux(picPath: String) = {
-    <img class="img-responsive" src="@CustomDirAssets.versioned(picPath)"/>
+    <img class="img-fluid" src="@CustomDirAssets.versioned(picPath)"/>
 }
 
 @section(id, caption, picOffset, picWidth, withLine)(content)(picPath.map(imageAux).getOrElse(Html("")))

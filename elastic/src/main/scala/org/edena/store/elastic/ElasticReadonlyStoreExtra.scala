@@ -10,12 +10,32 @@ import com.sksamuel.elastic4s.{ElasticDsl, HttpClient, Index, Indexes}
 import com.sksamuel.elastic4s.requests.searches.{HighlightField, SearchHit, SearchRequest}
 import com.sksamuel.elastic4s.requests.searches.knn.Knn
 import com.sksamuel.elastic4s.requests.common.FetchSourceContext
-import com.sksamuel.elastic4s.requests.searches.queries.{FuzzyQuery, InnerHit => QueriesInnerHit, Query}
-import com.sksamuel.elastic4s.requests.searches.queries.matches.{MatchQuery, MultiMatchQuery, MatchPhraseQuery}
+import com.sksamuel.elastic4s.requests.searches.queries.{
+  FuzzyQuery,
+  InnerHit => QueriesInnerHit,
+  Query
+}
+import com.sksamuel.elastic4s.requests.searches.queries.matches.{
+  MatchQuery,
+  MultiMatchQuery,
+  MatchPhraseQuery
+}
 import com.sksamuel.elastic4s.requests.common.Operator
 import com.sksamuel.elastic4s.requests.analyzers.{Analyzer => ES4sAnalyzer}
 import org.edena.core.store.ValueMapAux.ValueMap
-import org.edena.core.store.{And, AscSort, Criterion, DescSort, EqualsCriterion, EdenaDataStoreException, NoCriterion, Or, ReadonlyStore, Sort, ValueCriterion}
+import org.edena.core.store.{
+  And,
+  AscSort,
+  Criterion,
+  DescSort,
+  EqualsCriterion,
+  EdenaDataStoreException,
+  NoCriterion,
+  Or,
+  ReadonlyStore,
+  Sort,
+  ValueCriterion
+}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -24,8 +44,10 @@ import scala.concurrent.Future
 /**
  * Extension of a classic readonly repo with some Elastic-specific functionality
  *
- * @tparam E Item type
- * @tparam ID Id type (of a given item type)
+ * @tparam E
+ *   Item type
+ * @tparam ID
+ *   Id type (of a given item type)
  */
 trait ElasticReadonlyStoreExtra[E, ID] {
 
@@ -62,8 +84,9 @@ trait ElasticReadonlyStoreExtra[E, ID] {
     skip: Option[Int] = None,
     fuzzySearchField: Option[String] = None,
     fuzzySearchSettings: FuzzySearchSettings = FuzzySearchSettings()
-)(
-    implicit system: ActorSystem, materializer: Materializer
+  )(
+    implicit system: ActorSystem,
+    materializer: Materializer
   ): Future[Source[ValueMap, _]]
 
   def countFuzzy(
@@ -73,16 +96,23 @@ trait ElasticReadonlyStoreExtra[E, ID] {
   ): Future[Int]
 
   /**
-   * Find documents by kNN vector similarity search.
-   * Returns results with similarity scores, sorted by score descending.
+   * Find documents by kNN vector similarity search. Returns results with similarity scores,
+   * sorted by score descending.
    *
-   * @param vectorField The dense_vector field to search
-   * @param queryVector The query vector (must match field dimensions)
-   * @param criterion Additional filter criteria applied during kNN search (optional)
-   * @param sort Sort order for results (by default, results sorted by score)
-   * @param projection Fields to return
-   * @param settings kNN search settings (k, numCandidates, similarity threshold)
-   * @return Traversable of (ValueMap, score) tuples
+   * @param vectorField
+   *   The dense_vector field to search
+   * @param queryVector
+   *   The query vector (must match field dimensions)
+   * @param criterion
+   *   Additional filter criteria applied during kNN search (optional)
+   * @param sort
+   *   Sort order for results (by default, results sorted by score)
+   * @param projection
+   *   Fields to return
+   * @param settings
+   *   kNN search settings (k, numCandidates, similarity threshold)
+   * @return
+   *   Traversable of (ValueMap, score) tuples
    */
   def findAsValueMapKnn(
     vectorField: String,
@@ -96,13 +126,20 @@ trait ElasticReadonlyStoreExtra[E, ID] {
   /**
    * Streaming version of kNN vector search with scores.
    *
-   * @param vectorField The dense_vector field to search
-   * @param queryVector The query vector (must match field dimensions)
-   * @param criterion Additional filter criteria applied during kNN search (optional)
-   * @param sort Sort order for results
-   * @param projection Fields to return
-   * @param settings kNN search settings
-   * @return Source of (ValueMap, score) tuples
+   * @param vectorField
+   *   The dense_vector field to search
+   * @param queryVector
+   *   The query vector (must match field dimensions)
+   * @param criterion
+   *   Additional filter criteria applied during kNN search (optional)
+   * @param sort
+   *   Sort order for results
+   * @param projection
+   *   Fields to return
+   * @param settings
+   *   kNN search settings
+   * @return
+   *   Source of (ValueMap, score) tuples
    */
   def findAsValueMapKnnStream(
     vectorField: String,
@@ -112,23 +149,34 @@ trait ElasticReadonlyStoreExtra[E, ID] {
     projection: Traversable[String] = Nil,
     settings: KnnSearchSettings = KnnSearchSettings()
   )(
-    implicit system: ActorSystem, materializer: Materializer
+    implicit system: ActorSystem,
+    materializer: Materializer
   ): Future[Source[KnnResult, _]]
 
   /**
-   * Hybrid search combining kNN with traditional query.
-   * Scores are combined: score = knn_score * knn_boost + query_score * query_boost
+   * Hybrid search combining kNN with traditional query. Scores are combined: score = knn_score
+   * * knn_boost + query_score * query_boost
    *
-   * @param vectorField The dense_vector field to search
-   * @param queryVector The query vector (must match field dimensions)
-   * @param criterion Traditional query criteria to combine with kNN
-   * @param sort Sort order for results
-   * @param projection Fields to return
-   * @param limit Maximum number of results
-   * @param skip Number of results to skip
-   * @param knnSettings kNN search settings
-   * @param queryBoost Boost factor for the traditional query score (optional)
-   * @return Traversable of (ValueMap, combined score) tuples
+   * @param vectorField
+   *   The dense_vector field to search
+   * @param queryVector
+   *   The query vector (must match field dimensions)
+   * @param criterion
+   *   Traditional query criteria to combine with kNN
+   * @param sort
+   *   Sort order for results
+   * @param projection
+   *   Fields to return
+   * @param limit
+   *   Maximum number of results
+   * @param skip
+   *   Number of results to skip
+   * @param knnSettings
+   *   kNN search settings
+   * @param queryBoost
+   *   Boost factor for the traditional query score (optional)
+   * @return
+   *   Traversable of (ValueMap, combined score) tuples
    */
   def findAsValueMapKnnHybrid(
     vectorField: String,
@@ -144,26 +192,40 @@ trait ElasticReadonlyStoreExtra[E, ID] {
 
   /**
    * Hybrid search combining up to three search components:
-   * 1. Traditional query (criterion-based filtering) - optional
-   * 2. Full-text search (text matching with optional fuzziness) - optional
-   * 3. kNN (semantic/vector search) - optional
+   *   1. Traditional query (criterion-based filtering) - optional 2. Full-text search (text
+   *      matching with optional fuzziness) - optional 3. kNN (semantic/vector search) -
+   *      optional
    *
-   * Scores from each component are combined using Elasticsearch's bool query with should clauses.
-   * Each component can have its own boost factor to control its contribution to the final score.
+   * Scores from each component are combined using Elasticsearch's bool query with should
+   * clauses. Each component can have its own boost factor to control its contribution to the
+   * final score.
    *
-   * @param criterion Traditional query criteria (optional)
-   * @param fullTextFields Fields to search for full-text (for multi_match queries)
-   * @param vectorField The dense_vector field for kNN search (optional, required if knnQueryVector is provided)
-   * @param fullTextQuery The text query for full-text search (optional)
-   * @param knnQueryVector The query vector for kNN search (optional, must match field dimensions)
-   * @param sort Sort order for results
-   * @param projection Fields to return
-   * @param limit Maximum number of results
-   * @param skip Number of results to skip
-   * @param fullTextSettings Full-text search settings (includes fuzziness, boost)
-   * @param knnSettings kNN search settings (includes k, numCandidates, boost)
-   * @param queryBoost Boost factor for the traditional query score (optional)
-   * @return Traversable of (ValueMap, combined score) tuples
+   * @param criterion
+   *   Traditional query criteria (optional)
+   * @param fullTextFields
+   *   Fields to search for full-text (for multi_match queries)
+   * @param vectorField
+   *   The dense_vector field for kNN search (optional, required if knnQueryVector is provided)
+   * @param fullTextQuery
+   *   The text query for full-text search (optional)
+   * @param knnQueryVector
+   *   The query vector for kNN search (optional, must match field dimensions)
+   * @param sort
+   *   Sort order for results
+   * @param projection
+   *   Fields to return
+   * @param limit
+   *   Maximum number of results
+   * @param skip
+   *   Number of results to skip
+   * @param fullTextSettings
+   *   Full-text search settings (includes fuzziness, boost)
+   * @param knnSettings
+   *   kNN search settings (includes k, numCandidates, boost)
+   * @param queryBoost
+   *   Boost factor for the traditional query score (optional)
+   * @return
+   *   Traversable of (ValueMap, combined score) tuples
    */
   def findAsValueMapOmni(
     criterion: Criterion = NoCriterion,
@@ -182,14 +244,45 @@ trait ElasticReadonlyStoreExtra[E, ID] {
   ): Future[Traversable[KnnResult]]
 
   /**
-   * Count documents matching kNN criteria.
-   * Note: kNN count returns the number of documents that would be returned by the kNN search.
+   * Streaming version of omni search combining up to three search components:
+   *   1. Traditional query (criterion-based filtering) - optional 2. Full-text search (text
+   *      matching with optional fuzziness) - optional 3. kNN (semantic/vector search) -
+   *      optional
    *
-   * @param vectorField The dense_vector field to search
-   * @param queryVector The query vector (must match field dimensions)
-   * @param criterion Additional filter criteria (optional)
-   * @param settings kNN search settings
-   * @return Count of matching documents
+   * Uses Elasticsearch scroll API for large result sets.
+   */
+  def findAsValueMapOmniStream(
+    criterion: Criterion = NoCriterion,
+    fullTextFields: Seq[String] = Nil,
+    vectorField: Option[String] = None,
+    fullTextQuery: Option[String] = None,
+    knnQueryVector: Option[Seq[Double]] = None,
+    sort: Seq[Sort] = Nil,
+    projection: Traversable[String] = Nil,
+    scrollBatchSize: Option[Int] = None,
+    fullTextSettings: FullTextSearchSettings = FullTextSearchSettings(),
+    knnSettings: KnnSearchSettings = KnnSearchSettings(),
+    queryBoost: Option[Double] = None,
+    minScore: Option[Double] = None
+  )(
+    implicit system: ActorSystem,
+    materializer: Materializer
+  ): Future[Source[KnnResult, _]]
+
+  /**
+   * Count documents matching kNN criteria. Note: kNN count returns the number of documents
+   * that would be returned by the kNN search.
+   *
+   * @param vectorField
+   *   The dense_vector field to search
+   * @param queryVector
+   *   The query vector (must match field dimensions)
+   * @param criterion
+   *   Additional filter criteria (optional)
+   * @param settings
+   *   kNN search settings
+   * @return
+   *   Count of matching documents
    */
   def countKnn(
     vectorField: String,
@@ -199,19 +292,29 @@ trait ElasticReadonlyStoreExtra[E, ID] {
   ): Future[Int]
 
   /**
-   * Count documents matching an omni search (criterion + full-text + kNN).
-   * Uses Elasticsearch's native `min_score` to count only documents above a score threshold.
+   * Count documents matching an omni search (criterion + full-text + kNN). Uses
+   * Elasticsearch's native `min_score` to count only documents above a score threshold.
    *
-   * @param criterion Traditional query criteria (optional)
-   * @param fullTextFields Fields to search for full-text (for multi_match queries)
-   * @param vectorField The dense_vector field for kNN search (optional)
-   * @param fullTextQuery The text query for full-text search (optional)
-   * @param knnQueryVector The query vector for kNN search (optional)
-   * @param fullTextSettings Full-text search settings
-   * @param knnSettings kNN search settings
-   * @param queryBoost Boost factor for the traditional query score (optional)
-   * @param minScore Minimum score threshold — only documents scoring above this are counted (optional)
-   * @return Count of matching documents
+   * @param criterion
+   *   Traditional query criteria (optional)
+   * @param fullTextFields
+   *   Fields to search for full-text (for multi_match queries)
+   * @param vectorField
+   *   The dense_vector field for kNN search (optional)
+   * @param fullTextQuery
+   *   The text query for full-text search (optional)
+   * @param knnQueryVector
+   *   The query vector for kNN search (optional)
+   * @param fullTextSettings
+   *   Full-text search settings
+   * @param knnSettings
+   *   kNN search settings
+   * @param queryBoost
+   *   Boost factor for the traditional query score (optional)
+   * @param minScore
+   *   Minimum score threshold — only documents scoring above this are counted (optional)
+   * @return
+   *   Count of matching documents
    */
   def countOmni(
     criterion: Criterion = NoCriterion,
@@ -229,8 +332,10 @@ trait ElasticReadonlyStoreExtra[E, ID] {
 /**
  * Impl. of [[ElasticReadonlyStoreExtra]]
  *
- * @tparam E Item type
- * @tparam ID Id type (of a given item type)
+ * @tparam E
+ *   Item type
+ * @tparam ID
+ *   Id type (of a given item type)
  */
 trait ElasticReadonlyStoreExtraImpl[E, ID] extends ElasticReadonlyStoreExtra[E, ID] {
 
@@ -254,7 +359,9 @@ trait ElasticReadonlyStoreExtraImpl[E, ID] extends ElasticReadonlyStoreExtra[E, 
     //    ElasticDsl.reindex(Indexes(Seq("\"" + indexName + "\""))) into ("\"" + newIndexName +"\"") refresh true waitForActiveShards setting.shards
 
     client execute {
-      (baseRequest waitForActiveShards setting.shards refresh(asNative(RefreshPolicy.Immediate))): ReindexRequest
+      (baseRequest waitForActiveShards setting.shards refresh (asNative(
+        RefreshPolicy.Immediate
+      ))): ReindexRequest
     }
   }
 
@@ -284,12 +391,15 @@ trait ElasticReadonlyStoreExtraImpl[E, ID] extends ElasticReadonlyStoreExtra[E, 
     fuzzySearch: Boolean,
     fuzzySearchSettings: FuzzySearchSettings
   ): Future[Traversable[(ValueMap, Seq[String])]] = {
-    val fuzzyQueryDef = if (fuzzySearch) toQueryFuzzy(criterion, highlightField, fuzzySearchSettings) else toQuery(criterion)
+    val fuzzyQueryDef =
+      if (fuzzySearch) toQueryFuzzy(criterion, highlightField, fuzzySearchSettings)
+      else toQuery(criterion)
 
     // highlighting
     val addHighlightingDef = (searchDefinition: SearchRequest) =>
       searchDefinition.highlighting {
-        ElasticDsl.highlight(highlightField)
+        ElasticDsl
+          .highlight(highlightField)
           .setIfDefined(_.highlighterType(_: String), setting.highlighterType)
           .setIfDefined(_.fragmentSize(_: Int), setting.highlightFragmentSize)
           .setIfDefined(_.fragmentOffset(_: Int), setting.highlightFragmentOffset)
@@ -303,7 +413,13 @@ trait ElasticReadonlyStoreExtraImpl[E, ID] extends ElasticReadonlyStoreExtra[E, 
       }.fetchSource(false)
 
     findAsValueMapAux(
-      NoCriterion, sort, projection, limit, skip, addHighlightingDef, fuzzyQueryDef
+      NoCriterion,
+      sort,
+      projection,
+      limit,
+      skip,
+      addHighlightingDef,
+      fuzzyQueryDef
     ).map {
       _.map { case (projectionResults, highlightResults) =>
         (projectionResults, highlightResults.getOrElse(highlightField, Nil))
@@ -320,12 +436,21 @@ trait ElasticReadonlyStoreExtraImpl[E, ID] extends ElasticReadonlyStoreExtra[E, 
     fuzzySearchField: Option[String],
     fuzzySearchSettings: FuzzySearchSettings
   ): Future[Traversable[ValueMap]] = {
-    assert(projection.nonEmpty, "Projection expected for the 'findAsValueMapFuzzy' store/repo function.")
+    assert(
+      projection.nonEmpty,
+      "Projection expected for the 'findAsValueMapFuzzy' store/repo function."
+    )
 
     val fuzzyQueryDef = toFuzzyOrNormalQuery(criterion, fuzzySearchField, fuzzySearchSettings)
 
     findAsValueMapAux(
-      NoCriterion, sort, projection, limit, skip, identity(_), fuzzyQueryDef
+      NoCriterion,
+      sort,
+      projection,
+      limit,
+      skip,
+      identity(_),
+      fuzzyQueryDef
     ).map(_.map(_._1)) // no highlight... take only the value map (1st arg)
   }
 
@@ -337,15 +462,24 @@ trait ElasticReadonlyStoreExtraImpl[E, ID] extends ElasticReadonlyStoreExtra[E, 
     skip: Option[Int],
     fuzzySearchField: Option[String],
     fuzzySearchSettings: FuzzySearchSettings
-)(
-    implicit system: ActorSystem, materializer: Materializer
+  )(
+    implicit system: ActorSystem,
+    materializer: Materializer
   ): Future[Source[ValueMap, _]] = {
-    assert(projection.nonEmpty, "Projection expected for the 'findAsValueMapFuzzyStream' store/repo function.")
+    assert(
+      projection.nonEmpty,
+      "Projection expected for the 'findAsValueMapFuzzyStream' store/repo function."
+    )
 
     val fuzzyQueryDef = toFuzzyOrNormalQuery(criterion, fuzzySearchField, fuzzySearchSettings)
 
     findAsValueMapStreamAux(
-      NoCriterion, sort, projection, limit, skip, fuzzyQueryDef
+      NoCriterion,
+      sort,
+      projection,
+      limit,
+      skip,
+      fuzzyQueryDef
     )
   }
 
@@ -355,7 +489,8 @@ trait ElasticReadonlyStoreExtraImpl[E, ID] extends ElasticReadonlyStoreExtra[E, 
     fuzzySearchSettings: FuzzySearchSettings
   ): Future[Int] =
     countAux(
-      additionalQueryDef = toFuzzyOrNormalQuery(criterion, fuzzySearchField, fuzzySearchSettings)
+      additionalQueryDef =
+        toFuzzyOrNormalQuery(criterion, fuzzySearchField, fuzzySearchSettings)
     )
 
   private def toFuzzyOrNormalQuery(
@@ -365,7 +500,7 @@ trait ElasticReadonlyStoreExtraImpl[E, ID] extends ElasticReadonlyStoreExtra[E, 
   ) =
     fuzzyField match {
       case Some(field) => toQueryFuzzy(criterion, field, fuzzySearchSettings)
-      case None => toQuery(criterion)
+      case None        => toQuery(criterion)
     }
 
   // if fuzzy search is required, consider equals criteria used for a highlight field as fuzzy
@@ -377,13 +512,13 @@ trait ElasticReadonlyStoreExtraImpl[E, ID] extends ElasticReadonlyStoreExtra[E, 
     criterion match {
       case c: And =>
         c.criteria.flatMap(toQueryFuzzy(_, fuzzyField, fuzzySearchSettings)) match {
-          case Nil => None
+          case Nil     => None
           case queries => Some(ElasticDsl.must(queries))
         }
 
       case c: Or =>
         c.criteria.flatMap(toQueryFuzzy(_, fuzzyField, fuzzySearchSettings)) match {
-          case Nil => None
+          case Nil     => None
           case queries => Some(ElasticDsl.should(queries))
         }
 
@@ -392,11 +527,26 @@ trait ElasticReadonlyStoreExtraImpl[E, ID] extends ElasticReadonlyStoreExtra[E, 
       case EqualsCriterion(fieldName, value) if fieldName == fuzzyField =>
         val defaultSettings = setting.fuzzySearchSettings
         val query = FuzzyQuery(fuzzyField, value)
-          .setIfDefined(_.fuzziness(_: String), fuzzySearchSettings.`type`.orElse(defaultSettings.`type`))
-          .setIfDefined(_.boost(_: Double), fuzzySearchSettings.boost.orElse(defaultSettings.boost))
-          .setIfDefined(_.transpositions(_: Boolean), fuzzySearchSettings.transpositions.orElse(defaultSettings.transpositions))
-          .setIfDefined(_.maxExpansions(_: Int), fuzzySearchSettings.maxExpansions.orElse(defaultSettings.maxExpansions))
-          .setIfDefined(_.prefixLength(_: Int), fuzzySearchSettings.prefixLength.orElse(defaultSettings.prefixLength))
+          .setIfDefined(
+            _.fuzziness(_: String),
+            fuzzySearchSettings.`type`.orElse(defaultSettings.`type`)
+          )
+          .setIfDefined(
+            _.boost(_: Double),
+            fuzzySearchSettings.boost.orElse(defaultSettings.boost)
+          )
+          .setIfDefined(
+            _.transpositions(_: Boolean),
+            fuzzySearchSettings.transpositions.orElse(defaultSettings.transpositions)
+          )
+          .setIfDefined(
+            _.maxExpansions(_: Int),
+            fuzzySearchSettings.maxExpansions.orElse(defaultSettings.maxExpansions)
+          )
+          .setIfDefined(
+            _.prefixLength(_: Int),
+            fuzzySearchSettings.prefixLength.orElse(defaultSettings.prefixLength)
+          )
         Some(query)
 
       case c: ValueCriterion[_] =>
@@ -449,10 +599,13 @@ trait ElasticReadonlyStoreExtraImpl[E, ID] extends ElasticReadonlyStoreExtra[E, 
     val fetchSource = projection.isEmpty
     val searchDef = createKnnSearchDef(knnQuery, projectionSeq, fetchSource, sort, None, None)
 
-    client.execute(searchDef).map { response =>
-      val result = getResultOrError(response, "findAsValueMapKnn")
-      serializeKnnHits(projectionSeq, fetchSource, result.hits.hits, Set(vectorLeafField))
-    }.recover(handleExceptions)
+    client
+      .execute(searchDef)
+      .map { response =>
+        val result = getResultOrError(response, "findAsValueMapKnn")
+        serializeKnnHits(projectionSeq, fetchSource, result.hits.hits, Set(vectorLeafField))
+      }
+      .recover(handleExceptions)
   }
 
   override def findAsValueMapKnnStream(
@@ -463,21 +616,33 @@ trait ElasticReadonlyStoreExtraImpl[E, ID] extends ElasticReadonlyStoreExtra[E, 
     projection: Traversable[String],
     settings: KnnSearchSettings
   )(
-    implicit system: ActorSystem, materializer: Materializer
+    implicit system: ActorSystem,
+    materializer: Materializer
   ): Future[Source[KnnResult, _]] = {
     val knnQuery = createKnnQuery(vectorField, queryVector, criterion, settings)
     val projectionSeq = projection.map(toDBFieldName).toSeq
     val vectorLeafField = vectorField.split("\\.").last
 
     val scrollLimit = settings.k
-    val searchDef = createKnnSearchDef(knnQuery, projectionSeq, projection.isEmpty, sort, Some(scrollLimit), None)
+    val searchDef = createKnnSearchDef(
+      knnQuery,
+      projectionSeq,
+      projection.isEmpty,
+      sort,
+      Some(scrollLimit),
+      None
+    )
     val scrollDef = searchDef scroll scrollKeepAlive
 
     val publisher = client publisher scrollDef
 
     val source = Source.fromPublisher(publisher).map { hit =>
-      // Always source-based deserialization (createKnnSearchDef uses _source includes for projection)
-      serializeKnnHit(projectionSeq, fetchSource = true, hit, Set(vectorLeafField))
+      serializeKnnHit(
+        projectionSeq,
+        fetchSource = projection.isEmpty,
+        hit,
+        Set(vectorLeafField)
+      )
     }
 
     Future(source)
@@ -499,7 +664,8 @@ trait ElasticReadonlyStoreExtraImpl[E, ID] extends ElasticReadonlyStoreExtra[E, 
     val vectorLeafField = vectorField.split("\\.").last
 
     // Create base search definition with kNN
-    val baseDef = createKnnSearchDef(knnQuery, projectionSeq, projection.isEmpty, sort, limit, skip)
+    val baseDef =
+      createKnnSearchDef(knnQuery, projectionSeq, projection.isEmpty, sort, limit, skip)
 
     // Add traditional query for hybrid search
     val traditionalQuery = toQuery(criterion)
@@ -507,16 +673,24 @@ trait ElasticReadonlyStoreExtraImpl[E, ID] extends ElasticReadonlyStoreExtra[E, 
       case Some(query) =>
         val boostedQuery = queryBoost match {
           case Some(boost) => ElasticDsl.constantScoreQuery(query).boost(boost.toFloat)
-          case None => query
+          case None        => query
         }
         baseDef bool ElasticDsl.must(boostedQuery)
       case None => baseDef
     }
 
-    client.execute(hybridDef).map { response =>
-      val result = getResultOrError(response, "findAsValueMapKnnHybrid")
-      serializeKnnHits(projectionSeq, projection.isEmpty, result.hits.hits, Set(vectorLeafField))
-    }.recover(handleExceptions)
+    client
+      .execute(hybridDef)
+      .map { response =>
+        val result = getResultOrError(response, "findAsValueMapKnnHybrid")
+        serializeKnnHits(
+          projectionSeq,
+          projection.isEmpty,
+          result.hits.hits,
+          Set(vectorLeafField)
+        )
+      }
+      .recover(handleExceptions)
   }
 
   override def countKnn(
@@ -527,15 +701,15 @@ trait ElasticReadonlyStoreExtraImpl[E, ID] extends ElasticReadonlyStoreExtra[E, 
   ): Future[Int] = {
     val knnQuery = createKnnQuery(vectorField, queryVector, criterion, settings)
 
-    val countDef = ElasticDsl.search(index)
-      .knn(knnQuery)
-      .size(0)
-      .trackTotalHits(true)
+    val countDef = ElasticDsl.search(index).knn(knnQuery).size(0).trackTotalHits(true)
 
-    client.execute(countDef).map { response =>
-      val result = getResultOrError(response, "countKnn")
-      result.totalHits.toInt
-    }.recover(handleExceptions)
+    client
+      .execute(countDef)
+      .map { response =>
+        val result = getResultOrError(response, "countKnn")
+        result.totalHits.toInt
+      }
+      .recover(handleExceptions)
   }
 
   override def countOmni(
@@ -556,14 +730,21 @@ trait ElasticReadonlyStoreExtraImpl[E, ID] extends ElasticReadonlyStoreExtra[E, 
       toQuery(criterion).map { query =>
         queryBoost match {
           case Some(boost) => ElasticDsl.constantScoreQuery(query).boost(boost.toFloat)
-          case None => query
+          case None        => query
         }
       },
-      fullTextQuery.filter(_.nonEmpty).flatMap(q =>
-        createFullTextQuery(q, fullTextFields, fullTextSettings).map { ftQuery =>
-          wrapQueryForNestedFields(ftQuery, fullTextFields.map(toDBFieldName), withInnerHits = false, innerHitSourceExcludes = vectorExcludes)
-        }
-      )
+      fullTextQuery
+        .filter(_.nonEmpty)
+        .flatMap(q =>
+          createFullTextQuery(q, fullTextFields, fullTextSettings).map { ftQuery =>
+            wrapQueryForNestedFields(
+              ftQuery,
+              fullTextFields.map(toDBFieldName),
+              withInnerHits = false,
+              innerHitSourceExcludes = vectorExcludes
+            )
+          }
+        )
     ).flatten
 
     // Create search definition - with or without kNN
@@ -581,10 +762,13 @@ trait ElasticReadonlyStoreExtraImpl[E, ID] extends ElasticReadonlyStoreExtra[E, 
     val withMinScore = minScore.map(baseDef.minScore(_)).getOrElse(baseDef)
     val countDef = withMinScore.size(0).trackTotalHits(true)
 
-    client.execute(countDef).map { response =>
-      val result = getResultOrError(response, "countOmni")
-      result.totalHits.toInt
-    }.recover(handleExceptions)
+    client
+      .execute(countDef)
+      .map { response =>
+        val result = getResultOrError(response, "countOmni")
+        result.totalHits.toInt
+      }
+      .recover(handleExceptions)
   }
 
   override def findAsValueMapOmni(
@@ -611,16 +795,23 @@ trait ElasticReadonlyStoreExtraImpl[E, ID] extends ElasticReadonlyStoreExtra[E, 
       toQuery(criterion).map { query =>
         queryBoost match {
           case Some(boost) => ElasticDsl.constantScoreQuery(query).boost(boost.toFloat)
-          case None => query
+          case None        => query
         }
       },
       // Full-text search component (if query is provided and non-empty)
       // Wrap in NestedQuery when full-text fields reside under nested mappings
-      fullTextQuery.filter(_.nonEmpty).flatMap(q =>
-        createFullTextQuery(q, fullTextFields, fullTextSettings).map { ftQuery =>
-          wrapQueryForNestedFields(ftQuery, fullTextFields.map(toDBFieldName), withInnerHits = true, innerHitSourceExcludes = vectorExcludes)
-        }
-      )
+      fullTextQuery
+        .filter(_.nonEmpty)
+        .flatMap(q =>
+          createFullTextQuery(q, fullTextFields, fullTextSettings).map { ftQuery =>
+            wrapQueryForNestedFields(
+              ftQuery,
+              fullTextFields.map(toDBFieldName),
+              withInnerHits = true,
+              innerHitSourceExcludes = vectorExcludes
+            )
+          }
+        )
     ).flatten
 
     // Create search definition - with or without kNN
@@ -628,7 +819,8 @@ trait ElasticReadonlyStoreExtraImpl[E, ID] extends ElasticReadonlyStoreExtra[E, 
       case (Some(vf), Some(qv)) =>
         // Include kNN search
         val knnQuery = createKnnQuery(vf, qv, NoCriterion, knnSettings)
-        val baseDef = createKnnSearchDef(knnQuery, projectionSeq, projection.isEmpty, sort, limit, skip)
+        val baseDef =
+          createKnnSearchDef(knnQuery, projectionSeq, projection.isEmpty, sort, limit, skip)
         if (shouldQueries.nonEmpty) {
           baseDef bool ElasticDsl.should(shouldQueries)
         } else {
@@ -638,8 +830,10 @@ trait ElasticReadonlyStoreExtraImpl[E, ID] extends ElasticReadonlyStoreExtra[E, 
       case _ =>
         // No kNN - just traditional query and/or full-text search
         val baseDef = ElasticDsl.search(index).fetchSource(projection.isEmpty)
-        val withProjection = if (projectionSeq.nonEmpty) baseDef.storedFields(projectionSeq) else baseDef
-        val withSort = if (sort.nonEmpty) withProjection.sortBy(toSort(sort)) else withProjection
+        val withProjection =
+          if (projectionSeq.nonEmpty) baseDef.storedFields(projectionSeq) else baseDef
+        val withSort =
+          if (sort.nonEmpty) withProjection.sortBy(toSort(sort)) else withProjection
         val withSkip = skip.map(s => withSort.start(s)).getOrElse(withSort)
         val withLimit = limit.map(l => withSkip.limit(l)).getOrElse(withSkip)
         if (shouldQueries.nonEmpty) {
@@ -651,10 +845,103 @@ trait ElasticReadonlyStoreExtraImpl[E, ID] extends ElasticReadonlyStoreExtra[E, 
 
     val withMinScore = minScore.map(searchDef.minScore(_)).getOrElse(searchDef)
 
-    client.execute(withMinScore).map { response =>
-      val result = getResultOrError(response, "findAsValueMapOmniSearch")
-      serializeKnnHits(projectionSeq, projection.isEmpty, result.hits.hits, vectorExcludes)
-    }.recover(handleExceptions)
+    client
+      .execute(withMinScore)
+      .map { response =>
+        val result = getResultOrError(response, "findAsValueMapOmniSearch")
+        serializeKnnHits(projectionSeq, projection.isEmpty, result.hits.hits, vectorExcludes)
+      }
+      .recover(handleExceptions)
+  }
+
+  override def findAsValueMapOmniStream(
+    criterion: Criterion,
+    fullTextFields: Seq[String],
+    vectorField: Option[String],
+    fullTextQuery: Option[String],
+    knnQueryVector: Option[Seq[Double]],
+    sort: Seq[Sort],
+    projection: Traversable[String],
+    scrollBatchSize: Option[Int],
+    fullTextSettings: FullTextSearchSettings,
+    knnSettings: KnnSearchSettings,
+    queryBoost: Option[Double],
+    minScore: Option[Double]
+  )(
+    implicit system: ActorSystem,
+    materializer: Materializer
+  ): Future[Source[KnnResult, _]] = {
+    val projectionSeq = projection.map(toDBFieldName).toSeq
+    val vectorExcludes = vectorField.map(_.split("\\.").last).toSet
+
+    // Build the combined query with all components (same logic as findAsValueMapOmni)
+    val shouldQueries = Seq(
+      toQuery(criterion).map { query =>
+        queryBoost match {
+          case Some(boost) => ElasticDsl.constantScoreQuery(query).boost(boost.toFloat)
+          case None        => query
+        }
+      },
+      fullTextQuery
+        .filter(_.nonEmpty)
+        .flatMap(q =>
+          createFullTextQuery(q, fullTextFields, fullTextSettings).map { ftQuery =>
+            wrapQueryForNestedFields(
+              ftQuery,
+              fullTextFields.map(toDBFieldName),
+              withInnerHits = true,
+              innerHitSourceExcludes = vectorExcludes
+            )
+          }
+        )
+    ).flatten
+
+    val scrollLimit = scrollBatchSize.getOrElse(setting.scrollBatchSize)
+
+    // Create search definition - with or without kNN
+    val searchDef: SearchRequest = (vectorField, knnQueryVector) match {
+      case (Some(vf), Some(qv)) =>
+        // Include kNN search
+        val knnQuery = createKnnQuery(vf, qv, NoCriterion, knnSettings)
+        val baseDef = createKnnSearchDef(
+          knnQuery,
+          projectionSeq,
+          projection.isEmpty,
+          sort,
+          Some(scrollLimit),
+          None
+        )
+        if (shouldQueries.nonEmpty) {
+          baseDef bool ElasticDsl.should(shouldQueries)
+        } else {
+          baseDef
+        }
+
+      case _ =>
+        // No kNN - reuse createSearchDefinition for projection, sort, limit, fetchSource
+        val combinedQuery =
+          if (shouldQueries.nonEmpty) Some(ElasticDsl.should(shouldQueries): Query) else None
+
+        createSearchDefinition(
+          NoCriterion,
+          sort,
+          projection,
+          Some(scrollLimit),
+          None,
+          combinedQuery
+        )
+    }
+
+    val withMinScore = minScore.map(searchDef.minScore(_)).getOrElse(searchDef)
+    val scrollDef = withMinScore scroll scrollKeepAlive
+
+    val publisher = client publisher scrollDef
+
+    val source = Source.fromPublisher(publisher).map { hit =>
+      serializeKnnHit(projectionSeq, fetchSource = projection.isEmpty, hit, vectorExcludes)
+    }
+
+    Future(source)
   }
 
   // ==================== Full-Text Search Helper Methods ====================
@@ -695,21 +982,75 @@ trait ElasticReadonlyStoreExtraImpl[E, ID] extends ElasticReadonlyStoreExtra[E, 
         // Single field match query - use first field or default to "_all"
         val field = fields.headOption.getOrElse("_all")
         val matchQuery = MatchQuery(field, query)
-          .setIfDefined((q, v: FullTextOperator.Value) => q.operator(matchOperator(v)), settings.operator)
-          .setIfDefined((q, v: String) => q.fuzziness(v), settings.fuzziness)
-          .setIfDefined((q, v: Int) => q.prefixLength(v), settings.prefixLength)
-          .setIfDefined((q, v: Int) => q.maxExpansions(v), settings.maxExpansions)
-          .setIfDefined((q, v: String) => q.minimumShouldMatch(v), settings.minimumShouldMatch)
-          .setIfDefined((q, v: String) => q.analyzer(v), settings.analyzer)
-          .setIfDefined((q, v: Double) => q.boost(v), settings.boost)
+          .setIfDefined(
+            (
+              q,
+              v: FullTextOperator.Value
+            ) => q.operator(matchOperator(v)),
+            settings.operator
+          )
+          .setIfDefined(
+            (
+              q,
+              v: String
+            ) => q.fuzziness(v),
+            settings.fuzziness
+          )
+          .setIfDefined(
+            (
+              q,
+              v: Int
+            ) => q.prefixLength(v),
+            settings.prefixLength
+          )
+          .setIfDefined(
+            (
+              q,
+              v: Int
+            ) => q.maxExpansions(v),
+            settings.maxExpansions
+          )
+          .setIfDefined(
+            (
+              q,
+              v: String
+            ) => q.minimumShouldMatch(v),
+            settings.minimumShouldMatch
+          )
+          .setIfDefined(
+            (
+              q,
+              v: String
+            ) => q.analyzer(v),
+            settings.analyzer
+          )
+          .setIfDefined(
+            (
+              q,
+              v: Double
+            ) => q.boost(v),
+            settings.boost
+          )
         Some(matchQuery)
 
       case FullTextSearchType.MatchPhrase =>
         // Single field match phrase query
         val field = fields.headOption.getOrElse("_all")
         val matchPhraseQuery = MatchPhraseQuery(field, query)
-          .setIfDefined((q, v: String) => q.analyzer(new ES4sAnalyzer(v)), settings.analyzer)
-          .setIfDefined((q, v: Double) => q.boost(v), settings.boost)
+          .setIfDefined(
+            (
+              q,
+              v: String
+            ) => q.analyzer(new ES4sAnalyzer(v)),
+            settings.analyzer
+          )
+          .setIfDefined(
+            (
+              q,
+              v: Double
+            ) => q.boost(v),
+            settings.boost
+          )
         Some(matchPhraseQuery)
 
       case FullTextSearchType.MultiMatch =>
@@ -717,20 +1058,80 @@ trait ElasticReadonlyStoreExtraImpl[E, ID] extends ElasticReadonlyStoreExtra[E, 
         if (fields.isEmpty) {
           // If no fields specified, fall back to a regular match on _all
           val matchQuery = MatchQuery("_all", query)
-            .setIfDefined((q, v: FullTextOperator.Value) => q.operator(matchOperator(v)), settings.operator)
-            .setIfDefined((q, v: String) => q.fuzziness(v), settings.fuzziness)
-            .setIfDefined((q, v: Double) => q.boost(v), settings.boost)
+            .setIfDefined(
+              (
+                q,
+                v: FullTextOperator.Value
+              ) => q.operator(matchOperator(v)),
+              settings.operator
+            )
+            .setIfDefined(
+              (
+                q,
+                v: String
+              ) => q.fuzziness(v),
+              settings.fuzziness
+            )
+            .setIfDefined(
+              (
+                q,
+                v: Double
+              ) => q.boost(v),
+              settings.boost
+            )
           Some(matchQuery)
         } else {
           val multiMatchQuery = MultiMatchQuery(query)
             .fields(fields)
-            .setIfDefined((q, v: FullTextOperator.Value) => q.operator(matchOperator(v)), settings.operator)
-            .setIfDefined((q, v: String) => q.fuzziness(v), settings.fuzziness)
-            .setIfDefined((q, v: Int) => q.prefixLength(v), settings.prefixLength)
-            .setIfDefined((q, v: Int) => q.maxExpansions(v), settings.maxExpansions)
-            .setIfDefined((q, v: String) => q.minimumShouldMatch(v), settings.minimumShouldMatch)
-            .setIfDefined((q, v: String) => q.analyzer(v), settings.analyzer)
-            .setIfDefined((q, v: Double) => q.boost(v), settings.boost)
+            .setIfDefined(
+              (
+                q,
+                v: FullTextOperator.Value
+              ) => q.operator(matchOperator(v)),
+              settings.operator
+            )
+            .setIfDefined(
+              (
+                q,
+                v: String
+              ) => q.fuzziness(v),
+              settings.fuzziness
+            )
+            .setIfDefined(
+              (
+                q,
+                v: Int
+              ) => q.prefixLength(v),
+              settings.prefixLength
+            )
+            .setIfDefined(
+              (
+                q,
+                v: Int
+              ) => q.maxExpansions(v),
+              settings.maxExpansions
+            )
+            .setIfDefined(
+              (
+                q,
+                v: String
+              ) => q.minimumShouldMatch(v),
+              settings.minimumShouldMatch
+            )
+            .setIfDefined(
+              (
+                q,
+                v: String
+              ) => q.analyzer(v),
+              settings.analyzer
+            )
+            .setIfDefined(
+              (
+                q,
+                v: Double
+              ) => q.boost(v),
+              settings.boost
+            )
           Some(multiMatchQuery)
         }
     }
@@ -739,7 +1140,7 @@ trait ElasticReadonlyStoreExtraImpl[E, ID] extends ElasticReadonlyStoreExtra[E, 
   private def matchOperator(operator: FullTextOperator.Value): Operator =
     operator match {
       case FullTextOperator.And => Operator.AND
-      case FullTextOperator.Or => Operator.OR
+      case FullTextOperator.Or  => Operator.OR
     }
 
   private def createKnnSearchDef(
@@ -750,11 +1151,10 @@ trait ElasticReadonlyStoreExtraImpl[E, ID] extends ElasticReadonlyStoreExtra[E, 
     limit: Option[Int],
     skip: Option[Int]
   ): SearchRequest = {
-    val baseDef = ElasticDsl.search(index)
-      .knn(knnQuery)
-      .fetchSource(fetchSource)
+    val baseDef = ElasticDsl.search(index).knn(knnQuery).fetchSource(fetchSource)
 
-    val withProjection = if (projectionSeq.nonEmpty) baseDef.storedFields(projectionSeq) else baseDef
+    val withProjection =
+      if (projectionSeq.nonEmpty) baseDef.storedFields(projectionSeq) else baseDef
     val withSort = if (sort.nonEmpty) withProjection.sortBy(toSort(sort)) else withProjection
     val withSkip = skip.map(s => withSort.start(s)).getOrElse(withSort)
     val withLimit = limit.map(l => withSkip.limit(l)).getOrElse(withSkip)
@@ -762,13 +1162,16 @@ trait ElasticReadonlyStoreExtraImpl[E, ID] extends ElasticReadonlyStoreExtra[E, 
     withLimit
   }
 
-  private def toSort(sorts: Seq[Sort]): Seq[com.sksamuel.elastic4s.requests.searches.sort.FieldSort] =
+  private def toSort(sorts: Seq[Sort])
+    : Seq[com.sksamuel.elastic4s.requests.searches.sort.FieldSort] =
     sorts.map {
       case AscSort(fieldName) =>
-        com.sksamuel.elastic4s.requests.searches.sort.FieldSort(toDBFieldName(fieldName))
+        com.sksamuel.elastic4s.requests.searches.sort
+          .FieldSort(toDBFieldName(fieldName))
           .order(com.sksamuel.elastic4s.requests.searches.sort.SortOrder.ASC)
       case DescSort(fieldName) =>
-        com.sksamuel.elastic4s.requests.searches.sort.FieldSort(toDBFieldName(fieldName))
+        com.sksamuel.elastic4s.requests.searches.sort
+          .FieldSort(toDBFieldName(fieldName))
           .order(com.sksamuel.elastic4s.requests.searches.sort.SortOrder.DESC)
     }
 
@@ -796,7 +1199,10 @@ trait ElasticReadonlyStoreExtraImpl[E, ID] extends ElasticReadonlyStoreExtra[E, 
     val innerHitsMap = hit.innerHits.map { case (name, innerHits) =>
       name -> innerHits.hits.map { ih =>
         // Filter out vector fields from inner hit source (ES _source.excludes is unreliable for nested kNN inner hits)
-        val filteredSource = if (innerHitExcludes.nonEmpty) ih.source.view.filterKeys(k => !innerHitExcludes.contains(k)).toMap else ih.source
+        val filteredSource =
+          if (innerHitExcludes.nonEmpty)
+            ih.source.view.filterKeys(k => !innerHitExcludes.contains(k)).toMap
+          else ih.source
         InnerHitResult(
           filteredSource.map { case (k, v) => k -> Option(v: Any) },
           ih.score
@@ -808,4 +1214,6 @@ trait ElasticReadonlyStoreExtraImpl[E, ID] extends ElasticReadonlyStoreExtra[E, 
   }
 }
 
-trait ElasticReadonlyExtraStore[E, ID] extends ReadonlyStore[E, ID] with ElasticReadonlyStoreExtra[E, ID]
+trait ElasticReadonlyExtraStore[E, ID]
+    extends ReadonlyStore[E, ID]
+    with ElasticReadonlyStoreExtra[E, ID]

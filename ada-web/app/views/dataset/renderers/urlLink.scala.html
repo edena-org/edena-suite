@@ -9,7 +9,7 @@
 
 @GETLink(json: JsValue) = {
     <a href="@JsonUtil.toString(json).getOrElse("")">
-        <span class="glyphicon glyphicon-arrow-right"></span>
+        <span class="bi bi-arrow-right"></span>
     </a>
 }
 
@@ -19,7 +19,7 @@
 
 @onClickLinkAux(url: String, method: String) = {
     <a href="#" onclick="followUrlLink(event, '@method', '@url', getQueryParams('@url'));">
-        <span class="glyphicon glyphicon-arrow-right"></span>
+        <span class="bi bi-arrow-right"></span>
     </a>
 }
 

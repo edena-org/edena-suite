@@ -1,0 +1,141 @@
+@import org.edena.play.controllers.WebContext
+@import org.edena.play.controllers.WebContext._
+@import views.html.documentation.{core, section, sectionNavigation}
+@import org.edena.play.routes.CustomDirAssets
+
+@()(implicit context: WebContext)
+
+@emptyHtml = {}
+
+@core("Data Set Transformations") {
+
+    @section(rightPanelOffset = 0) {
+        <p>
+            Data set transformations allow admins to create new (derived) data sets by applying various operations such as filtering, field manipulation, and joining.
+            To create, edit, delete, schedule, or execute a data set transformation, go to <i>Admin&rarr;Data Set Transformations</i>.
+        </p>
+
+        <p>
+            To create a new transformation, select a desired type in the drop-down located on the right side.
+            Once configured, execute a transformation by clicking the run button at the associated row in the list table.
+            Each transformation produces a result data set with a configurable data set id, name, and storage type.
+        </p>
+
+        <p>
+            Transformations can be scheduled for periodic execution (daily at a specified time) and support stream-based processing for large data sets.
+        </p>
+    } {
+        <div class="card border-warning">
+            <div class="card-header"><strong>Note</strong></div>
+            <div class="card-body">Data set transformations can be created and executed only by admins.</div>
+        </div>
+    }
+
+    @sectionNavigation(Some("Transformation Types"))(
+        ("section_copy", "Copy"),
+        ("section_filter", "Filter"),
+        ("section_drop_fields", "Drop Fields"),
+        ("section_rename_fields", "Rename Fields"),
+        ("section_change_field_types", "Change Field Types"),
+        ("section_change_field_enums", "Change Field Enums"),
+        ("section_infer", "Infer"),
+        ("section_link_two", "Link Two Data Sets"),
+        ("section_link_sorted_two", "Link Sorted Two Data Sets"),
+        ("section_link_multi", "Link Multi Data Sets"),
+        ("section_link_sorted_multi", "Link Sorted Multi Data Sets"),
+        ("section_merge_multi", "Merge Multi Data Sets"),
+        ("section_merge_fully_multi", "Merge Fully Multi Data Sets"),
+        ("section_match_groups", "Match Groups")
+    )
+
+    @section(id = Some("section_copy"), caption = Some("Copy")) {
+        <p>
+            Creates a complete copy of a source data set. This is useful as a starting point for further modifications or as a backup before applying destructive changes.
+        </p>
+    }(emptyHtml)
+
+    @section(id = Some("section_filter"), caption = Some("Filter")) {
+        <p>
+            Creates a new data set containing only the rows that match specified filter conditions.
+            This allows you to create subsets of data based on criteria such as field values, ranges, or combinations using AND logic.
+        </p>
+    }(emptyHtml)
+
+    @section(id = Some("section_drop_fields"), caption = Some("Drop Fields")) {
+        <p>
+            Creates a new data set with specified fields removed. Use this to strip unnecessary or sensitive columns from a data set.
+        </p>
+    }(emptyHtml)
+
+    @section(id = Some("section_rename_fields"), caption = Some("Rename Fields")) {
+        <p>
+            Creates a new data set with specified fields renamed using old-to-new name mappings. This is useful for standardizing field names across data sets or making them more descriptive.
+        </p>
+    }(emptyHtml)
+
+    @section(id = Some("section_change_field_types"), caption = Some("Change Field Types")) {
+        <p>
+            Creates a new data set where specified fields have their data types changed (e.g., from String to Integer, or from Integer to Enum).
+            This is helpful when automatic type inference did not produce the desired result.
+        </p>
+    }(emptyHtml)
+
+    @section(id = Some("section_change_field_enums"), caption = Some("Change Field Enums")) {
+        <p>
+            Updates enumeration values of specified fields in-place (without creating a new data set).
+            Use this to relabel categories, e.g., renaming "0" and "1" to "Control" and "Case".
+        </p>
+    }(emptyHtml)
+
+    @section(id = Some("section_infer"), caption = Some("Infer")) {
+        <p>
+            Re-infers field types, enumerations, and statistics from the source data. This is useful after manual data modifications or when the original type inference needs to be refreshed.
+        </p>
+    }(emptyHtml)
+
+    @section(id = Some("section_link_two"), caption = Some("Link Two Data Sets")) {
+        <p>
+            Joins two data sets on specified key fields, similar to a SQL join.
+            You specify the left and right data sets along with the fields to join on. The result data set contains the combined fields from both sources.
+        </p>
+    }(emptyHtml)
+
+    @section(id = Some("section_link_sorted_two"), caption = Some("Link Sorted Two Data Sets")) {
+        <p>
+            Joins two pre-sorted data sets on specified key fields. This variant is optimized for data sets that are already sorted by the join key, enabling more efficient processing for large data sets.
+        </p>
+    }(emptyHtml)
+
+    @section(id = Some("section_link_multi"), caption = Some("Link Multi Data Sets")) {
+        <p>
+            Joins multiple data sets on specified key fields. This extends the two-dataset join to handle any number of source data sets in a single operation.
+        </p>
+    }(emptyHtml)
+
+    @section(id = Some("section_link_sorted_multi"), caption = Some("Link Sorted Multi Data Sets")) {
+        <p>
+            Joins multiple pre-sorted data sets on specified key fields. Like the sorted two-dataset variant, this is optimized for pre-sorted inputs.
+        </p>
+    }(emptyHtml)
+
+    @section(id = Some("section_merge_multi"), caption = Some("Merge Multi Data Sets")) {
+        <p>
+            Merges multiple data sets by appending rows (union-like operation) with explicit field name mappings.
+            Use this when combining data sets that have different field names but represent the same data.
+        </p>
+    }(emptyHtml)
+
+    @section(id = Some("section_merge_fully_multi"), caption = Some("Merge Fully Multi Data Sets")) {
+        <p>
+            Merges multiple data sets with automatic field matching.
+            All fields from all source data sets are included in the result, with automatic alignment of matching field names.
+        </p>
+    }(emptyHtml)
+
+    @section(id = Some("section_match_groups"), caption = Some("Match Groups With Confounders"), withLine = false) {
+        <p>
+            Creates a new data set by matching groups while controlling for confounding variables.
+            This is commonly used in clinical studies to create balanced cohorts (e.g., matching cases and controls by age and gender).
+        </p>
+    }(emptyHtml)
+}

@@ -137,14 +137,12 @@
 @inputElements = {
     @fieldTypeaheadDiv(field, Some("col-md-3 col-sm-6"), "field", "Field")
 
-    <div class="pull-right">
-        <a class="btn btn-success btn-sm" href="#" onclick="addNewFilter();return false" data-toggle="tooltip" title="Add a New Filter">
-            <span class="glyphicon glyphicon-plus"></span>
-        </a>
-        <a class="btn btn-success btn-sm" href="#" onclick="removeFilterRight();return false" data-toggle="tooltip" title="Remove the Rightmost Filter">
-            <span class="glyphicon glyphicon-minus"></span>
-        </a>
-    </div>
+    <a class="btn btn-success btn-sm" href="#" onclick="addNewFilter();return false" data-toggle="tooltip" title="Add a New Filter">
+        <span class="bi bi-plus-circle"></span>
+    </a>
+    <a class="btn btn-success btn-sm" href="#" onclick="removeFilterRight();return false" data-toggle="tooltip" title="Remove the Rightmost Filter">
+        <span class="bi bi-dash"></span>
+    </a>
 }
 
 @widgetsScreen(

@@ -44,24 +44,24 @@
 }
 
 @extraDropdownItems = {
-    <li role="separator" class="divider"></li>
+    <div class="dropdown-divider"></div>
     <li>
-        <a href="#" onclick="exportCharts('image/png');">
+        <a class="dropdown-item" href="#" onclick="exportCharts('image/png');">
             Export Charts as PNG
         </a>
     </li>
     <li>
-        <a href="#" onclick="exportCharts('image/svg+xml');">
+        <a class="dropdown-item" href="#" onclick="exportCharts('image/svg+xml');">
             Export Charts as SVG
         </a>
     </li>
     <li>
-        <a href="#" onclick="exportCharts('application/pdf');">
+        <a class="dropdown-item" href="#" onclick="exportCharts('application/pdf');">
             Export Charts as PDF
         </a>
     </li>
     @if(extraExportActions.nonEmpty) {
-        <li role="separator" class="divider"></li>
+        <div class="dropdown-divider"></div>
         @extraExportActions.map(extraNavItem)
     }
 }

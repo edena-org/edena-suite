@@ -24,17 +24,17 @@
 )
 
 @actions = {
-    <div class="row">
-        <div class="col-md-10">
+    <div class="d-flex align-items-start">
+        <div class="flex-grow-1">
             @filterWithJs(
                 Filter(conditions),
                 filterRouter.plainList,
                 Left(Seq(Field("name", None)))
             )
         </div>
-        <div class="col-md-2">
-            <a class="btn btn-success btn-sm pull-right" href="@filterRouter.create" data-toggle="tooltip" title="Add New Filter">
-                <span class="glyphicon glyphicon-plus"></span>
+        <div class="ml-auto d-flex align-items-center" style="gap: 6px; padding-top: 10px;">
+            <a class="btn btn-info btn-sm" href="@filterRouter.create" data-toggle="tooltip" title="Add New Filter">
+                <span class="bi bi-plus-circle"></span>
             </a>
         </div>
     </div>

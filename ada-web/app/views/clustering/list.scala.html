@@ -32,8 +32,8 @@
 }
 
 @actions = {
-    <div class="row">
-        <div class="col-md-10">
+    <div class="d-flex align-items-start">
+        <div class="flex-grow-1">
             @filterWithJs(
                 Filter(conditions),
                 route.find(),
@@ -44,12 +44,12 @@
                 Some(FilterShowFieldStyle.LabelsOnly)
             )
         </div>
-        <div class="dropdown pull-right">
-            <button class="btn btn-success btn-sm dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" data-toggle="tooltip" title="Add Unsupervised Learning">
-                <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
-                <span class="caret"></span>
+        <div class="ml-auto d-flex align-items-center dropdown" style="gap: 6px; padding-top: 10px;">
+            <button class="btn btn-info btn-sm dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" title="Add Unsupervised Learning">
+                <span class="bi bi-plus-circle" aria-hidden="true"></span>
+
             </button>
-            <ul class="dropdown-menu">
+            <ul class="dropdown-menu dropdown-menu-right">
                 @importLink(classOf[KMeans], "K-Means")
                 @importLink(classOf[LDA], "LDA")
                 @importLink(classOf[BisectingKMeans], "Bisecting K-Means")

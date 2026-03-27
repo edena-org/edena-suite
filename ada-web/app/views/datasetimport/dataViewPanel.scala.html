@@ -4,9 +4,9 @@
 
 @(form: Form[_ <: DataSetImport])(implicit msg: Messages)
 
-<div class="panel panel-default">
-    <div class="panel-heading">Data View</div>
-    <div class="panel-body">
+<div class="card">
+    <div class="card-header">Data View</div>
+    <div class="card-body">
         @yesNoRadio("dataSetImport", "includeDataView", form, Some("Do you want to specify a default data view now?"))
         <div id="dataViewDiv" style="display:none">
             <hr/>

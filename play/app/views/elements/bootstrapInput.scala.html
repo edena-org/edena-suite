@@ -4,7 +4,7 @@
 @(labelGridWidth: Int)(elements: FieldElements)
 
 @* TODO: call labelValue here *@
-<div class="form-group @if(elements.hasErrors) {has-error}">
+<div class="form-group row @if(elements.hasErrors) {has-error}">
   <div class="col-sm-@labelGridWidth">
     <label for="@elements.id" class="control-label">@elements.label</label>
     @{

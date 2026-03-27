@@ -4,9 +4,9 @@
 
 @(form: Form[_])(implicit msg: Messages)
 
-<div class="panel panel-default">
-    <div class="panel-heading">Schedule</div>
-    <div class="panel-body">
+<div class="card">
+    <div class="card-header">Schedule</div>
+    <div class="card-body">
         @yesNoRadio("schedulePanel", "scheduled", form, Some("Do you want to schedule the import execution?"))
         <hr/>
         @select("schedulePanel", "scheduledTime.weekDay", form, enumToValueString(WeekDay), true)

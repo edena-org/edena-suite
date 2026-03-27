@@ -73,7 +73,7 @@
             "exportFilteredTableCsvModal", "Export Filtered Table as CSV",
             exportFilteredTableCsvModal(exportCsvCall, Nil, extraCsvTableElements)
         )),
-        Right(Html("<li role='separator' class='divider'></li>")),
+        Right(Html("<div class='dropdown-divider'></div>")),
         Left((
             "exportAllJsonModal", "Export All as JSON",
             exportAllJsonModal(exportJsonCall)
@@ -86,7 +86,7 @@
             "exportFilteredTableJsonModal", "Export Filtered Table as JSON",
             exportFilteredTableJsonModal(exportJsonCall, Nil, Some(extraJsonTableElements))
         )),
-        Right(Html("<li role='separator' class='divider'></li>")),
+        Right(Html("<div class='dropdown-divider'></div>")),
         Left((
             "exportTranSMARTDataModal", "Export TranSMART Data",
             exportModal("exportTranSMARTDataModal", "CSV TranSMART Data Export", dataSetRouter.exportTranSMARTData, transmartModalBody("\\t"))

@@ -21,19 +21,20 @@
     actions: Html,
     extraBottomResources: Option[Html],
     tableRowSelection: Boolean,
-    dataSpaceMetaInfos: Traversable[DataSpaceMetaInfo]
+    dataSpaceMetaInfos: Traversable[DataSpaceMetaInfo],
+    hasWidgets: Boolean
 )(
     implicit context: DataSetWebContext
 )
 
 @actionsDiv = {
-    <div class="row">
-        <div id="singleFilterDiv" class="col-md-10">
+    <div class="d-flex align-items-start">
+        <div id="singleFilterDiv" class="flex-grow-1">
             @if(tableViewParts.size == 1) {
                 @viewCountFilters(tableViewParts, dataSetSetting.filterShowFieldStyle, true)
             }
         </div>
-        <div class="pull-right">
+        <div class="ml-auto" style="padding-top: 10px;">
             @actions
         </div>
     </div>
@@ -186,13 +187,14 @@
     tableViewParts.map(_.page.total).sum,
     Some(actionsDiv),
     if(tableViewParts.exists(_.tableFields.nonEmpty)) {
-        Some(viewTables(dataViewId, tableViewParts, tableRowSelection))
+        Some(viewTables(dataViewId, tableViewParts, tableRowSelection, dataSetSetting))
     } else {
         None
     },
-    Some(filtersAndWidgets),
+    widgetsAndFilters = Some(filtersAndWidgets),
     Some(sideMenu),
     Some(datasetSubNav(dataSetSetting)),
     None,
-    Some(bottomResources)
+    Some(bottomResources),
+    showCollapsibleTableSeparator = hasWidgets
 )

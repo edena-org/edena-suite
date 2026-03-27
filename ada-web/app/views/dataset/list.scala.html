@@ -8,15 +8,17 @@
 @import org.edena.ada.web.controllers.dataset.DataSetWebContext
 @import org.edena.play.Page
 @import org.edena.core.FilterCondition
+@import org.edena.ada.server.models.DataSetSetting
 
 @import org.edena.core.DefaultTypes.Seq
 
 @(
-    domainName : String,
+    domainName: String,
     page: Page[JsObject],
     conditions: Seq[FilterCondition],
-    fieldLabelMap : Map[String, String],
-    fieldsToShow : Seq[String]
+    fieldLabelMap: Map[String, String],
+    fieldsToShow: Seq[String],
+    setting: DataSetSetting
 )(
     implicit context: DataSetWebContext
 )
@@ -40,7 +42,11 @@
         dataSetRouter.list(_, _, conditions),
         Some(fieldLabelMap),
         Some(fieldsToShow),
-        Some({ (item : JsObject) => dataSetRouter.get((item \ "_id").as[BSONObjectID])})
+        setting.getListItemURL.map { baseUrl =>
+            (item: JsObject) => play.api.mvc.Call("GET", baseUrl.replace("{{id}}", (item \ setting.keyFieldName).as[String]))
+        }.orElse(
+            Some({ (item: JsObject) => dataSetRouter.get((item \ setting.keyFieldName).as[BSONObjectID]) })
+        )
     )
 }
 

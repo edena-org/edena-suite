@@ -96,7 +96,70 @@ object DataSetFormattersAndIds {
   implicit val filterShowFieldStyleFormat = EnumFormat(FilterShowFieldStyle)
   implicit val storageTypeFormat = EnumFormat(StorageType)
 
-  val dataSetSettingFormat = Json.format[DataSetSetting]
+  // Manual format needed because DataSetSetting has 23 fields (exceeds Play JSON's 22-field macro limit)
+  val dataSetSettingFormat: OFormat[DataSetSetting] = OFormat(
+    Reads[DataSetSetting] { json =>
+      for {
+        _id <- (json \ "_id").validateOpt[BSONObjectID]
+        dataSetId <- (json \ "dataSetId").validate[String]
+        keyFieldName <- (json \ "keyFieldName").validate[String]
+        exportOrderByFieldName <- (json \ "exportOrderByFieldName").validateOpt[String]
+        defaultScatterXFieldName <- (json \ "defaultScatterXFieldName").validateOpt[String]
+        defaultScatterYFieldName <- (json \ "defaultScatterYFieldName").validateOpt[String]
+        defaultDistributionFieldName <- (json \ "defaultDistributionFieldName").validateOpt[String]
+        defaultCumulativeCountFieldName <- (json \ "defaultCumulativeCountFieldName").validateOpt[String]
+        filterShowFieldStyle <- (json \ "filterShowFieldStyle").validateOpt[FilterShowFieldStyle.Value]
+        filterShowNonNullCount <- (json \ "filterShowNonNullCount").validateOpt[Boolean].map(_.getOrElse(false))
+        displayItemName <- (json \ "displayItemName").validateOpt[String]
+        storageType <- (json \ "storageType").validate[StorageType.Value]
+        mongoAutoCreateIndexForProjection <- (json \ "mongoAutoCreateIndexForProjection").validateOpt[Boolean].map(_.getOrElse(false))
+        cacheDataSet <- (json \ "cacheDataSet").validateOpt[Boolean].map(_.getOrElse(false))
+        ownerId <- (json \ "ownerId").validateOpt[BSONObjectID]
+        showSideCategoricalTree <- (json \ "showSideCategoricalTree").validateOpt[Boolean].map(_.getOrElse(true))
+        extraNavigationItems <- (json \ "extraNavigationItems").validateOpt[Seq[NavigationItem]].map(_.getOrElse(Nil))
+        extraExportActions <- (json \ "extraExportActions").validateOpt[Seq[Link]].map(_.getOrElse(Nil))
+        customControllerClassName <- (json \ "customControllerClassName").validateOpt[String]
+        description <- (json \ "description").validateOpt[String]
+        widgetEngineClassName <- (json \ "widgetEngineClassName").validateOpt[String]
+        customStorageCollectionName <- (json \ "customStorageCollectionName").validateOpt[String]
+        getListItemURL <- (json \ "getListItemURL").validateOpt[String]
+      } yield DataSetSetting(
+        _id, dataSetId, keyFieldName, exportOrderByFieldName, defaultScatterXFieldName,
+        defaultScatterYFieldName, defaultDistributionFieldName, defaultCumulativeCountFieldName,
+        filterShowFieldStyle, filterShowNonNullCount, displayItemName, storageType,
+        mongoAutoCreateIndexForProjection, cacheDataSet, ownerId, showSideCategoricalTree,
+        extraNavigationItems, extraExportActions, customControllerClassName, description,
+        widgetEngineClassName, customStorageCollectionName, getListItemURL
+      )
+    },
+    OWrites[DataSetSetting] { s =>
+      Json.obj(
+        "_id" -> s._id,
+        "dataSetId" -> s.dataSetId,
+        "keyFieldName" -> s.keyFieldName,
+        "exportOrderByFieldName" -> s.exportOrderByFieldName,
+        "defaultScatterXFieldName" -> s.defaultScatterXFieldName,
+        "defaultScatterYFieldName" -> s.defaultScatterYFieldName,
+        "defaultDistributionFieldName" -> s.defaultDistributionFieldName,
+        "defaultCumulativeCountFieldName" -> s.defaultCumulativeCountFieldName,
+        "filterShowFieldStyle" -> s.filterShowFieldStyle,
+        "filterShowNonNullCount" -> s.filterShowNonNullCount,
+        "displayItemName" -> s.displayItemName,
+        "storageType" -> s.storageType,
+        "mongoAutoCreateIndexForProjection" -> s.mongoAutoCreateIndexForProjection,
+        "cacheDataSet" -> s.cacheDataSet,
+        "ownerId" -> s.ownerId,
+        "showSideCategoricalTree" -> s.showSideCategoricalTree,
+        "extraNavigationItems" -> s.extraNavigationItems,
+        "extraExportActions" -> s.extraExportActions,
+        "customControllerClassName" -> s.customControllerClassName,
+        "description" -> s.description,
+        "widgetEngineClassName" -> s.widgetEngineClassName,
+        "customStorageCollectionName" -> s.customStorageCollectionName,
+        "getListItemURL" -> s.getListItemURL
+      )
+    }
+  )
   implicit val serializableDataSetSettingFormat = new SerializableFormat(dataSetSettingFormat.reads, dataSetSettingFormat.writes)
 
   val serializableBSONObjectIDFormat = new SerializableFormat(BSONObjectIDFormat.reads, BSONObjectIDFormat.writes)

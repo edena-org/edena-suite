@@ -36,8 +36,8 @@
 )
 
 @actions = {
-    <div class="row">
-        <div class="col-md-10">
+    <div class="d-flex align-items-start">
+        <div class="flex-grow-1">
             @filterWithJs(
                 Filter(conditions),
                 dictionaryRouter.plainList,
@@ -45,36 +45,29 @@
                 showFieldStyle = Some(FilterShowFieldStyle.LabelsOnly)
             )
         </div>
-        <div class="pull-right">
-            <ul class="list-inline">
-                <li>
-                    @exportDropdown(
-                        dictionaryRouter.exportCsv(_, true, None, _, _),
-                        dictionaryRouter.exportJson,
-                        conditions
-                    )
-                </li>
-                <li>
-                    <div class="dropdown">
-                        <button class="btn btn-info btn-sm dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                            <span class="glyphicon glyphicon-wrench" aria-hidden="true"></span>
-                            <span class="caret"></span>
-                        </button>
-                        <ul class="dropdown-menu">
-                            <li>
-                                <a href="@dictionaryRouter.setDefaultLabels">
-                                    Set Default Labels
-                                </a>
-                            </li>
-                            <li>
-                                <a href="@dictionaryRouter.convertLabelsToCamelCase">
-                                    Convert Labels to Camelcase
-                                </a>
-                            </li>
-                        </ul>
-                    </div>
-                </li>
-            </ul>
+        <div class="ml-auto d-flex align-items-center" style="gap: 6px; padding-top: 10px;">
+            @exportDropdown(
+                dictionaryRouter.exportCsv(_, true, None, _, _),
+                dictionaryRouter.exportJson,
+                conditions
+            )
+            <div class="dropdown">
+                <button class="btn btn-info btn-sm dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    <span class="bi bi-gear" aria-hidden="true"></span>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-right">
+                    <li>
+                        <a href="@dictionaryRouter.setDefaultLabels">
+                            Set Default Labels
+                        </a>
+                    </li>
+                    <li>
+                        <a href="@dictionaryRouter.convertLabelsToCamelCase">
+                            Convert Labels to Camelcase
+                        </a>
+                    </li>
+                </ul>
+            </div>
         </div>
     </div>
     @dataViewSelectionModal("dataViewSelectionModal", dataViewRouter)
@@ -90,10 +83,10 @@
 }
 
 @table = {
-    <div class="pull-right dropdown">
+    <div class="float-right dropdown">
         <button class="btn btn-info btn-sm dropdown-toggle" type="button" id="dropdownMenu2" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-            <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>To
-            <span class="caret"></span>
+            <span class="bi bi-plus-circle" aria-hidden="true"></span>To
+            
         </button>
         <ul class="dropdown-menu">
             <li>
@@ -131,7 +124,7 @@
                     Table
                 </a>
             </li>
-            <li role="separator" class="divider"></li>
+            <div class="dropdown-divider"></div>
             <li>
                 <a href="#" data-toggle="modal" data-target="#categorySelectionModal" title="Add To Category">
                     Category

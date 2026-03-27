@@ -26,38 +26,36 @@
 	</div>
 
 	<div class="row">
-		<fieldset>
-			@item.fields.sortBy(_._1).map { case (fieldName, value) =>
-				@if(!nonNullOnly || value != JsNull) {
-					@elementValue(
-                        fieldName,
-                        fieldNameLabelAndRendererMap.get(fieldName).map(_._1.take(30)).getOrElse(
-                            attributeLabel(
-                                domainName,
-                                fieldName.take(30)
-                            )
-                        ),
-                        fieldNameLabelAndRendererMap.get(fieldName).map(_._2.apply(value)).getOrElse(
-                            JsonUtil.toString(value).getOrElse("")
-                        ),
-                        false,
-						None,
-						3
-                    )
+		<div class="col-md-12">
+			<fieldset>
+				@item.fields.sortBy(_._1).map { case (fieldName, value) =>
+					@if(!nonNullOnly || value != JsNull) {
+						@elementValue(
+							fieldName,
+							fieldNameLabelAndRendererMap.get(fieldName).map(_._1.take(30)).getOrElse(
+								attributeLabel(
+									domainName,
+									fieldName.take(30)
+								)
+							),
+							fieldNameLabelAndRendererMap.get(fieldName).map(_._2.apply(value)).getOrElse(
+								JsonUtil.toString(value).getOrElse("")
+							),
+							false,
+							None,
+							3
+						)
+					}
 				}
-			}
-		</fieldset>
+			</fieldset>
 
-		<div class="actions" align="center">
-			<a href="@listCall" class="btn btn-default">Go Back</a>
-			@if(deleteCall.isDefined) {
-				<a href="#" class="btn btn-danger" onclick='submit("post", "@deleteCall.get")'>Delete</a>
-			}
+			<hr/>
+			<div class="actions float-right">
+				<a href="@listCall" class="btn btn-secondary">Go Back</a>
+				@if(deleteCall.isDefined) {
+					<a href="#" class="btn btn-danger" onclick='submit("post", "@deleteCall.get")'>Delete</a>
+				}
+			</div>
 		</div>
-	<!--
-		<div class="col-md-3">
-			info()
-		</div>
-	-->
 	</div>
 }

@@ -9,12 +9,13 @@
 	deleteCall: Option[Call] = None,
 	sideBar: Option[Html] = None,
 	topContentBar: Option[Html] = None,
-	isFullDisplayName: Boolean = false
+	isFullDisplayName: Boolean = false,
+	showMessageBox: Boolean = true
 )(
 	implicit context: WebContext
 )
 
-@main(if(isFullDisplayName) displayName else Messages("show.title", displayName), sideBar, topContentBar) {
+@main(if(isFullDisplayName) displayName else Messages("show.title", displayName), sideBar, topContentBar, showMessageBox = showMessageBox) {
 
 	<div class="page-header">
 		<h3>@{if(isFullDisplayName) displayName else Messages("show.title", displayName)}</h3>
@@ -29,12 +30,12 @@
 
             @if(editCall.isDefined || cancelCall.isDefined) {
 				<hr/>
-                <div class="actions pull-right">
+                <div class="actions float-right">
                     @if(editCall.isDefined) {
                         <a href="@editCall.get" class="btn btn-primary">Edit</a>
                     }
                     @if(cancelCall.isDefined) {
-                        <a href="@cancelCall.get" class="btn btn-default">Cancel</a>
+                        <a href="@cancelCall.get" class="btn btn-secondary">Cancel</a>
                     }
 					@if(deleteCall.isDefined) {
 						<a href="#" class="btn btn-danger" onclick='submit("post", "@deleteCall.get")'>Delete</a>

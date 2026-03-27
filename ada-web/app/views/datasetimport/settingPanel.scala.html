@@ -7,9 +7,9 @@
 
 @(form: Form[_])(implicit msg: Messages, configuration: Configuration)
 
-<div class="panel panel-default">
-    <div class="panel-heading">Setting</div>
-    <div class="panel-body">
+<div class="card">
+    <div class="card-header">Setting</div>
+    <div class="card-body">
         @yesNoRadio("dataSetImport", "includeSetting", form, Some("Do you want to specify a setting now?"))
         <div id="settingDiv" style="display:none">
             <input type="hidden" id="setting_dataSetId" name="setting.dataSetId" value="">
@@ -22,7 +22,7 @@
                 true,
                 Seq('_helpModal -> "<p>Which storage/database the data should be saved to. Currently <i>Elastic Search</i> and <i>Mongo</i> are supported.</p><p>Normally you want to choose Elastic Search (mainly for performance reasons), although if available resources are insufficient  or a data set has several array or nested-JSON fields, Mongo could be a better choice.</p>")
             )
-            <a class="pull-right" href="#moreSetting" data-toggle="collapse">Show More</a>
+            <a class="float-right" href="#moreSetting" data-toggle="collapse">Show More</a>
 
             <div id="moreSetting" class="collapse">
                 @checkbox("dataSetImport", "setting.mongoAutoCreateIndexForProjection", form)

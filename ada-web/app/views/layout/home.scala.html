@@ -11,7 +11,7 @@
 )
 
 @main(
-    title = Messages("homepage.title", context.configuration.getOptional[String]("project.name").getOrElse("")),
+    title = context.configuration.getOptional[String]("homepage.title").getOrElse("Discovery Platform"),
     showMessageBox = false
 ) {
 
@@ -19,15 +19,15 @@
         <div class="row">
             <div class="col-md-12 aligned-container">
             <div class="col-md-9 col-sm-12">
-                @Messages("homepage.title", context.configuration.getOptional[String]("project.name").getOrElse(""))
+                <h2 style="margin: 0; font-weight: 300;">@context.configuration.getOptional[String]("homepage.title").getOrElse("Discovery Platform")</h2>
             </div>
             <div class="col-md-3 col-sm-12">
                 @context.configuration.getOptional[String]("project.url").map { url =>
                     <a target="_blank" href="@url">
                         @context.configuration.getOptional[String]("project.logo").map { logo =>
-                            <img class="img-responsive pull-right" src="@CustomDirAssets.versioned(logo)" />
+                            <img class="img-fluid float-right" src="@CustomDirAssets.versioned(logo)" />
                         }.getOrElse {
-                            <div class="pull-right">&rarr;</div>
+                            <div class="float-right">&rarr;</div>
                         }
                     </a>
                 }
@@ -39,16 +39,18 @@
         @carousel()
         <hr/>
     }
-    <div class="row-fluid jumbotron homepage-jumbotron">
+    <div class="row jumbotron homepage-jumbotron">
         @customHtml.map(Html(_)).getOrElse {
             <h3>Welcome to this awesome project!</h3>
         }
     </div>
-    <div class="row-fluid">
-        <hr/>
-        <h4>
-            If you want to try Ada <a class="btn btn-sm btn-primary" href="@routes.AppController.dataSets">Login</a> or <a class="btn btn-sm btn-primary" href="@routes.AppController.contact">Request an account</a>.<br/>
-            Note that at the moment we provide accounts only for the collaborating partners, not for the general public.
-        </h4>
+    <hr/>
+    <div class="row">
+        <div class="col-12">
+            <p>
+                If you want to try Ada <a class="btn btn-sm btn-primary" href="@routes.AppController.dataSets">Login</a> or <a class="btn btn-sm btn-primary" href="@routes.AppController.contact">Request an account</a>.<br/>
+                Note that at the moment we provide accounts only for the collaborating partners, not for the general public.
+            </p>
+        </div>
     </div>
 }

@@ -15,7 +15,7 @@ import scala.collection.Traversable
 
 package object util {
 
-  def shorten(string : String, length: Int = 25) =
+  def shorten(string : String, length: Int = 35) =
     if (string.length > length) string.substring(0, length - 2) + "..." else string
 
   def fieldLabel(fieldName : String): String =

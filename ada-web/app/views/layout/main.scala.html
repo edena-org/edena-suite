@@ -23,6 +23,7 @@
         <title>@title</title>
         <!-- Latest compiled and minified CSS -->
         @context.webJarAssets.locate("bootswatch-united", "bootstrap.min.css").css()
+        @context.webJarAssets.locate("bootstrap-icons", "font/bootstrap-icons.min.css").css()
         <link rel="stylesheet" type="text/css" media="screen" href="@CustomDirAssets.versioned("stylesheets/main.css")">
 
         @* Optional theme *@
@@ -35,30 +36,23 @@
 
         @if(topResources.isDefined) { @topResources.get }
 
-        <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
-	    <!--[if lt IE 9]>
-	      @context.webJarAssets.locate("html5shiv", "html5shiv.js").script()
-	      @context.webJarAssets.locate("respond", "dest/respond.min.js").script()
-	    <![endif]-->
     </head>
     <body>
         @navbar()
 
         <div class="container-fluid">
-            <div class="row-fluid">
+            <div class="row">
                 <div class="menu col-md-2 col-sm-12">
                     @sideBar.getOrElse("")
                 </div>
-                <div id="contentDiv" class="col-md-8-25 col-sm-12">
+                <div id="contentDiv" class="col-md-10 col-sm-12">
                     @if(topContentBar.isDefined) {
-                        <div class="row-fluid">
-                            @topContentBar.get
-                        </div>
+                        @topContentBar.get
                     }
                     <div class="content">
                         @if(showMessageBox) {
-                            <div class="hidden-sm hidden-xs showHideMessageBoxDiv">
-                                <a href="#" onclick="showHideMessageBox();"><span id="showHideMessageBoxSpan">&#8614;</span></a>
+                            <div class="d-none d-md-block showHideMessageBoxDiv">
+                                <a href="#" onclick="showHideMessageBox();"><span id="showHideMessageBoxSpan">&#8612;</span></a>
                             </div>
                         }
                         <div id="messageContainer">
@@ -73,7 +67,7 @@
                     </div>
                     @footer()
                 </div>
-                <div id="messageBoxDiv" class="col-md-1-75 hidden-sm hidden-xs">
+                <div id="messageBoxDiv" class="col-md-1-75" style="display:none">
                     @if(showMessageBox) {
                         @deadboltRestricts.subjectPresent() {
                             @trollbox()
@@ -87,7 +81,7 @@
 	    ================================================== -->
 	    <!-- Placed at the end of the document so the pages load faster -->
 	    <!-- Latest compiled and minified JavaScript -->
-        @context.webJarAssets.locate("bootswatch-united", "bootstrap.min.js").script()
+        @context.webJarAssets.locate("bootstrap", "bootstrap.bundle.min.js").script()
 
         @if(bottomResources.isDefined) {
             @bottomResources.get
@@ -104,7 +98,7 @@
             addMessageDividerIfNeeded();
             registerMessageDividerRemoval();
 
-            if (@showMessageBox && @{toConfiguration.get[Boolean]("messageBox.always_hide")})
+            if (@showMessageBox && !@{toConfiguration.get[Boolean]("messageBox.always_hide")})
                 showHideMessageBox()
 
             @deadboltRestricts.subjectPresent() {

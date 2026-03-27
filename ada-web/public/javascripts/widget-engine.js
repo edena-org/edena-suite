@@ -1,8 +1,11 @@
+function _callMultiFilter(filterElement, method, ...args) {
+    $(filterElement).multiFilter(method, ...args);
+}
+
 class WidgetEngine {
 
     // Main function of this class
     plot(widget, filterElement) {
-        console.log("WidgetEngine.plot called")
         const widgetId = this._elementId(widget)
         this.plotForElement(widgetId, widget, filterElement)
     }
@@ -68,8 +71,6 @@ class WidgetEngine {
 
     // creates a div for a widget
     widgetDiv(widget, defaultGridWidth, enforceWidth) {
-        console.log("WidgetEngine.widgetDiv called")
-
         var elementIdVal = this._elementId(widget)
 
         if (enforceWidth)
@@ -86,10 +87,15 @@ class WidgetEngine {
         var gridWidthElement = "col-md-" + gridWidth
         var gridOffsetElement = gridOffset ? "col-md-offset-" + gridOffset : ""
 
-        var innerDiv = '<div id="' + elementIdVal + '" class="chart-holder"></div>'
-        var div = $("<div class='" + gridWidthElement + " " + gridOffsetElement + "'>")
-        div.append(innerDiv)
-        return div
+        var outerDiv = document.createElement('div')
+        outerDiv.className = gridWidthElement + " " + gridOffsetElement
+
+        var innerDiv = document.createElement('div')
+        innerDiv.id = elementIdVal
+        innerDiv.className = 'chart-holder'
+
+        outerDiv.appendChild(innerDiv)
+        return outerDiv
     }
 
     ////////////////////////////////////////////////////
@@ -97,8 +103,6 @@ class WidgetEngine {
     ////////////////////////////////////////////////////
 
     _categoricalTableWidget(elementId, widget) {
-        console.log("WidgetEngine._categoricalTableWidget")
-
         var allCategories = widget.data.map(function (series) {
             return series[1].map(function (count) {
                 return count.value
@@ -113,7 +117,7 @@ class WidgetEngine {
 
         var dataMap = widget.data.map(function (series) {
             var map = {}
-            $.each(series[1], function (index, count) {
+            series[1].forEach(function (count) {
                 map[count.value] = count.count
             })
             return map
@@ -136,7 +140,7 @@ class WidgetEngine {
         if (categories.length > 1) {
             var counts = widget.data.map(function (series) {
                 var sum = 0
-                $.each(series[1], function (index, count) {
+                series[1].forEach(function (count) {
                     sum += count.count
                 })
                 return sum
@@ -161,19 +165,20 @@ class WidgetEngine {
         var caption = "<h4 align='center'>" + widget.title + "</h4>"
 
         var height = widget.displayOptions.height || 400
-        var div = $("<div style='position: relative; overflow: auto; height:" + height + "px; text-align: left; line-height: normal; z-index: 0;'>")
+        var div = document.createElement('div')
+        div.style.cssText = 'position: relative; overflow: auto; height:' + height + 'px; text-align: left; line-height: normal; z-index: 0;'
 
         var table = createTable(columnNames, rowData)
 
-        div.append(caption)
-        div.append(table)
+        div.insertAdjacentHTML('beforeend', caption)
+        div.appendChild(table[0])
 
-        $('#' + elementId).html(div)
+        var el = document.getElementById(elementId)
+        el.innerHTML = ''
+        el.appendChild(div)
     }
 
     _numericalTableWidget(elementId, widget) {
-        console.log("WidgetEngine._numericalTableWidget")
-
         var isDate = widget.fieldType == "Date"
 
         var groups = widget.data.map(function (series) {
@@ -202,34 +207,42 @@ class WidgetEngine {
         var caption = "<h4 align='center'>" + widget.title + "</h4>"
 
         var height = widget.displayOptions.height || 400
-        var div = $("<div style='position: relative; overflow: auto; height:" + height + "px; text-align: left; line-height: normal; z-index: 0;'>")
+        var div = document.createElement('div')
+        div.style.cssText = 'position: relative; overflow: auto; height:' + height + 'px; text-align: left; line-height: normal; z-index: 0;'
 
         var table = createTable(columnNames, rowData)
 
-        div.append(caption)
+        div.insertAdjacentHTML('beforeend', caption)
 
-        var centerWrapper = $("<table align='center'>")
-        var tr = $("<tr class='vertical-divider' valign='top'>")
-        var td = $("<td>")
+        var centerWrapper = document.createElement('table')
+        centerWrapper.setAttribute('align', 'center')
+        var tr = document.createElement('tr')
+        tr.className = 'vertical-divider'
+        tr.setAttribute('valign', 'top')
+        var td = document.createElement('td')
 
-        td.append(table)
-        tr.append(td)
-        centerWrapper.append(tr)
-        div.append(centerWrapper)
+        td.appendChild(table[0])
+        tr.appendChild(td)
+        centerWrapper.appendChild(tr)
+        div.appendChild(centerWrapper)
 
-        $('#' + elementId).html(div)
+        var el = document.getElementById(elementId)
+        el.innerHTML = ''
+        el.appendChild(div)
     }
 
     _categoricalCheckboxCountWidget(elementId, widget, filterElement) {
-        console.log("WidgetEngine._categoricalCheckboxCountWidget")
-        var widgetElement = $('#' + elementId)
+        var widgetElement = document.getElementById(elementId)
 
         var caption = "<h4 align='center'>" + widget.title + "</h4>"
 
         var height = widget.displayOptions.height || 400
-        var div = $("<div style='position: relative; overflow: auto; height:" + height + "px; text-align: left; line-height: normal; z-index: 0;'>")
+        var div = document.createElement('div')
+        div.style.cssText = 'position: relative; overflow: auto; height:' + height + 'px; text-align: left; line-height: normal; z-index: 0;'
 
-        var jumbotron = $("<div class='alert alert-very-light' role='alert'>")
+        var jumbotron = document.createElement('div')
+        jumbotron.className = 'alert alert-very-light'
+        jumbotron.setAttribute('role', 'alert')
 
         var rowData = widget.data.map(function (checkCount) {
             var checked = checkCount[0]
@@ -255,39 +268,41 @@ class WidgetEngine {
 
         var checkboxTable = createTable(null, rowData, true)
 
-        jumbotron.append(checkboxTable)
+        jumbotron.appendChild(checkboxTable[0])
 
-        div.append(caption)
-        div.append(jumbotron)
+        div.insertAdjacentHTML('beforeend', caption)
+        div.appendChild(jumbotron)
 
-        widgetElement.html(div)
+        widgetElement.innerHTML = ''
+        widgetElement.appendChild(div)
 
         // add a filter support
 
         function findCheckedKeys() {
             var keys = []
-            $.each(widgetElement.find('input:checkbox'), function () {
-                if ($(this).is(":checked")) {
-                    keys.push($(this).attr("data-key"))
+            widgetElement.querySelectorAll('input[type="checkbox"]').forEach(function (cb) {
+                if (cb.checked) {
+                    keys.push(cb.dataset.key)
                 }
             });
             return keys;
         }
 
-        widgetElement.find('input:checkbox').on('change', function () {
-            var selectedKeys = findCheckedKeys();
+        widgetElement.querySelectorAll('input[type="checkbox"]').forEach(function (cb) {
+            cb.addEventListener('change', function () {
+                var selectedKeys = findCheckedKeys();
 
-            if (selectedKeys.length > 0) {
-                var condition = {fieldName: widget.fieldName, conditionType: "in", value: selectedKeys}
+                if (selectedKeys.length > 0) {
+                    var condition = {fieldName: widget.fieldName, conditionType: "in", value: selectedKeys}
 
-                $(filterElement).multiFilter('replaceWithConditionAndSubmit', condition);
-            } else
-                showError("At least one checkbox must be selected in the widget '" + widget.title + "'.")
+                    _callMultiFilter(filterElement, 'replaceWithConditionAndSubmit', condition);
+                } else
+                    showError("At least one checkbox must be selected in the widget '" + widget.title + "'.")
+            });
         });
     }
 
     _basicStatsWidget(elementId, widget) {
-        console.log("WidgetEngine._basicStatsWidget")
         var caption = "<h4 align='center'>" + widget.title + "</h4>"
         var columnNames = ["Stats", "Value"]
 
@@ -307,49 +322,60 @@ class WidgetEngine {
         ]
 
         var height = widget.displayOptions.height || 400
-        var div = $("<div style='position: relative; overflow: hidden; height:" + height + "px; text-align: left; line-height: normal; z-index: 0;'>")
+        var div = document.createElement('div')
+        div.style.cssText = 'position: relative; overflow: hidden; height:' + height + 'px; text-align: left; line-height: normal; z-index: 0;'
 
         var table = createTable(columnNames, data)
 
-        div.append(caption)
+        div.insertAdjacentHTML('beforeend', caption)
 
-        var centerWrapper = $("<table align='center'>")
-        var tr = $("<tr class='vertical-divider' valign='top'>")
-        var td = $("<td>")
+        var centerWrapper = document.createElement('table')
+        centerWrapper.setAttribute('align', 'center')
+        var tr = document.createElement('tr')
+        tr.className = 'vertical-divider'
+        tr.setAttribute('valign', 'top')
+        var td = document.createElement('td')
 
-        td.append(table)
-        tr.append(td)
-        centerWrapper.append(tr)
-        div.append(centerWrapper)
+        td.appendChild(table[0])
+        tr.appendChild(td)
+        centerWrapper.appendChild(tr)
+        div.appendChild(centerWrapper)
 
-        $('#' + elementId).html(div)
+        var el = document.getElementById(elementId)
+        el.innerHTML = ''
+        el.appendChild(div)
     }
 
     _independenceTestWidget(elementId, widget) {
-        console.log("WidgetEngine._independenceTestWidget")
         var caption = "<h4 align='center'>" + widget.title + "</h4>"
 
         var height = widget.displayOptions.height || 400
-        var div = $("<div style='position: relative; overflow: hidden; height:" + height + "px; text-align: left; line-height: normal; z-index: 0;'>")
+        var div = document.createElement('div')
+        div.style.cssText = 'position: relative; overflow: hidden; height:' + height + 'px; text-align: left; line-height: normal; z-index: 0;'
 
         var table = createIndependenceTestTable(widget.data)
 
-        div.append(caption)
+        div.insertAdjacentHTML('beforeend', caption)
 
-        var centerWrapper = $("<table align='center'>")
-        var tr = $("<tr class='vertical-divider' valign='top'>")
-        var td = $("<td>")
+        var centerWrapper = document.createElement('table')
+        centerWrapper.setAttribute('align', 'center')
+        var tr = document.createElement('tr')
+        tr.className = 'vertical-divider'
+        tr.setAttribute('valign', 'top')
+        var td = document.createElement('td')
 
-        td.append(table)
-        tr.append(td)
-        centerWrapper.append(tr)
-        div.append(centerWrapper)
+        td.appendChild(table[0])
+        tr.appendChild(td)
+        centerWrapper.appendChild(tr)
+        div.appendChild(centerWrapper)
 
-        $('#' + elementId).html(div)
+        var el = document.getElementById(elementId)
+        el.innerHTML = ''
+        el.appendChild(div)
     }
 
     _htmlWidget(elementId, widget) {
-        $('#' + elementId).html(widget.content)
+        document.getElementById(elementId).innerHTML = widget.content
     }
 
     _agg(series, widget) {

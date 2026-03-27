@@ -67,17 +67,17 @@ class HighchartsWidgetEngine extends WidgetEngine {
         }
 
 
-        $('#' + elementId).on('chartTypeChanged', function (event, chartType) {
-            plot(chartType);
+        document.getElementById(elementId).addEventListener('chartTypeChanged', function (event) {
+            plot(event.detail);
         })
 
         plot(widget.displayOptions.chartType)
 
         if (filterElement) {
-            $('#' + elementId).on('pointSelected', function (event, data) {
-                var condition = {fieldName: widget.fieldName, conditionType: "=", value: data.key};
+            document.getElementById(elementId).addEventListener('pointSelected', function (event) {
+                var condition = {fieldName: widget.fieldName, conditionType: "=", value: event.detail.key};
 
-                $(filterElement).multiFilter('replaceWithConditionAndSubmit', condition);
+                _callMultiFilter(filterElement, 'replaceWithConditionAndSubmit', condition);
             });
         }
     }
@@ -282,14 +282,14 @@ class HighchartsWidgetEngine extends WidgetEngine {
             })
         }
 
-        $('#' + elementId).on('chartTypeChanged', function (event, chartType) {
-            plot(chartType)
+        document.getElementById(elementId).addEventListener('chartTypeChanged', function (event) {
+            plot(event.detail)
         });
 
         plot(widget.displayOptions.chartType)
 
         if (filterElement) {
-            this._addIntervalSelected($('#' + elementId), filterElement, widget.fieldName, isDouble, isDate)
+            this._addIntervalSelected(document.getElementById(elementId), filterElement, widget.fieldName, isDouble, isDate)
         }
     }
 
@@ -487,7 +487,7 @@ class HighchartsWidgetEngine extends WidgetEngine {
         });
 
         if (filterElement) {
-            this._addIntervalSelected($('#' + elementId), filterElement, widget.xFieldName, isDouble, isDate)
+            this._addIntervalSelected(document.getElementById(elementId), filterElement, widget.xFieldName, isDouble, isDate)
         }
     }
 
@@ -498,16 +498,16 @@ class HighchartsWidgetEngine extends WidgetEngine {
             return (isDate) ? msOrDateToStandardDateString(intValue) : (isDouble) ? value.toString() : intValue.toString()
         }
 
-        chartElement.on('intervalSelected', function (event, data) {
-            var xMin = toTypedStringValue(data.xMin, true);
-            var xMax = toTypedStringValue(data.xMax, false);
+        chartElement.addEventListener('intervalSelected', function (event) {
+            var xMin = toTypedStringValue(event.detail.xMin, true);
+            var xMax = toTypedStringValue(event.detail.xMax, false);
 
             var conditions = [
                 {fieldName: xFieldName, conditionType: ">=", value: xMin},
                 {fieldName: xFieldName, conditionType: "<=", value: xMax}
             ]
 
-            $(filterElement).multiFilter('addConditionsAndSubmit', conditions);
+            _callMultiFilter(filterElement, 'addConditionsAndSubmit', conditions);
         });
     }
 
@@ -593,7 +593,8 @@ class HighchartsWidgetEngine extends WidgetEngine {
     }
 
     _addScatterAreaSelected(elementId, filterElement, widget, isXDate, isYDate) {
-        $('#' + elementId).on('areaSelected', function (event, data) {
+        document.getElementById(elementId).addEventListener('areaSelected', function (event) {
+            const data = event.detail;
             const xMin = (isXDate) ? msOrDateToStandardDateString(data.xMin) : data.xMin.toString();
             const xMax = (isXDate) ? msOrDateToStandardDateString(data.xMax) : data.xMax.toString();
             const yMin = (isYDate) ? msOrDateToStandardDateString(data.yMin) : data.yMin.toString();
@@ -606,7 +607,7 @@ class HighchartsWidgetEngine extends WidgetEngine {
                 {fieldName: widget.yFieldName, conditionType: "<=", value: yMax}
             ]
 
-            $(filterElement).multiFilter('addConditionsAndSubmit', conditions);
+            _callMultiFilter(filterElement, 'addConditionsAndSubmit', conditions);
         });
     }
 
@@ -716,7 +717,7 @@ class HighchartsWidgetEngine extends WidgetEngine {
             pointFormat = null
         }
 
-        $('#' + chartElementId).highcharts({
+        Highcharts.chart(chartElementId, {
             chart: {
                 plotBackgroundColor: null,
                 plotBorderWidth: null,
@@ -740,7 +741,7 @@ class HighchartsWidgetEngine extends WidgetEngine {
                         enabled: showLabels,
                         format: '<b>{point.name}</b>: {point.percentage:.1f}%',
                         style: {
-                            color: (Highcharts.theme && Highcharts.theme.contrastTextColor) || 'black'
+                            color: 'black'
                         }
                     },
                     showInLegend: showLegend,
@@ -748,7 +749,7 @@ class HighchartsWidgetEngine extends WidgetEngine {
                         events: {
                             click: function () {
                                 if (allowSelectionEvent)
-                                    $('#' + chartElementId).trigger("pointSelected", this);
+                                    document.getElementById(chartElementId).dispatchEvent(new CustomEvent("pointSelected", {detail: this}));
                             }
                         }
                     }
@@ -808,7 +809,7 @@ class HighchartsWidgetEngine extends WidgetEngine {
                 var xMin = event.xAxis[0].min;
                 var xMax = event.xAxis[0].max;
 
-                $('#' + chartElementId).trigger("intervalSelected", {xMin: xMin, xMax: xMax});
+                document.getElementById(chartElementId).dispatchEvent(new CustomEvent("intervalSelected", {detail: {xMin: xMin, xMax: xMax}}));
             }
         }
 
@@ -817,7 +818,7 @@ class HighchartsWidgetEngine extends WidgetEngine {
         var chartType = 'column'
         if (inverted)
             chartType = 'bar'
-        $('#' + chartElementId).highcharts({
+        Highcharts.chart(chartElementId, {
             chart: {
                 type: chartType,
                 height: height,
@@ -877,7 +878,7 @@ class HighchartsWidgetEngine extends WidgetEngine {
                         events: {
                             click: function () {
                                 if (allowPointSelectionEvent)
-                                    $('#' + chartElementId).trigger("pointSelected", this);
+                                    document.getElementById(chartElementId).dispatchEvent(new CustomEvent("pointSelected", {detail: this}));
                             }
                         }
                     },
@@ -939,14 +940,14 @@ class HighchartsWidgetEngine extends WidgetEngine {
                 var xMin = event.xAxis[0].min;
                 var xMax = event.xAxis[0].max;
 
-                $('#' + chartElementId).trigger("intervalSelected", {xMin: xMin, xMax: xMax});
+                document.getElementById(chartElementId).dispatchEvent(new CustomEvent("intervalSelected", {detail: {xMin: xMin, xMax: xMax}}));
             }
         }
 
         var selectHandler = (allowIntervalSelectionEvent) ? selectXAxisPointsByDrag : null
         var zoomType = (allowIntervalSelectionEvent) ? 'x' : null
 
-        $('#' + chartElementId).highcharts({
+        Highcharts.chart(chartElementId, {
             chart: {
                 height: height,
                 events: {
@@ -1008,7 +1009,7 @@ class HighchartsWidgetEngine extends WidgetEngine {
                         events: {
                             click: function () {
                                 if (allowPointSelectionEvent)
-                                    $('#' + chartElementId).trigger("pointSelected", this);
+                                    document.getElementById(chartElementId).dispatchEvent(new CustomEvent("pointSelected", {detail: this}));
                             }
                         }
                     },
@@ -1056,7 +1057,7 @@ class HighchartsWidgetEngine extends WidgetEngine {
             pointFormat = null
         }
 
-        $('#' + chartElementId).highcharts({
+        Highcharts.chart(chartElementId, {
             chart: {
                 polar: true,
                 height: height
@@ -1107,7 +1108,7 @@ class HighchartsWidgetEngine extends WidgetEngine {
                         events: {
                             click: function () {
                                 if (allowSelectionEvent)
-                                    $('#' + chartElementId).trigger("pointSelected", this);
+                                    document.getElementById(chartElementId).dispatchEvent(new CustomEvent("pointSelected", {detail: this}));
                             }
                         }
                     },
@@ -1159,8 +1160,8 @@ class HighchartsWidgetEngine extends WidgetEngine {
         function selectPointsByDrag(e) {
 
             // Select points
-            Highcharts.each(this.series, function (series) {
-                Highcharts.each(series.points, function (point) {
+            this.series.forEach(function (series) {
+                series.points.forEach(function (point) {
                     if (point.x >= e.xAxis[0].min && point.x <= e.xAxis[0].max &&
                         point.y >= e.yAxis[0].min && point.y <= e.yAxis[0].max) {
                         point.select(true, true);
@@ -1181,8 +1182,8 @@ class HighchartsWidgetEngine extends WidgetEngine {
                 // count the selected points
                 var count = 0
 
-                Highcharts.each(this.series, function (series) {
-                    Highcharts.each(series.points, function (point) {
+                this.series.forEach(function (series) {
+                    series.points.forEach(function (point) {
                         if (point.x >= e.xAxis[0].min && point.x <= e.xAxis[0].max &&
                             point.y >= e.yAxis[0].min && point.y <= e.yAxis[0].max) {
                             count++;
@@ -1201,7 +1202,7 @@ class HighchartsWidgetEngine extends WidgetEngine {
         function triggerSelectionEvent(series, event) {
             var cornerPoints = that._findCornerPoints(series, event)
             if (cornerPoints)
-                $('#' + chartElementId).trigger("areaSelected", cornerPoints);
+                document.getElementById(chartElementId).dispatchEvent(new CustomEvent("areaSelected", {detail: cornerPoints}));
         }
 
         /**
@@ -1210,7 +1211,7 @@ class HighchartsWidgetEngine extends WidgetEngine {
         function unselectByClick() {
             var points = this.getSelectedPoints();
             if (points.length > 0) {
-                Highcharts.each(points, function (point) {
+                points.forEach(function (point) {
                     point.select(false);
                 });
             }
@@ -1219,7 +1220,7 @@ class HighchartsWidgetEngine extends WidgetEngine {
         var exporting = {};
         this._adjustExporting(chartElementId, exporting)
 
-        $('#' + chartElementId).highcharts({
+        Highcharts.chart(chartElementId, {
             chart: {
                 type: 'scatter',
                 zoomType: 'xy',
@@ -1297,7 +1298,7 @@ class HighchartsWidgetEngine extends WidgetEngine {
     }
 
     _defaultScatterPointFormatter(xDataType, yDataType) {
-        Highcharts.setOptions({global: {useUTC: false}});
+        Highcharts.setOptions({time: {useUTC: false}});
 
         var formatter = function () {
             var xPoint = (xDataType == "datetime") ? Highcharts.dateFormat('%Y-%m-%d', this.point.x) : this.point.x
@@ -1334,7 +1335,7 @@ class HighchartsWidgetEngine extends WidgetEngine {
         var exporting = {};
         this._adjustExporting(chartElementId, exporting)
 
-        $('#' + chartElementId).highcharts({
+        Highcharts.chart(chartElementId, {
             chart: {
                 type: 'heatmap',
                 height: height
@@ -1429,7 +1430,7 @@ class HighchartsWidgetEngine extends WidgetEngine {
         var exporting = {};
         this._adjustExporting(chartElementId, exporting)
 
-        $('#' + chartElementId).highcharts({
+        Highcharts.chart(chartElementId, {
             chart: {
                 type: 'boxplot',
                 height: height
@@ -1497,7 +1498,7 @@ class HighchartsWidgetEngine extends WidgetEngine {
                             return {
                                 text: name,
                                 onclick: function () {
-                                    $('#' + chartElementId).trigger("chartTypeChanged", name);
+                                    document.getElementById(chartElementId).dispatchEvent(new CustomEvent("chartTypeChanged", {detail: name}));
                                 }
                             }
                         })
@@ -1539,8 +1540,8 @@ class HighchartsWidgetEngine extends WidgetEngine {
 
     _findCornerPoints(series, event) {
         var xMin, xMax, yMin, yMax;
-        Highcharts.each(series, function (series) {
-            Highcharts.each(series.points, function (point) {
+        series.forEach(function (series) {
+            series.points.forEach(function (point) {
                 if (point.x >= event.xAxis[0].min && point.x <= event.xAxis[0].max &&
                     point.y >= event.yAxis[0].min && point.y <= event.yAxis[0].max) {
 
@@ -1562,7 +1563,8 @@ class HighchartsWidgetEngine extends WidgetEngine {
     }
 
     _adjustExporting(chartElementId, exporting) {
-        const width = $('#' + chartElementId).width()
+        const el = document.getElementById(chartElementId)
+        const width = el ? el.clientWidth : 0
         exporting.sourceWidth = width
         exporting.scale = 2
     }
@@ -1583,7 +1585,9 @@ class HighchartsWidgetEngine extends WidgetEngine {
         options = Highcharts.merge(Highcharts.getOptions().exporting, options);
 
         function exportFun(chartId, svgCallback) {
-            const chart = $("#" + chartId).highcharts()
+            const el = document.getElementById(chartId)
+            const idx = el ? el.getAttribute('data-highcharts-chart') : null
+            const chart = idx != null ? Highcharts.charts[parseInt(idx)] : null
             if (chart) {
                 chart.getSVGForLocalExport(options, {}, function () {
                     console.log("Failed to get SVG");
@@ -1667,7 +1671,7 @@ class HighchartsWidgetEngine extends WidgetEngine {
     _getPointFormatNumericalValue(isDate, isDouble, that, xFloatingPoints) {
         var colorStartPart = '<span style="color:' + that.point.color + '">'
 
-        Highcharts.setOptions({global: {useUTC: false}});
+        Highcharts.setOptions({time: {useUTC: false}});
 
         var valuePart =
             (isDate) ?

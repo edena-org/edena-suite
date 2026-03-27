@@ -34,8 +34,8 @@
 }
 
 @actions = {
-    <div class="row">
-        <div class="col-md-10">
+    <div class="d-flex align-items-start">
+        <div class="flex-grow-1">
             @filterWithJs(
                 Filter(conditions),
                 dataSetTransformationRoutes.find(),
@@ -47,35 +47,31 @@
                 Some(FilterShowFieldStyle.LabelsOnly)
             )
         </div>
-        <div class="dropdown pull-right">
-            <ul class="list-inline">
-                <li>
-                    <button class="btn btn-success btn-sm dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" data-toggle="tooltip" title="Add Data Set Import">
-                        <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
-                        <span class="caret"></span>
-                    </button>
-                    <ul class="dropdown-menu">
-                        @classDisplayNameMap.toSeq.sortBy(_._2).map((transformationLink(_, _)).tupled)
-                    </ul>
-                </li>
-                <li>
-                    <a class="btn btn-success btn-sm" href="#" data-toggle="modal" data-target="#dataSetTransformationSelectionModal" title="Copy Data Set Import">
-                        <span class="glyphicon glyphicon-duplicate"></span>
-                    </a>
-                </li>
-            </ul>
-            @typeaheadSelectionModal("dataSetTransformationSelectionModal", "dataSetTransformation", "Data Set Transformation", dataSetTransformationRoutes.idAndNames, Some(dataSetTransformationRoutes.copy(BSONObjectID.generate)))
+        <div class="ml-auto d-flex align-items-center" style="gap: 6px; padding-top: 10px;">
+            <div class="dropdown">
+                <button class="btn btn-info btn-sm dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" title="Add Data Set Transformation">
+                    <span class="bi bi-plus-circle" aria-hidden="true"></span>
+
+                </button>
+                <ul class="dropdown-menu dropdown-menu-right">
+                    @classDisplayNameMap.toSeq.sortBy(_._2).map((transformationLink(_, _)).tupled)
+                </ul>
+            </div>
+            <a class="btn btn-info btn-sm" href="#" data-toggle="modal" data-target="#dataSetTransformationSelectionModal" title="Copy Data Set Transformation">
+                <span class="bi bi-files"></span>
+            </a>
         </div>
     </div>
+    @typeaheadSelectionModal("dataSetTransformationSelectionModal", "dataSetTransformation", "Data Set Transformation", dataSetTransformationRoutes.idAndNames, Some(dataSetTransformationRoutes.copy(BSONObjectID.generate)))
 }
 
 @scheduleCheckbox(dataSetTransformation: DataSetMetaTransformation) = {
     <ul class="list-inline">
-        <li>
+        <li class="list-inline-item">
             <input type="checkbox" class="no-rowClicked" @if(dataSetTransformation.scheduled) { checked="checked" } disabled="disabled"/>
         </li>
         @if(dataSetTransformation.scheduled) {
-            <li class="topVerticalAlign">
+            <li class="list-inline-item topVerticalAlign">
                 @Html(formatScheduleTime(dataSetTransformation.scheduledTime.get))
             </li>
         }
@@ -83,8 +79,8 @@
 }
 
 @executeLink(dataSetTransformation: DataSetMetaTransformation) = {
-    <a class="btn btn-default btn-xs btn-clean no-rowClicked" href="#" onclick="executeTransformation('@{dataSetTransformation._id.get.stringify}')">
-        <span class="glyphicon glyphicon-play green" aria-hidden="true"></span>
+    <a class="btn btn-secondary btn-xs btn-clean no-rowClicked" href="#" onclick="executeTransformation('@{dataSetTransformation._id.get.stringify}')">
+        <span class="bi bi-play-circle green" aria-hidden="true"></span>
     </a>
 }
 

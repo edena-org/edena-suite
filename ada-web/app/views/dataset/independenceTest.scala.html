@@ -22,13 +22,12 @@
 )
 
 @extraActions = {
-    <div class="pull-right">
+    <div class="d-flex align-items-center" style="gap: 6px;">
         <button class="btn btn-success btn-sm" href="#" onclick="testIndependence();" data-toggle="tooltip" title="Test Independence">
-            <span class="glyphicon glyphicon-play" aria-hidden="true"></span> Launch
+            <span class="bi bi-play-circle" aria-hidden="true"></span> Launch
         </button>
-
         <button class="btn btn-info btn-sm" type="button" data-toggle="modal" data-target="#dataViewSelectionModal" title="Add Independence Test To View">
-            <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>To View
+            <span class="bi bi-plus-circle" aria-hidden="true"></span>To View
         </button>
     </div>
 }
@@ -195,11 +194,11 @@
 
 @fieldButtons = {
     <a id="addAllFieldsButton" class="btn btn-info btn-sm" href="#" onclick="addAllFields();" data-toggle="tooltip" title="Add All">
-        <span class="glyphicon glyphicon-plus" aria-hidden="true"></span> All
+        <span class="bi bi-plus-circle" aria-hidden="true"></span> All
     </a>
 
     <a id="addAllNumericalFieldsButton" class="btn btn-info btn-sm" href="#" onclick="addAllNumericalFields();" data-toggle="tooltip" title="Add All Numerical">
-        <span class="glyphicon glyphicon-plus" aria-hidden="true"></span> All Numerical
+        <span class="bi bi-plus-circle" aria-hidden="true"></span> All Numerical
     </a>
 }
 

@@ -34,8 +34,8 @@
 }
 
 @actions = {
-    <div class="row">
-        <div class="col-md-10">
+    <div class="d-flex align-items-start">
+        <div class="flex-grow-1">
             @filterWithJs(
                 Filter(conditions),
                 dataSetImportRoutes.find(),
@@ -47,40 +47,34 @@
                 Some(FilterShowFieldStyle.LabelsOnly)
             )
         </div>
-        <div class="dropdown pull-right">
-            <ul class="list-inline">
-                <li>
-                    <button class="btn btn-success btn-sm dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" data-toggle="tooltip" title="Add Data Set Import">
-                        <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
-                        <span class="caret"></span>
-                    </button>
-                    <ul class="dropdown-menu">
-                        @classDisplayNameMap.toSeq.sortBy(_._2).map((importLink(_, _)).tupled)
-                    </ul>
-                </li>
-                <li>
-                    <a class="btn btn-success btn-sm" href="#" data-toggle="modal" data-target="#dataSetImportSelectionModal" title="Copy Data Set Import">
-                        <span class="glyphicon glyphicon-duplicate"></span>
-                    </a>
-                </li>
-                <li>
-                    <a class="btn btn-success btn-sm" href="@org.edena.ada.web.controllers.routes.DocumentationController.dataSetImport" title="Help">
-                        <span class="glyphicon glyphicon-question-sign"></span>
-                    </a>
-                </li>
-            </ul>
-            @typeaheadSelectionModal("dataSetImportSelectionModal", "dataSetImport", "Data Set Import", dataSetImportRoutes.idAndNames, Some(dataSetImportRoutes.copy(BSONObjectID.generate)))
+        <div class="ml-auto d-flex align-items-center" style="gap: 6px; padding-top: 10px;">
+            <div class="dropdown">
+                <button class="btn btn-info btn-sm dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" title="Add Data Set Import">
+                    <span class="bi bi-plus-circle" aria-hidden="true"></span>
+
+                </button>
+                <ul class="dropdown-menu dropdown-menu-right">
+                    @classDisplayNameMap.toSeq.sortBy(_._2).map((importLink(_, _)).tupled)
+                </ul>
+            </div>
+            <a class="btn btn-info btn-sm" href="#" data-toggle="modal" data-target="#dataSetImportSelectionModal" title="Copy Data Set Import">
+                <span class="bi bi-files"></span>
+            </a>
+            <a class="btn btn-info btn-sm" href="@org.edena.ada.web.controllers.routes.DocumentationController.dataSetImport" title="Help">
+                <span class="bi bi-question-circle"></span>
+            </a>
         </div>
     </div>
+    @typeaheadSelectionModal("dataSetImportSelectionModal", "dataSetImport", "Data Set Import", dataSetImportRoutes.idAndNames, Some(dataSetImportRoutes.copy(BSONObjectID.generate)))
 }
 
 @scheduleCheckbox(dataSetImport: DataSetImport) = {
     <ul class="list-inline">
-        <li>
+        <li class="list-inline-item">
             <input type="checkbox" class="no-rowClicked" @if(dataSetImport.scheduled) { checked="checked" } disabled="disabled"/>
         </li>
         @if(dataSetImport.scheduled) {
-            <li class="topVerticalAlign">
+            <li class="list-inline-item topVerticalAlign">
                 @Html(formatScheduleTime(dataSetImport.scheduledTime.get))
             </li>
         }
@@ -88,8 +82,8 @@
 }
 
 @executeLink(dataSetImport: DataSetImport) = {
-    <a class="btn btn-default btn-xs btn-clean no-rowClicked" href="#" onclick="executeImport('@{dataSetImport._id.get.stringify}')">
-        <span class="glyphicon glyphicon-play green" aria-hidden="true"></span>
+    <a class="btn btn-secondary btn-xs btn-clean no-rowClicked" href="#" onclick="executeImport('@{dataSetImport._id.get.stringify}')">
+        <span class="bi bi-play-circle green" aria-hidden="true"></span>
     </a>
 }
 

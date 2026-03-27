@@ -35,9 +35,9 @@
                             var finalUrl = coreUrl + "?" + decodeURIComponent($.param(params));
 
                             if (currentCoreUrl == coreUrl && dataViewId == currentDataViewId && dataSetId && currentDataSetId) {
-                                $("#viewsDropdownDiv").append("<li class='active'><a href='" + finalUrl + "'>" + dataView.name + "</a></li>")
+                                $("#viewsDropdownDiv").append("<li class='active'><a class='dropdown-item' href='" + finalUrl + "'>" + dataView.name + "</a></li>")
                             } else {
-                                $("#viewsDropdownDiv").append("<li><a href='" + finalUrl + "'>" + dataView.name + "</a></li>")
+                                $("#viewsDropdownDiv").append("<li><a class='dropdown-item' href='" + finalUrl + "'>" + dataView.name + "</a></li>")
                             }
                         })
                     } else {
@@ -50,7 +50,7 @@
 
             function propagateActive() {
                 $("li.dropdown").each(function () {
-                    if ($(this).find("li.active").size() > 0)
+                    if ($(this).find("li.active").length > 0)
                         $(this).addClass("active")
                 });
             }

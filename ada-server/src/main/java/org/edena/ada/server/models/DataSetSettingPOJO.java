@@ -21,6 +21,7 @@ public class DataSetSettingPOJO {
     private String description;
     private String widgetEngineClassName;
     private String customStorageCollectionName;
+    private String getListItemURL;
 
     // Original item to preserve complex fields (extraNavigationItems, extraExportActions)
     private DataSetSetting originalItem;
@@ -58,6 +59,7 @@ public class DataSetSettingPOJO {
     public String getDescription() { return description; }
     public String getWidgetEngineClassName() { return widgetEngineClassName; }
     public String getCustomStorageCollectionName() { return customStorageCollectionName; }
+    public String getGetListItemURL() { return getListItemURL; }
     public DataSetSetting getOriginalItem() { return originalItem; }
 
     // Setters
@@ -81,6 +83,7 @@ public class DataSetSettingPOJO {
     public void setDescription(String description) { this.description = description; }
     public void setWidgetEngineClassName(String widgetEngineClassName) { this.widgetEngineClassName = widgetEngineClassName; }
     public void setCustomStorageCollectionName(String customStorageCollectionName) { this.customStorageCollectionName = customStorageCollectionName; }
+    public void setGetListItemURL(String getListItemURL) { this.getListItemURL = getListItemURL; }
     public void setOriginalItem(DataSetSetting originalItem) { this.originalItem = originalItem; }
 
     @Override

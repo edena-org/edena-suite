@@ -18,7 +18,7 @@
 
 @logoElement = {
     @image.map { image =>
-        <img class="img-responsive" src="@CustomDirAssets.versioned(image)" />
+        <img class="img-fluid" src="@CustomDirAssets.versioned(image)" />
     }.getOrElse {
         <div>&rarr;</div>
     }
@@ -62,11 +62,11 @@
 
 @dataSetInfoPanel(form)
 
-<div class="panel panel-default">
-    <div class="panel-heading">Import Specifics</div>
-    <div class="panel-body">
+<div class="card">
+    <div class="card-header">Import Specifics</div>
+    <div class="card-body">
         @typeSpecificElements
-        <a class="pull-right" href="#advancedSetting" data-toggle="collapse">Show Advanced</a>
+        <a class="float-right" href="#advancedSetting" data-toggle="collapse">Show Advanced</a>
     </div>
 </div>
 

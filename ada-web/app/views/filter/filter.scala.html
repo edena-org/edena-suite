@@ -21,7 +21,7 @@
 }
 
 @saveFilterModelButtons = {
-    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
     <button type="button" id="submitButton" data-dismiss="modal" class="btn btn-primary">OK</button>
 }
 
@@ -31,7 +31,7 @@
 }
 
 @loadFilterModelButtons = {
-    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
     <button type="button" id="submitButton" data-dismiss="modal" class="btn btn-primary">OK</button>
 }
 
@@ -41,27 +41,27 @@
     @conditionPanel(filter, filterLabel)
 
     <span class="filter-part">
-        <button id="showAddConditionButton" type="button" class="btn btn-sm btn-default" data-toggle="tooltip" title="Add Filter Condition">
-            <span class="glyphicon glyphicon-plus"></span>
+        <button id="showAddConditionButton" type="button" class="btn btn-sm btn-secondary" data-toggle="tooltip" title="Add Filter Condition">
+            <span class="bi bi-plus-circle"></span>
         </button>
 
         @defining(enableSaveFilter && filter.isDefined && filter.get._id.isEmpty && filter.get.conditions.nonEmpty) { showPanel =>
-            <button id="saveFilterButton" type="button" class="btn btn-sm btn-default" data-toggle="modal" data-target="#saveFilterModal@filterElementId" title="Save Filter" @if(!showPanel) {style="display:None"}>
-                <span class="glyphicon glyphicon glyphicon-save"></span>
+            <button id="saveFilterButton" type="button" class="btn btn-sm btn-secondary" data-toggle="modal" data-target="#saveFilterModal@filterElementId" title="Save Filter" @if(!showPanel) {style="display:None"}>
+                <span class="bi bi-save"></span>
             </button>
             @modal(s"saveFilterModal$filterElementId", "Save Filter", saveFilterModalBody, None, Some(saveFilterModelButtons))
         }
 
         @if(enableListFilters) {
-            <button id="loadFilterButton" type="button" class="btn btn-sm btn-default" title="Load Filter">
-                <span class="glyphicon glyphicon-book"></span>
+            <button id="loadFilterButton" type="button" class="btn btn-sm btn-secondary" title="Load Filter">
+                <span class="bi bi-book"></span>
             </button>
 
             @modal(s"loadFilterModal$filterElementId", "Load Filter", loadFilterModalBody, None, Some(loadFilterModelButtons))
         }
 
-        <button id="rollbackFilterButton" type="button" class="btn btn-sm btn-default" title="Rollback Filter" style="display:None">
-            <span class="glyphicon glyphicon-arrow-left"></span>
+        <button id="rollbackFilterButton" type="button" class="btn btn-sm btn-secondary" title="Rollback Filter" style="display:None">
+            <span class="bi bi-arrow-left"></span>
         </button>
 
     </span>

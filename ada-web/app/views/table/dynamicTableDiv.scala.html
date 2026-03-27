@@ -8,16 +8,18 @@
     gridWidth: Int = 4
 )
 
-<div id="@{domainName}Div" class="row col-sm-@gridWidth">
-    <a id="addRowButton" class="btn btn-info btn-sm" href="#" onclick="$('#@{domainName}Div').dynamicTable('openAddModal');return false;" data-toggle="tooltip" title="Add New @{toHumanReadableCamel(domainName)}">
-        <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
-    </a>
-    <a id="remoteRowButton" class="btn btn-info btn-sm" href="#" onclick="$('#@{domainName}Div').dynamicTable('removeCheckedRows');return false;" data-toggle="tooltip" title="Delete @{toHumanReadableCamel(domainName)}">
-        <span class="glyphicon glyphicon-trash" aria-hidden="true"></span>
-    </a>
-    @if(extraActions.isDefined) {
-        @extraActions.get
-    }
+<div id="@{domainName}Div" class="col-sm-@gridWidth">
+    <div style="margin-bottom: 8px;">
+        <a id="addRowButton" class="btn btn-info btn-sm" href="#" onclick="$('#@{domainName}Div').dynamicTable('openAddModal');return false;" data-toggle="tooltip" title="Add New @{toHumanReadableCamel(domainName)}">
+            <span class="bi bi-plus-circle" aria-hidden="true"></span>
+        </a>
+        <a id="remoteRowButton" class="btn btn-info btn-sm" href="#" onclick="$('#@{domainName}Div').dynamicTable('removeCheckedRows');return false;" data-toggle="tooltip" title="Delete @{toHumanReadableCamel(domainName)}">
+            <span class="bi bi-trash" aria-hidden="true"></span>
+        </a>
+        @if(extraActions.isDefined) {
+            @extraActions.get
+        }
+    </div>
     <div>
         @table
     </div>

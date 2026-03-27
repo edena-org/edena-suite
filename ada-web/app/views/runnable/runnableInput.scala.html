@@ -45,12 +45,12 @@
 
             <hr/>
 
-            <div class="actions pull-right">
+            <div class="actions float-right">
                 <input type="submit" value="Submit" class="btn btn-primary">
                 @deadboltRestricts.restrictOr(roles = List(Array(SecurityRole.admin))) {
-                    <a href="@cancelLink.getOrElse(routes.RunnableController.find().url)" class="btn btn-default">Cancel</a>
+                    <a href="@cancelLink.getOrElse(routes.RunnableController.find().url)" class="btn btn-secondary">Cancel</a>
                 } {
-                    <a href="@cancelLink.getOrElse(routes.AppController.index.url)" class="btn btn-default">Cancel</a>
+                    <a href="@cancelLink.getOrElse(routes.AppController.index.url)" class="btn btn-secondary">Cancel</a>
                 }
             </div>
         }

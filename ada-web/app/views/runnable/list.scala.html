@@ -44,25 +44,24 @@
                 Some(FilterShowFieldStyle.LabelsOnly)
             )
         </div>
-        <div class="pull-right">
-            <div class="dropdown">
+        <div class="col-md-4 text-right">
+            <div class="dropdown d-inline-block">
                 <button class="btn btn-info btn-sm dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
-                    <span class="caret"></span>
+                    <span class="bi bi-plus-circle" aria-hidden="true"></span>
                 </button>
-                <ul class="dropdown-menu">
+                <ul class="dropdown-menu dropdown-menu-right">
                     <li>
-                        <a href="#" onclick="createNew();">
+                        <a class="dropdown-item" href="#" onclick="createNew();">
                             Store/Schedule
                         </a>
                     </li>
                     <li>
-                        <a href="#" onclick="launch();">
+                        <a class="dropdown-item" href="#" onclick="launch();">
                             Launch Directly
                         </a>
                     </li>
                     <li>
-                        <a href="#" data-toggle="modal" data-target="#runnableIdSelectionModal">
+                        <a class="dropdown-item" href="#" data-toggle="modal" data-target="#runnableIdSelectionModal">
                             Copy
                         </a>
                     </li>
@@ -76,11 +75,11 @@
 
 @scheduleCheckbox(runnableSpec: RunnableSpec) = {
     <ul class="list-inline">
-        <li>
+        <li class="list-inline-item">
             <input type="checkbox" class="no-rowClicked" @if(runnableSpec.scheduled) { checked="checked" } disabled="disabled"/>
         </li>
         @if(runnableSpec.scheduled) {
-            <li class="topVerticalAlign">
+            <li class="list-inline-item topVerticalAlign">
                 @Html(formatScheduleTime(runnableSpec.scheduledTime.get))
             </li>
         }
@@ -88,8 +87,8 @@
 }
 
 @executeLink(runnableSpec: RunnableSpec) = {
-    <a class="btn btn-default btn-xs btn-clean no-rowClicked" href="#" onclick="submit('post', '@routes.RunnableController.execute(runnableSpec._id.get)'); return false;">
-        <span class="glyphicon glyphicon-play green" aria-hidden="true"></span>
+    <a class="btn btn-secondary btn-xs btn-clean no-rowClicked" href="#" onclick="submit('post', '@routes.RunnableController.execute(runnableSpec._id.get)'); return false;">
+        <span class="bi bi-play-circle green" aria-hidden="true"></span>
     </a>
 }
 

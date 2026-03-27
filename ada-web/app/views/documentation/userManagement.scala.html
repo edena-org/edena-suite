@@ -82,7 +82,7 @@
                     This experimental feature first traverses all sub entries of the <code>dit</code> path. If it finds a requested user it feeds its path (as a suffix) for the authentication together with the user id. Defaults to <code>false</code>.
                 </li>
             </ul>
-        <p>
+        </p>
         <br/>
         <p>
         In nutshell, there are two basic scenarios:
@@ -132,7 +132,7 @@ export ADA_LDAP_BIND_PASSWORD="XXX"
     dit = "cn=accounts,dc=north,dc=edu"
     groups = ["cn=ada-group,cn=groups,cn=accounts,dc=north,dc=edu"]
     bindDN = "uid=ldap-reader,cn=users,cn=accounts,dc=north,dc=edu"
-    bindPassword = "XXX
+    bindPassword = "XXX"
 }
 </code></pre>
         The currently used LDAP settings can be reviewed by clicking on <code>LDAP Settings</code> located in the Admin menu (see the screenshot on on the right).
@@ -264,12 +264,12 @@ export ADA_LDAP_BIND_PASSWORD="XXX"
             Runnable permissions can by assigned by choosing <img src="@CustomDirAssets.versioned("images/documentation/new_rn_button.png")"/> and selecting a desired runnable name.<br/>
         </p>
     } {
-        <div clas="row">
-            <img class="img-responsive" src="@CustomDirAssets.versioned("images/documentation/edit_user.png")"/>
+        <div class="row">
+            <img class="img-fluid" src="@CustomDirAssets.versioned("images/documentation/edit_user.png")"/>
         </div>
 
-        <div clas="row" style="margin-top: 40px">
-            <img class="img-responsive" src="@CustomDirAssets.versioned("images/documentation/adding_user_permission.png")"/>
+        <div class="row" style="margin-top: 40px">
+            <img class="img-fluid" src="@CustomDirAssets.versioned("images/documentation/adding_user_permission.png")"/>
         </div>
     }
 }

@@ -54,6 +54,36 @@ class DataSetSettingController @Inject() (
   private implicit val navigationItemFormatter = JsonFormatter[NavigationItem]
   private implicit val linkFormatter = JsonFormatter[Link]
 
+  // Custom apply/unapply to stay within Play's 22-field mapping limit (cacheDataSet excluded, always false)
+  private val dataSetSettingApply = (
+    _id: Option[BSONObjectID], dataSetId: String, keyFieldName: String,
+    exportOrderByFieldName: Option[String], defaultScatterXFieldName: Option[String],
+    defaultScatterYFieldName: Option[String], defaultDistributionFieldName: Option[String],
+    defaultCumulativeCountFieldName: Option[String], filterShowFieldStyle: Option[FilterShowFieldStyle.Value],
+    filterShowNonNullCount: Boolean, displayItemName: Option[String], storageType: StorageType.Value,
+    mongoAutoCreateIndexForProjection: Boolean, ownerId: Option[BSONObjectID],
+    showSideCategoricalTree: Boolean, extraNavigationItems: Seq[NavigationItem],
+    extraExportActions: Seq[Link], customControllerClassName: Option[String],
+    description: Option[String], widgetEngineClassName: Option[String],
+    customStorageCollectionName: Option[String], getListItemURL: Option[String]
+  ) => DataSetSetting(
+    _id, dataSetId, keyFieldName, exportOrderByFieldName, defaultScatterXFieldName,
+    defaultScatterYFieldName, defaultDistributionFieldName, defaultCumulativeCountFieldName,
+    filterShowFieldStyle, filterShowNonNullCount, displayItemName, storageType,
+    mongoAutoCreateIndexForProjection, cacheDataSet = false, ownerId, showSideCategoricalTree,
+    extraNavigationItems, extraExportActions, customControllerClassName, description,
+    widgetEngineClassName, customStorageCollectionName, getListItemURL
+  )
+
+  private val dataSetSettingUnapply = (s: DataSetSetting) => Some((
+    s._id, s.dataSetId, s.keyFieldName, s.exportOrderByFieldName, s.defaultScatterXFieldName,
+    s.defaultScatterYFieldName, s.defaultDistributionFieldName, s.defaultCumulativeCountFieldName,
+    s.filterShowFieldStyle, s.filterShowNonNullCount, s.displayItemName, s.storageType,
+    s.mongoAutoCreateIndexForProjection, s.ownerId, s.showSideCategoricalTree,
+    s.extraNavigationItems, s.extraExportActions, s.customControllerClassName,
+    s.description, s.widgetEngineClassName, s.customStorageCollectionName, s.getListItemURL
+  ))
+
   override protected[controllers] val form = Form(
     mapping(
       "id" -> ignored(Option.empty[BSONObjectID]),
@@ -69,7 +99,6 @@ class DataSetSettingController @Inject() (
       "displayItemName" -> optional(text),
       "storageType" -> of[StorageType.Value],
       "mongoAutoCreateIndexForProjection" -> boolean,
-      "cacheDataSet" -> ignored(false),
       "ownerId" -> optional(of[BSONObjectID]),
       "showSideCategoricalTree" -> boolean,
       "extraNavigationItems" -> seq(of[NavigationItem]).transform(mergeMenus, mergeMenus),
@@ -77,8 +106,9 @@ class DataSetSettingController @Inject() (
       "customControllerClassName" -> optional(text),
       "description" -> optional(text),
       "widgetEngineClassName" -> optional(text),
-      "customStorageCollectionName" -> optional(text)
-    )(DataSetSetting.apply)(DataSetSetting.unapply)
+      "customStorageCollectionName" -> optional(text),
+      "getListItemURL" -> optional(text)
+    )(dataSetSettingApply)(dataSetSettingUnapply)
   )
 
   override protected val homeCall = dataSetSettingRoutes.find()

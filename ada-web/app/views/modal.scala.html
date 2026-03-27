@@ -16,7 +16,7 @@
     </div>
     <div class="modal-footer">
         @if(buttons.isEmpty) {
-            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
             <button type="submit" id="submitButton" class="btn btn-primary">OK</button>
         } else {
             @buttons.get
@@ -28,9 +28,9 @@
     <div class="modal-dialog @{modalClass.getOrElse("")}">
         <div class="modal-content">
             <div class="modal-header">
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-                <button type="button" class="close" aria-label="Pull Right" data-dismiss="modal" onclick="moveModalRight('@{modalId}');"><span aria-hidden="true">&rightarrow;</span></button>
                 <h4 class="modal-title">@title</h4>
+                <button type="button" class="close" aria-label="Pull Right" data-dismiss="modal" onclick="moveModalRight('@{modalId}');"><span aria-hidden="true">&rightarrow;</span></button>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
             </div>
             @if(call.isDefined) {
                 <form id="@{modalId}Form" action="@call">

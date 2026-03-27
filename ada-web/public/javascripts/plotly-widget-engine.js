@@ -193,7 +193,7 @@ class PlotlyWidgetEngine extends WidgetEngine {
     }
 
     _addScatterAreaZoomed(elementId, filterElement, widget, isXDouble, isXDate, isYDouble, isYDate) {
-        $("#" + elementId).get(0).on('plotly_relayout', function(eventData) {
+        document.getElementById(elementId).on('plotly_relayout', function(eventData) {
             const xMin = eventData["xaxis.range[0]"]
             const xMax = eventData["xaxis.range[1]"]
             const yMin = eventData["yaxis.range[0]"]
@@ -212,13 +212,13 @@ class PlotlyWidgetEngine extends WidgetEngine {
                     {fieldName: widget.yFieldName, conditionType: "<=", value: yMaxOut}
                 ]
 
-                $(filterElement).multiFilter('addConditionsAndSubmit', conditions);
+                _callMultiFilter(filterElement, 'addConditionsAndSubmit', conditions);
             }
         });
     }
 
     _addAreaSelected(elementId) {
-        const element = $("#" + elementId).get(0)
+        const element = document.getElementById(elementId)
 
         element.on('plotly_selected', function(eventData) {
             if (element.layout.annotations) {
@@ -513,8 +513,8 @@ class PlotlyWidgetEngine extends WidgetEngine {
             }
         }
 
-        $('#' + elementId).on('chartTypeChanged', function (event, chartType) {
-            plot(chartType);
+        document.getElementById(elementId).addEventListener('chartTypeChanged', function (event) {
+            plot(event.detail);
         })
 
         plot(widget.displayOptions.chartType)
@@ -538,10 +538,13 @@ class PlotlyWidgetEngine extends WidgetEngine {
             </ul>\
             </div>';
 
-        $("#" + elementId).prepend(chartTypeMenu)
-        $("#" + elementId).find(".chart-type-menu-item").on("click", function(event) {
-            const chartType = $(event.target).attr("data-chart-type")
-            $('#' + elementId).trigger("chartTypeChanged", chartType)
+        var el = document.getElementById(elementId)
+        el.insertAdjacentHTML('afterbegin', chartTypeMenu)
+        el.querySelectorAll('.chart-type-menu-item').forEach(function (item) {
+            item.addEventListener('click', function (event) {
+                const chartType = event.target.dataset.chartType
+                document.getElementById(elementId).dispatchEvent(new CustomEvent("chartTypeChanged", {detail: chartType}))
+            })
         })
     }
 
@@ -691,8 +694,8 @@ class PlotlyWidgetEngine extends WidgetEngine {
             }
         }
 
-        $('#' + elementId).on('chartTypeChanged', function (event, chartType) {
-            plot(chartType);
+        document.getElementById(elementId).addEventListener('chartTypeChanged', function (event) {
+            plot(event.detail);
         })
 
         plot(widget.displayOptions.chartType)
@@ -792,8 +795,8 @@ class PlotlyWidgetEngine extends WidgetEngine {
             case 'Polar':
                 var minX = null, maxX = null
 
-                $.each(datas, function (index, nameSeries) {
-                    $.each(nameSeries[1], function (index2, item) {
+                datas.forEach(function (nameSeries) {
+                    nameSeries[1].forEach(function (item) {
                         if (!minX || minX > item.x)
                             minX = item.x
 
@@ -1131,19 +1134,19 @@ class PlotlyWidgetEngine extends WidgetEngine {
     }
 
     _addPointClicked(elementId, filterElement, fieldName) {
-        $("#" + elementId).get(0).on('plotly_click', function(eventData) {
+        document.getElementById(elementId).on('plotly_click', function(eventData) {
             if (eventData.points.length > 0) {
                 const key = eventData.points[0].customdata
 
                 const condition = {fieldName: fieldName, conditionType: "=", value: key}
 
-                $(filterElement).multiFilter('replaceWithConditionAndSubmit', condition)
+                _callMultiFilter(filterElement, 'replaceWithConditionAndSubmit', condition)
             }
         });
     }
 
     _addXAxisZoomed(elementId, filterElement, fieldName, isDouble, isDate) {
-        $("#" + elementId).get(0).on('plotly_relayout', function(eventData) {
+        document.getElementById(elementId).on('plotly_relayout', function(eventData) {
             const xMin = eventData["xaxis.range[0]"]
             const xMax = eventData["xaxis.range[1]"]
 
@@ -1156,7 +1159,7 @@ class PlotlyWidgetEngine extends WidgetEngine {
                     {fieldName: fieldName, conditionType: "<=", value: xMaxOut}
                 ]
 
-                $(filterElement).multiFilter('addConditionsAndSubmit', conditions);
+                _callMultiFilter(filterElement, 'addConditionsAndSubmit', conditions);
             }
         });
     }
@@ -1239,8 +1242,8 @@ class PlotlyWidgetEngine extends WidgetEngine {
 
     refresh() {
         console.log("Plotly refresh called")
-        $.each($(".js-plotly-plot"), function (index, chart) {
-            const elementId = $(chart).attr('id')
+        document.querySelectorAll('.js-plotly-plot').forEach(function (chart) {
+            const elementId = chart.id
 //            Plotly.Plots.resize(elementId)
             Plotly.relayout(elementId, { "autosize": true});
         })
@@ -1284,31 +1287,32 @@ class PlotlyWidgetEngine extends WidgetEngine {
 
             // remove paths without 'd' attribute (svg2pdf cannot handle those)
             const paths = svgContainer.getElementsByTagName('path');
-            $.each(Array.from(paths), function (i, el) {
+            Array.from(paths).forEach(function (el) {
                 if (!el.getAttribute("d")) {
                     el.parentNode.removeChild(el);
                 }
             });
 
             // collects all the clips and gradient defs and put them into a single space (svg2pdf needs this)
-            const $newDefs = $("<defs>", {"id": "defs-global"});
+            const newDefs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+            newDefs.id = 'defs-global';
             const defs = svgContainer.getElementsByTagName('defs');
-            $.each(Array.from(defs), function (i, el) {
+            Array.from(defs).forEach(function (el) {
                 const clips = Array.from(el.getElementsByClassName("clips"))
                 const gradient = Array.from(el.getElementsByClassName("gradient"))
                 if (clips.length > 0) {
-                    $newDefs.append(clips[0].innerHTML)
+                    newDefs.innerHTML += clips[0].innerHTML
                 }
                 if (gradient.length > 0) {
-                    $newDefs.append(gradient[0].innerHTML)
+                    newDefs.innerHTML += gradient[0].innerHTML
                 }
                 el.parentNode.removeChild(el);
             });
-            $(svgContainer.firstChild).prepend($newDefs)
+            svgContainer.firstChild.prepend(newDefs)
 
             // TODO: nested image with data:image/png;base64 cannot be handled so we remove them... should be preserved and addressed properly
             const images = svgContainer.getElementsByTagName('image');
-            $.each(Array.from(images), function (i, el) {
+            Array.from(images).forEach(function (el) {
                 el.parentNode.removeChild(el);
             });
 

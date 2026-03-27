@@ -14,99 +14,99 @@
 
 @listItem(call: Call, text: String, matchPrefixDepth: Option[Int] = None) = {
     @listItemCustom(call, matchPrefixDepth) {
-        <a href="@call">@text</a>
+        <a class="nav-link" href="@call">@text</a>
+    }
+}
+
+@dropdownItem(call: Call, text: String, matchPrefixDepth: Option[Int] = None) = {
+    @listItemCustom(call, matchPrefixDepth) {
+        <a class="dropdown-item" href="@call">@text</a>
     }
 }
 
 @listItemCustom(call: Call, matchPrefixDepth: Option[Int] = None)(element: Html) = {
 
-    <li @if(
+    <li class="nav-item @if(
         matchesCorePath(call.url, toRequest.path, matchPrefixDepth, toConfiguration.getOptional[String]("play.http.context"))
-    ) { class="active"} >
+    ) { active }" >
         @element
     </li>
 }
 
-<div class="navbar navbar-inverse navbar-fixed-top navbar-custom" role="navigation">
+<nav class="navbar navbar-expand-md navbar-dark fixed-top navbar-custom" role="navigation">
     <div class="container">
-        <div class="navbar-header">
-            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navigation" aria-expanded="false">
-                <span class="sr-only">Toggle navigation</span>
-                <span class="icon-bar"></span>
-                <span class="icon-bar"></span>
-                <span class="icon-bar"></span>
-            </button>
-            <a class="navbar-brand" href="@routes.AppController.index">
-                <img height="35 px" src="@CustomDirAssets.versioned("images/logos/ada_logo_v3.png")"/>
-            </a>
-        </div>
+        <a class="navbar-brand" href="@routes.AppController.index">
+            <img height="35 px" src="@CustomDirAssets.versioned("images/logos/ada_logo_v3.png")"/>
+        </a>
+        <button type="button" class="navbar-toggler" data-toggle="collapse" data-target="#navigation" aria-controls="navigation" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
 
         <div id="navigation" class="collapse navbar-collapse">
-            <ul class="nav navbar-nav">
+            <ul class="navbar-nav">
                 @deadboltRestricts.subjectPresent() {
                     @listItem(routes.AppController.dataSets, webContext.msg("dataSets.menu"), Some(1))
                 }
                 @deadboltRestricts.restrict(roles = List(Array(SecurityRole.admin))) {
-                    <li class="dropdown">
-                        <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">@webContext.msg("ml.menu")<span class="caret"></span></a>
+                    <li class="nav-item dropdown">
+                        <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">@webContext.msg("ml.menu")</a>
                         <ul class="dropdown-menu">
-                            @listItem(mlRoutes.ClassifierController.find(), "Classifiers")
-                            @listItem(mlRoutes.RegressorController.find(), "Regressors")
-                            @listItem(mlRoutes.ClusteringController.find(), "Clusterings")
+                            @dropdownItem(mlRoutes.ClassifierController.find(), "Classifiers")
+                            @dropdownItem(mlRoutes.RegressorController.find(), "Regressors")
+                            @dropdownItem(mlRoutes.ClusteringController.find(), "Clusterings")
                         </ul>
                     </li>
 
-                    <li class="dropdown">
-                        <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
-                            @webContext.msg("admin.menu")<span class="caret"></span></a>
+                    <li class="nav-item dropdown">
+                        <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
+                            @webContext.msg("admin.menu")</a>
                         <ul class="dropdown-menu multi-level">
-                            @listItem(dataSetImportRoutes.DataSetImportController.find(), "Data Set Imports")
-                            @listItem(dataSetTransformationRoutes.DataSetTransformationController.find(), "Data Set Transformations")
-                            @listItem(dataSetRoutes.DataSetSettingController.find(), "Data Set Settings")
-                            @listItem(routes.HtmlSnippetController.find(), "HTML Snippets")
-                            <li role="separator" class="divider"></li>
-                            @listItem(routes.UserController.listAll(), "Users")
-                            @listItem(routes.LdapUserController.listAll, "LDAP Users")
-                            @listItem(routes.LdapUserController.settings, "LDAP Settings")
+                            @dropdownItem(dataSetImportRoutes.DataSetImportController.find(), "Data Set Imports")
+                            @dropdownItem(dataSetTransformationRoutes.DataSetTransformationController.find(), "Data Set Transformations")
+                            @dropdownItem(dataSetRoutes.DataSetSettingController.find(), "Data Set Settings")
+                            @dropdownItem(routes.HtmlSnippetController.find(), "HTML Snippets")
+                            <div class="dropdown-divider"></div>
+                            @dropdownItem(routes.UserController.listAll(), "Users")
+                            @dropdownItem(routes.LdapUserController.listAll, "LDAP Users")
+                            @dropdownItem(routes.LdapUserController.settings, "LDAP Settings")
 
                             <li class="dropdown-submenu">
-                                <a href="#" class="dropdown-toggle" data-toggle="dropdown">User Actions</a>
+                                <a href="#" class="dropdown-item dropdown-toggle" data-toggle="dropdown">User Actions</a>
                                 <ul class="dropdown-menu">
                                     @listItemCustom(routes.AdminController.importLdapUsers) {
-                                        <a href="#" onclick="submit('post', '@routes.AdminController.importLdapUsers'); return false;">
+                                        <a class="dropdown-item" href="#" onclick="submit('post', '@routes.AdminController.importLdapUsers'); return false;">
                                             Import from LDAP
                                         </a>
                                     }
                                     @listItemCustom(routes.AdminController.lockMissingLdapUsers) {
-                                        <a href="#" onclick="submit('post', '@routes.AdminController.lockMissingLdapUsers'); return false;">
+                                        <a class="dropdown-item" href="#" onclick="submit('post', '@routes.AdminController.lockMissingLdapUsers'); return false;">
                                             Lock Missing
                                         </a>
                                     }
                                     @listItemCustom(routes.AdminController.purgeMissingLdapUsers) {
-                                        <a data-toggle="modal" data-target="#purgeMissingLdapUsersModalConfirmation">
+                                        <a class="dropdown-item" data-toggle="modal" data-target="#purgeMissingLdapUsersModalConfirmation">
                                             Purge Missing
                                         </a>
                                     }
                                 </ul>
                             </li>
 
-                            <li role="separator" class="divider"></li>
-                            @listItem(routes.RunnableController.find(), "Runnables")
+                            <div class="dropdown-divider"></div>
+                            @dropdownItem(routes.RunnableController.find(), "Runnables")
                         </ul>
                     </li>
                 }
             </ul>
 
-            <ul class="nav navbar-nav navbar-right">
+            <ul class="navbar-nav ml-auto">
 
                 @deadboltRestricts.patternOr(value = "PN:hide_links", patternType = PatternType.EQUALITY) {
 
                 } {
                     @deadboltRestricts.subjectPresent() {
-                        <li id="linksDropdownToggle" class="dropdown">
-                            <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
-                                @webContext.msg("links.menu")<span class="caret"></span>
-                            </a>
+                        <li id="linksDropdownToggle" class="nav-item dropdown">
+                            <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
+                                @webContext.msg("links.menu")                            </a>
                             <ul class="dropdown-menu">
                             </ul>
                         </li>
@@ -119,29 +119,29 @@
 
                 @listItem(routes.AppController.contact, webContext.msg("contact.menu"), Some(1))
 
-                <li>
+                <li class="nav-item">
                     <!-- show login link, if no subject present; otherwise show user dropdown list -->
                     @deadboltRestricts.subjectPresentOr() {
-                        <li class="dropdown">
-                            <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false"><span class="glyphicon glyphicon-user"></span><span class="caret"></span></a>
+                        <li class="nav-item dropdown">
+                            <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false"><span class="bi bi-person-circle"></span></a>
                             <ul class="dropdown-menu">
-                                <li><a href="@routes.UserProfileController.profile">My Profile</a></li>
-                                <li role="separator" class="divider"></li>
-                                <li><a href="@routes.AuthController.logout">Logout&#160;&#160;&#160;<span class="glyphicon glyphicon-log-out"></span></a></li>
+                                <li><a class="dropdown-item" href="@routes.UserProfileController.profile">My Profile</a></li>
+                                <div class="dropdown-divider"></div>
+                                <li><a class="dropdown-item" href="@routes.AuthController.logout">Logout&#160;&#160;&#160;<span class="bi bi-box-arrow-right"></span></a></li>
                             </ul>
                         </li>
                     }{
-                        <a href="@routes.AuthController.login">Login&#160;&#160;&#160;<span class="glyphicon glyphicon-log-in"></span></a>
+                        <a class="nav-link" href="@routes.AuthController.login">Login&#160;&#160;&#160;<span class="bi bi-box-arrow-in-right"></span></a>
                     }
                 </li>
             </ul>
         </div>
     </div>
-</div>
+</nav>
 
 @purgeMissingButtons = {
     <button type="button" class="btn btn-primary" data-dismiss="modal">Close</button>
-    <button type="button" class="btn btn-default" onclick="submit('post', '@routes.AdminController.purgeMissingLdapUsers'); return false;">Yes, Delete All Missing</button>
+    <button type="button" class="btn btn-secondary" onclick="submit('post', '@routes.AdminController.purgeMissingLdapUsers'); return false;">Yes, Delete All Missing</button>
 }
 
 @purgeMissingModalInner = {
@@ -158,7 +158,7 @@
 <script type="text/javascript">
     $(function () {
         $("li.dropdown").each(function () {
-            if ($(this).find("li.active").size() > 0)
+            if ($(this).find("li.active").length > 0)
                 $(this).addClass("active")
         });
 
@@ -168,6 +168,10 @@
                 htmlSnippetJsRoutes.org.edena.ada.web.controllers.HtmlSnippetController.getHtmlLinks().ajax({
                     success: function (data) {
                         dropDown.html(data)
+                        // BS3→BS4: add dropdown-item class to links
+                        dropDown.find('li > a:not(.dropdown-item)').addClass('dropdown-item');
+                        // BS3→BS4: convert dividers
+                        dropDown.find('li.divider').replaceWith('<div class="dropdown-divider"></div>');
                     },
                     error: showErrorResponse
                 })

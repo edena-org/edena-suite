@@ -1,6 +1,6 @@
 @import views.html.dataset.jsonTable
 @import play.api.libs.json.JsObject
-@import org.edena.ada.server.models.{Field, Filter}
+@import org.edena.ada.server.models.{DataSetSetting, Field, Filter}
 @import org.edena.ada.web.controllers.dataset.DataSetRouter
 @import org.edena.play.Page
 @import reactivemongo.api.bson.BSONObjectID
@@ -14,10 +14,22 @@
     filter: Option[Filter],
     tableFields: Traversable[Field],
     withRowClickableJs: Boolean = false,
-    tableRowSelection: Boolean = false
+    tableRowSelection: Boolean = false,
+    setting: Option[DataSetSetting] = None
 )(
     implicit dataSetWebContext: DataSetWebContext
 )
+
+@rowClickCall = @{
+    setting.flatMap(_.getListItemURL).map { baseUrl =>
+        val keyFieldName = setting.map(_.keyFieldName).getOrElse(JsObjectIdentity.name)
+        (item: JsObject) => play.api.mvc.Call("GET", baseUrl.replace("{{id}}", (item \ keyFieldName).as[String]))
+    }.orElse(
+        Some((item: JsObject) =>
+            (item \ JsObjectIdentity.name).asOpt[BSONObjectID].map(dataSetRouter.get).getOrElse(dataSetRouter.getDefaultView(Nil))
+        )
+    )
+}
 
 @if(page.items.nonEmpty) {
     @jsonTable(
@@ -30,9 +42,7 @@
             filter.map(_.conditionsOrId).getOrElse(Left(Nil)),
             tableRowSelection
         ),
-        Some((item: JsObject) =>
-            (item \ JsObjectIdentity.name).asOpt[BSONObjectID].map(dataSetRouter.get).getOrElse(dataSetRouter.getDefaultView(Nil))
-        ),
+        rowClickCall,
         withRowClickableJs,
         true,
         tableRowSelection

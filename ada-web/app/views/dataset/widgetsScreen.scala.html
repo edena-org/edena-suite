@@ -28,8 +28,8 @@
 )
 
 @actions = {
-    <div class="row">
-        <div class="@if(extraActions.isDefined) { col-md-10 } else { col-md-12 }">
+    <div class="d-flex align-items-start">
+        <div class="flex-grow-1">
             @fixedTableRow("filtersTr") {
                 @filters.zipWithIndex.map { case (filterSpec, index) =>
                     <td style='padding-left: 10px; vertical-align:top'>
@@ -39,7 +39,11 @@
             }
         </div>
 
-        @extraActions.getOrElse("")
+        @if(extraActions.isDefined) {
+            <div class="ml-auto" style="padding-top: 10px;">
+                @extraActions.get
+            </div>
+        }
     </div>
 }
 
@@ -323,13 +327,13 @@
         <table>
             <tr>
                 <td style="vertical-align: top;">
-                    <button type="button" class="btn btn-default btn-circle" data-toggle="collapse" data-target="#inputDiv" title="Show/Hide">
-                        <span class="glyphicon glyphicon-resize-horizontal"></span>
+                    <button type="button" class="btn btn-secondary btn-circle" data-toggle="collapse" data-target="#inputDiv" title="Show/Hide">
+                        <span class="bi bi-arrows-expand"></span>
                     </button>
                 </td>
                 <td style="width: 100%;">
                     <div class="row vertical-divider">
-                        <div id="inputDiv" class="col-md-4 col-sm-12 collapse in">
+                        <div id="inputDiv" class="col-md-4 col-sm-12 collapse show">
                             @inputElements
                         </div>
 
