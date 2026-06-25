@@ -17,3 +17,6 @@ dist
 /**/.DS_Store
 dataImports
 /ignite/work/
+/TODO.md
+/kafka/src/main/resources/docker-compose.yml
+/.mcp.json
