@@ -27,29 +27,36 @@
             var width = this.element.width() - margin.right - margin.left,
                 height = this.options.height - margin.top - margin.bottom;
 
-            this.tree = d3.layout.tree()
+            // d3 v4+: layout is d3.tree() applied to a d3.hierarchy() root (replaces d3.layout.tree())
+            this.tree = d3.tree()
                 .size([height, width]);
 
-            this.diagonal = d3.svg.diagonal()
-                .projection(function (d) {
-                    return [d.y, d.x];
-                });
+            // d3 v4+: d3.svg.diagonal().projection([y, x]) -> d3.linkHorizontal() with x/y accessors swapped
+            this.diagonal = d3.linkHorizontal()
+                .x(function (d) { return d.y; })
+                .y(function (d) { return d.x; });
 
 
             var that = this;
-            that.root = this.options.jsonData;
+            // wrap the raw JSON in a d3.hierarchy so nodes carry .data/.parent/.depth/.children
+            that.root = d3.hierarchy(this.options.jsonData);
             that.root.x0 = height / 2;
             that.root.y0 = 0;
 
-            this.drag = d3.behavior.drag()
-                .on('dragstart', function(node) {
-                    that._dragstart(node, this)
+            // d3 v4+: d3.behavior.drag() -> d3.drag(); event names dragstart/dragend -> start/end
+            // clickDistance(5): v6+ drag defaults to 0px tolerance, so any sub-pixel jitter during a
+            // click is treated as a drag and d3 suppresses the click — which silently broke node
+            // expand/collapse. 5px tolerance lets a near-stationary click through as a real click.
+            this.drag = d3.drag()
+                .clickDistance(5)
+                .on('start', function(event, node) {
+                    that._dragstart(event, node, this)
                 })
-                .on("drag", function(node) {
-                    that._drag(node, this)
+                .on("drag", function(event, node) {
+                    that._drag(event, node, this)
                 })
-                .on("dragend", function(node) {
-                    that._dragend(node, this)
+                .on("end", function(event, node) {
+                    that._dragend(event, node, this)
                 })
 
             that.collapseAll()
@@ -74,9 +81,8 @@
         },
 
         addToRoot: function(id, name) {
-            var node = {}
-            node.name = name;
-            node._id = id;
+            // build a proper hierarchy node so it renders like the rest (d.data/.parent/.depth)
+            var node = d3.hierarchy({ _id: id, name: name, children: [] });
             node.parent = this.root;
 
             this._expand(this.root);
@@ -90,24 +96,25 @@
             this._update(this.root);
         },
 
-        _dragstart: function (node, uiNode) {
+        _dragstart: function (event, node, uiNode) {
             node.dragstartx = node.x
             node.dragstarty = node.y
-            //d3.event.sourceEvent.stopPropagation();
+            //event.sourceEvent.stopPropagation();
         },
 
-        _drag: function(node, uiNode) {
+        _drag: function(event, node, uiNode) {
             if (node == this.root)
                 return;
             var that = this
 
-            node.x += d3.event.dy
-            node.y += d3.event.dx
+            node.x += event.dy
+            node.y += event.dx
 
             d3.select(uiNode).attr("transform", "translate(" + node.y + "," + node.x + ")");
 
-            var allUINodes = this.svg.selectAll("g.node")
-            allUINodes[0].forEach(function(uiNode2) {
+            // d3 v4+: selection[0] (raw DOM array) -> selection.nodes()
+            var allUINodes = this.svg.selectAll("g.node").nodes()
+            allUINodes.forEach(function(uiNode2) {
                 var node2 = uiNode2.__data__
                 if (node.id != node2.id) {
                     if (that._areNodesClose(node, node2) && !that._isPredecessor(node, node2)) {
@@ -119,12 +126,12 @@
             });
         },
 
-        _dragend: function(node, uiNode) {
+        _dragend: function(event, node, uiNode) {
             var that = this
 
             var matchFound = false;
-            var allUINodes = this.svg.selectAll("g.node")
-            allUINodes[0].forEach(function(parentUiNode) {
+            var allUINodes = this.svg.selectAll("g.node").nodes()
+            allUINodes.forEach(function(parentUiNode) {
                 var parent = parentUiNode.__data__
                 if (that._areNodesClose(node, parent) && !that._isPredecessor(node, parent)) {
                     var index = node.parent.children.indexOf(node);
@@ -140,7 +147,7 @@
                     node.depth = parent.depth + 1
                     that._update(parent);
                     if (that.options.dragRelocateToParent)
-                        that.options.dragRelocateToParent(node, parent)
+                        that.options.dragRelocateToParent(node.data, parent.data)
                     matchFound = true
                     return;
                 }
@@ -156,9 +163,13 @@
         _update: function(source) {
             var that = this;
 
-            // Compute the new tree layout.
-            var nodes = this.tree.nodes(this.root).reverse(),
-                links = this.tree.links(nodes);
+            // keep depths consistent after add/relocate (drives the fixed-depth normalization below)
+            this.root.eachBefore(function(d) { d.depth = d.parent ? d.parent.depth + 1 : 0; });
+
+            // Compute the new tree layout (d3 v4+: layout mutates x/y on the hierarchy in place).
+            this.tree(this.root);
+            var nodes = this.root.descendants().reverse(),
+                links = this.root.links();
 
             var depths = $.map( nodes, function(val){ return val.depth; })
             var maxDepth = Math.max.apply( null, depths);
@@ -186,8 +197,8 @@
             nodeEnter.append("circle")
                 .attr("r", 1e-6)
                 .style("fill", function(d) { return that._isCollapsed(d) ? "lightsteelblue" : "#fff"; })
-                .on("click", function(d) {
-                    if (d3.event.defaultPrevented) return;
+                .on("click", function(event, d) {
+                    if (event.defaultPrevented) return;
                     if (d.children)
                         that._collapse(d)
                     else
@@ -201,15 +212,15 @@
                 .attr("text-anchor", function(d) { return that._isInnerNode(d) ? "end" : "start"; })
                 .text(function(d) {
                     var maxLength = that.options.maxTextLength;
-                    return (d.name.length > maxLength) ? d.name.substring(0, maxLength - 2) + ".." : d.name;
+                    return (d.data.name.length > maxLength) ? d.data.name.substring(0, maxLength - 2) + ".." : d.data.name;
                 })
                 .style("fill-opacity", 1e-6)
-                .on("dblclick", function(d) {
-                    that.options.showNodeFun(d)
+                .on("dblclick", function(event, d) {
+                    that.options.showNodeFun(d.data)
                 })
 
-            // Transition nodes to their new position.
-            var nodeUpdate = uiNodes.transition()
+            // d3 v4+: enter and update are separate selections — merge them for the shared transition.
+            var nodeUpdate = nodeEnter.merge(uiNodes).transition()
                 .duration(this.options.duration)
                 .attr("transform", function(d) { return "translate(" + d.y + "," + d.x + ")"; });
 
@@ -237,17 +248,17 @@
                 .data(links, function(d) { return d.target.id; });
 
             // Enter any new links at the parent's previous position.
-            link.enter().insert("path", "g")
+            var linkEnter = link.enter().insert("path", "g")
                 .attr("class", "link")
                 .attr("d", function(d) {
                     var o = {x: source.x0, y: source.y0};
                     return that.diagonal({source: o, target: o});
                 });
 
-            // Transition links to their new position.
-            link.transition()
+            // Transition links (entering + updating) to their new position.
+            linkEnter.merge(link).transition()
                 .duration(this.options.duration)
-                .attr("d", this.diagonal);
+                .attr("d", function(d) { return that.diagonal(d); });
 
             // Transition exiting nodes to the parent's new position.
             link.exit().transition()
