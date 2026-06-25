@@ -30,7 +30,7 @@ Edena Suite is a comprehensive data discovery and analytics platform built with 
 - **Play Framework**: 2.9.6
 - **Apache Spark**: 3.5.4
 - **MongoDB**: ReactiveMongo 1.1.0-RC12
-- **Elasticsearch**: Elastic4S 8.15.4 (ES 8.x compatible, Akka 2.6.x, Play JSON 2.10.x, Jackson overridden to 2.14.x)
+- **Elasticsearch**: Elastic4S 8.19.1 (ES 8.x compatible, Akka 2.6.x, Play JSON 2.10.x, Jackson overridden to 2.14.x)
 - **Apache Ignite**: 2.14.0
 - **GraalVM**: For polyglot scripting (JavaScript, Python)
 - **Akka**: 2.6.21
@@ -53,6 +53,13 @@ sbt scripting/test         # Run scripting module tests
 sbt "testOnly *ClassName*" # Run specific test class
 sbt "scripting/testOnly *GraalJSPoolTest*" # Run JavaScript pool tests
 ```
+
+#### Full-suite run requirements
+A clean single-shot `sbt test` needs a larger heap and some external services/config — the defaults will fail:
+- **Heap**: run with `SBT_OPTS="-Xmx6g -Xss8m"`. The default 1 GB heap OOMs during the GraalPy pool init in the `scripting` tests (and the resulting GC thrash can also abort in-flight Elastic tests).
+- **Elasticsearch** at `localhost:9200` (creds via `ELASTIC_USERNAME` / `ELASTIC_PASSWORD`) for `elastic` / `elastic-json` tests. Note `ElasticKnnSearchTest` may abort in a full run due to index-state ordering (its `beforeAll` deletes `test_articles_knn` before it exists) — it passes when run standalone via `testOnly *ElasticKnnSearchTest*`.
+- **MongoDB** at `localhost:27017` plus `ADA_MONGO_DB_URI` (e.g. `mongodb://localhost:27017/ada-test`) for the ada-web Mongo/importer specs.
+- The ada-web `*ImporterSpec` / `AuthControllerTest` / `MongoCrudStoreSpec` additionally need a full Play app + pac4j auth config to build the Guice injector (`SecurityComponents` binding); without it they abort regardless of Mongo. These are known pre-existing harness-config gaps, not code failures.
 
 ### Running the Application
 ```bash
