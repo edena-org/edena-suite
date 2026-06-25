@@ -2,8 +2,8 @@ name := "edena-suite"
 
 organization in ThisBuild := "org.edena"
 scalaVersion in ThisBuild := "2.13.11" // "2.12.15"
-version in ThisBuild := "1.1.0.RC.71"
-isSnapshot in ThisBuild := false
+version in ThisBuild := "1.1.0.RC.76-SNAPSHOT"
+isSnapshot in ThisBuild := true
 
 // Dependency override groups
 val akkaLibs = Seq(
@@ -65,6 +65,27 @@ val playLibs = Seq(
   "com.typesafe.play" %% "play-test"             % Dependencies.Versions.play,
 //  "com.typesafe.play" %% "filters-helpers"       % Dependencies.Versions.play,
   "com.typesafe.play" %% "play-netty-server"     % Dependencies.Versions.play
+)
+
+val nettyLibs = Seq(
+  "netty-all", "netty-buffer", "netty-codec", "netty-codec-http",
+  "netty-codec-http2", "netty-codec-socks", "netty-common",
+  "netty-handler", "netty-handler-proxy", "netty-resolver",
+  "netty-transport", "netty-transport-classes-epoll",
+  "netty-transport-classes-kqueue", "netty-transport-native-epoll",
+  "netty-transport-native-kqueue", "netty-transport-native-unix-common"
+).map(m => "io.netty" % m % Dependencies.Versions.netty)
+
+val logbackLibs = Seq(
+  "logback-classic", "logback-core"
+).map(m => "ch.qos.logback" % m % Dependencies.Versions.logback)
+
+val commonsLang3Libs = Seq(
+  "org.apache.commons" % "commons-lang3" % Dependencies.Versions.commonsLang3
+)
+
+val commonsIoLibs = Seq(
+  "commons-io" % "commons-io" % Dependencies.Versions.commonsIo
 )
 
 lazy val core = (project in file("core"))
@@ -218,10 +239,30 @@ lazy val adaWeb = (project in file("ada-web"))
     addArtifact(Assets / packageBin / artifact, Assets / packageBin),
     aggregate in test := false,
     aggregate in testOnly := false,
+    // Required by EnvDecryptor to rewrite encrypted `enc:v1:` env vars in place (reflective access
+    // to the process-environment map on JDK 17+). For dev `sbt adaWeb/run` also pass it via
+    // SBT_OPTS/.jvmopts; production start scripts should include it (e.g. -J--add-opens=...).
+    javaOptions += "--add-opens=java.base/java.util=ALL-UNNAMED",
     dependencyOverrides ++= akkaLibs ++ jacksonLibs ++ playJsonLibs ++ akkaHttpLibs ++ playWsLibs ++ playLibs
   )
 
 fork in Test := true
+
+// EnvDecryptor's in-place env rewrite needs reflective access to the process environment.
+core / Test / fork := true
+core / Test / javaOptions += "--add-opens=java.base/java.util=ALL-UNNAMED"
+
+  // Global Netty version alignment (security: CVE-2025-58056, -58057, -55163 fixed in 4.1.127+)
+  ThisBuild / dependencyOverrides ++= nettyLibs
+
+  // Global Logback version alignment (security: CVE-2023-6378/6481, CVE-2024-12798/12801 fixed in 1.5.13+)
+  ThisBuild / dependencyOverrides ++= logbackLibs
+
+  // Global commons-lang3 version alignment (security: CVE-2025-48924 fixed in 3.18.0; elastic was on vulnerable 3.12.0)
+  ThisBuild / dependencyOverrides ++= commonsLang3Libs
+
+  // Global commons-io version alignment (security: CVE-2024-47554 fixed in 2.14.0; core/ml-spark were on vulnerable 2.6)
+  ThisBuild / dependencyOverrides ++= commonsIoLibs
 
 // Global dependency scheme overrides to resolve version conflicts
 ThisBuild / libraryDependencySchemes ++= Seq(

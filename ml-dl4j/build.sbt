@@ -1,4 +1,5 @@
 import com.typesafe.sbt.license.{DepModuleInfo, LicenseInfo}
+import Dependencies.Versions
 
 name := "edena-dl4j"
 
@@ -8,11 +9,11 @@ isSnapshot := false
 
 // scalaVersion := "2.12.15" // "2.11.12"
 
-val dl4jVersion = "1.0.0-M1.1"
+val dl4jVersion = "1.0.0-M2.1"
 
-// Java CPP setting
-javaCppVersion := "1.5.5"
-javaCppPresetLibs ++= Seq("openblas" -> "0.3.13", "opencv" -> "4.5.1", "ffmpeg" -> "4.3.2", "leptonica" -> "1.80.0", "hdf5" -> "1.12.0", "mkl" -> "2021.1")
+// Java CPP setting — versions aligned with DL4J 1.0.0-M2.1 (javacpp-presets 1.5.7, see its parent POM)
+javaCppVersion := "1.5.7"
+javaCppPresetLibs ++= Seq("openblas" -> "0.3.19", "opencv" -> "4.5.5", "ffmpeg" -> "5.0", "leptonica" -> "1.82.0", "hdf5" -> "1.12.1", "mkl" -> "2022.0")
 fork:= true
 
 // -Dorg.bytedeco.javacpp.platform.extension=-avx2.
@@ -36,7 +37,7 @@ libraryDependencies ++= Seq(
 //  "org.bytedeco" % "openblas" % "0.3.13-1.5.5" classifier "linux-x86",
 
   "org.slf4j" % "slf4j-api" % "1.7.21",
-  "ch.qos.logback" % "logback-classic" % "1.2.3",
+  "ch.qos.logback" % "logback-classic" % Versions.logback,
 )
 
 // For licenses not automatically downloaded (need to list them manually)

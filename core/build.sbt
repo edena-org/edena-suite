@@ -23,8 +23,8 @@ libraryDependencies ++= Seq(
   "com.typesafe.akka" %% "akka-stream" % Versions.akka,
 
   // Commons
-  "commons-io" % "commons-io" % "2.6",
-  "commons-lang" % "commons-lang" % "2.6",
+  "commons-io" % "commons-io" % Versions.commonsIo,
+  "org.apache.commons" % "commons-lang3" % Versions.commonsLang3, // replaced EOL commons-lang 2.6
   "org.apache.commons" % "commons-math3" % "3.6.1",
   "joda-time" % "joda-time" % "2.9.9",
 
@@ -36,7 +36,7 @@ libraryDependencies ++= Seq(
 
   // Logging
   "com.typesafe.scala-logging" %% "scala-logging" % "3.9.5",
-  "ch.qos.logback" % "logback-classic" % "1.4.14", // requires JDK11, in order to use JDK8 switch to 1.3.5
+  "ch.qos.logback" % "logback-classic" % Versions.logback, // requires JDK11, in order to use JDK8 switch to 1.3.5
   "org.slf4j" % "slf4j-api" % "1.7.26"
 
 //  "com.typesafe.scala-logging" %% "scala-logging" % "3.5.0",

@@ -19,10 +19,10 @@ libraryDependencies ++= Seq(
   "com.typesafe.play" %% "play-ws-standalone-json" % Versions.playWs,
   "com.typesafe.play" %% "play-ws-standalone-xml" % Versions.playWs,
 
-  "ch.qos.logback" % "logback-classic" % "1.2.3",                                                  // to provide slf4j implementation % Runtime
+  "ch.qos.logback" % "logback-classic" % Versions.logback,                                          // to provide slf4j implementation % Runtime
 
   "org.reflections" % "reflections" % "0.9.10" exclude("com.google.code.findbugs", "annotations"),  // class finder - TODO: upgrade to 0.9.12
-  "com.unboundid" % "unboundid-ldapsdk" % "2.3.8",                                                  // LDAP
+  "com.unboundid" % "unboundid-ldapsdk" % "7.0.2",                                                  // LDAP — CVE-2018-1000134 empty-password bypass fixed in 4.0.5+
   // t-SNE Java
   "com.github.lejon.T-SNE-Java" % "tsne" % "v2.5.0",
 
@@ -148,7 +148,7 @@ licenseOverrides := {
     LicenseInfo(LicenseCategory.EPL, "Eclipse Public License 1.0", "http://www.eclipse.org/legal/epl-v10.html")
 
   case
-    DepModuleInfo("com.unboundid", "unboundid-ldapsdk", "2.3.8") // LDAP SDK has a ternary GPLv2 / GPLv2.1 / UnboundID LDAP SDK Free Use license, we choose the last one
+    DepModuleInfo("com.unboundid", "unboundid-ldapsdk", "7.0.2") // LDAP SDK has a ternary GPLv2 / GPLv2.1 / UnboundID LDAP SDK Free Use license, we choose the last one
   =>
     LicenseInfo(LicenseCategory.Unrecognized, "UnboundID LDAP SDK Free Use License", "https://github.com/pingidentity/ldapsdk/blob/master/LICENSE-UnboundID-LDAPSDK.txt")
 }

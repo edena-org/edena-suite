@@ -13,7 +13,7 @@ libraryDependencies ++= Seq(
   "nl.gn0s1s" %% "elastic4s-http-streams" % Versions.elastic4s,
   "com.sksamuel.exts" %% "exts" % "1.61.1", // Utilities library (Logging, StringOption, etc.)
 //  "javax.inject" % "javax.inject" % "1",
-  "org.apache.commons" % "commons-lang3" % "3.5",
+  "org.apache.commons" % "commons-lang3" % Versions.commonsLang3,
   "org.slf4j" % "slf4j-api" % "1.7.21",
   "org.scalatest" %% "scalatest" % Versions.scalaTest % "test"               // testing
 )
@@ -23,9 +23,9 @@ licenseOverrides := {
   case
     DepModuleInfo("com.carrotsearch", "hppc", "0.7.1")
   | DepModuleInfo("commons-codec", "commons-codec", "1.10")
-  | DepModuleInfo("commons-io", "commons-io", "2.6")
+  | DepModuleInfo("commons-io", "commons-io", _)
   | DepModuleInfo("commons-logging", "commons-logging", "1.1.3")
-  | DepModuleInfo("org.apache.commons", "commons-lang3", "3.5")
+  | DepModuleInfo("org.apache.commons", "commons-lang3", _)
   | DepModuleInfo("org.apache.logging.log4j", "log4j-api", "2.9.1") =>
     LicenseInfo(LicenseCategory.Apache, "Apache License v2.0", "http://www.apache.org/licenses/LICENSE-2.0")
 

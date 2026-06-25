@@ -43,13 +43,13 @@ libraryDependencies ++= Seq(
   "org.webjars.npm" % "apexcharts" % "4.4.0",                       // apexcharts
   "org.webjars.npm" % "echarts" % "5.5.1",                          // echarts (Apache 2.0)
 
-  "org.webjars.bower" % "d3" % "3.5.16",
+  "org.webjars.npm" % "d3" % "7.9.0" intransitive(),               // d3 v7 (CVE: EOL v3 dropped); intransitive — dist/d3.min.js is a self-contained UMD bundle, no need for the ~30 d3-* sub-webjars
   "org.webjars.bower" % "Autolinker.js" % "0.25.0",                 // to convert links to a-href elements
-  "org.webjars" % "jquery-ui" % "1.11.1",
+  "org.webjars" % "jquery-ui" % "1.14.2", // CVE-2022-31160 (checkboxradio XSS); also aligns with jQuery 3.5.1 (1.11.1 predates jQuery 3)
   "org.scalatestplus.play" %% "scalatestplus-play" % Versions.scalatestplusPlay % "test",
 
   // Because of Spark (turning janino logging to warn: https://github.com/janino-compiler/janino/issues/13)
-  "ch.qos.logback" % "logback-classic" % "1.2.3"
+  "ch.qos.logback" % "logback-classic" % Versions.logback
 
   //  "com.typesafe.scala-logging" %% "scala-logging" % "3.5.0",
   //  "ch.qos.logback" % "logback-classic" % "1.2.3",                    // to provide slf4j implementation % Runtime

@@ -17,8 +17,25 @@ object Dependencies {
     // JSON
     val jackson = "2.14.3"
 
+    // Netty (transitive via Akka HTTP, Spark, Ignite, etc.) — pinned to fix CVE-2025-58056/58057/55163
+    val netty = "4.1.127.Final"
+
+    // Logback — pinned to fix CVE-2023-6378/6481 (receiver DoS) and CVE-2024-12798/12801 (fixed in 1.5.13+).
+    // Effective runtime was 1.4.14 (ada-server, ml-dl4j) / 1.5.12 (ada-web via play-logback); slf4j 2.0.x already resolves.
+    val logback = "1.5.34"
+
+    // commons-lang3 — pinned to fix CVE-2025-48924 (ClassUtils recursion → StackOverflowError DoS, fixed in 3.18.0).
+    // elastic resolved 3.12.0 (vulnerable); ada-server/ada-web already pulled 3.20.0 transitively. Only StringEscapeUtils
+    // is used in our code (deprecated since 3.6 but still present in 3.x). 3.20.0 is the highest already in play — no downgrade.
+    val commonsLang3 = "3.20.0"
+
+    // commons-io — pinned to fix CVE-2024-47554 (uncontrolled resource consumption, fixed in 2.14.0). core/build.sbt
+    // declared a misleading 2.6 that actually resolved to 2.6 in core/ml-spark (vulnerable) and 2.16.1 elsewhere.
+    // Only IOUtils.toInputStream(CharSequence, String) is used (ml-dl4j) — stable across all 2.x, no API break.
+    val commonsIo = "2.18.0"
+
     // ES
-    val elastic4s = "8.15.4" // Upgraded to ES 8.x - compatible with Akka 2.6.x, Play JSON 2.10.x, Jackson overridden to 2.14.x
+    val elastic4s = "8.19.1" // Latest 8.x - compatible with Akka 2.6.x, Play JSON 2.10.x, Jackson overridden to 2.14.x
 
     // MONGO
     // reactivemongo-akkastream uses akka-stream 2.5.23
@@ -37,7 +54,7 @@ object Dependencies {
     val bnd = "0.7.3"
 
     // IGNITE
-    val ignite = "2.14.0" //  "2.14.0" - uses JDK 17
+    val ignite = "2.17.0" // CVE-2024-52577 (RCE) fixed; brings Spring 5.3.x, H2 past its CVEs
 
     // WS + ADA-SERVER
     val playWs = "2.2.10" // compatible with Akka 2.6.21 and Play 2.9.6 uses it
@@ -57,7 +74,7 @@ object Dependencies {
     val playMailer = "9.0.1" // play 2.9.5, play-mailer-guice -> guice 6.0.0
 //    val playPac4j = "11.1.0-PLAY2.8" //"10.0.2"
     val playPac4j = "12.0.1-PLAY2.9" //"10.0.2"
-    val pac4jOidc = "6.2.1" // 5.3.1
+    val pac4jOidc = "6.3.3" // 6.3.3 has CVE-2026-29000 fix for pac4j-jwt (not directly on classpath, hygiene bump)
 
     val scalazCore = "7.2.36"
     val scalatestplusPlay = "4.0.3"
