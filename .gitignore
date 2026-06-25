@@ -20,3 +20,8 @@ dataImports
 /TODO.md
 /kafka/src/main/resources/docker-compose.yml
 /.mcp.json
+# Extraneous per-module sbt project files (only the root project/ is used)
+/ada-web/project/build.properties
+/ml-spark/project/build.properties
+# Apache Ignite runtime artifact
+/ignite/README.txt
