@@ -21,7 +21,7 @@ private[nested] class ElasticNestedArticleStore @Inject()(
 ) with ElasticCrudStoreExtraImpl[NestedArticle, UUID]
   with NestedArticleStoreTypes.NestedArticleStore {
 
-  createIndexIfNeeded
+  createIndexIfNeeded()
 
   override protected def fieldDefs = Seq(
     keywordField("id") store true,

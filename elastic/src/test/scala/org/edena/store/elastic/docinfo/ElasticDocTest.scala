@@ -6,7 +6,7 @@ import java.{util => ju}
 import akka.actor.ActorSystem
 import akka.stream.Materializer
 import akka.stream.scaladsl.Sink
-import org.edena.store.elastic.ElasticBaseTest
+import org.edena.store.elastic.{ElasticBaseTest, SourceFilter}
 import org.edena.store.elastic.docinfo.DocInfo.DocIdentity
 import org.edena.store.elastic.docinfo.StoreTypes.DocStore
 import org.edena.core.store.Criterion._
@@ -59,6 +59,44 @@ class ElasticDocTest extends AsyncFlatSpec
       docInfo.get.charCount should be (200)
       docInfo.get.wordCount should be (50)
       docInfo.get.comment should be (Some("Very first doc"))
+    }
+  }
+
+  "ElasticDocTest" should "get an item with excluded fields (SourceFilter)" in {
+    println("2b. Test - get an item with SourceFilter(excludes)")
+
+    docStore.get(fixedId, SourceFilter(excludes = Set("comment"))).map { docInfo =>
+      println(docInfo)
+
+      docInfo should not be None
+      docInfo.get.id should be (Some(fixedId))
+      docInfo.get.fileName should be ("dada.txt")
+      docInfo.get.text should be ("This is a very long long text. I am bored here.")
+      docInfo.get.charCount should be (200)
+      docInfo.get.wordCount should be (50)
+      // "comment" was excluded server-side — despite being stored as Some("Very first doc"),
+      // it never leaves Elasticsearch, so the deserialized DocInfo has comment = None.
+      docInfo.get.comment should be (None)
+    }
+  }
+
+  "ElasticDocTest" should "get an item with included fields only (SourceFilter)" in {
+    println("2c. Test - get an item with SourceFilter(includes)")
+
+    docStore.get(
+      fixedId,
+      SourceFilter(includes = Set("id", "fileName", "text", "charCount", "wordCount", "timeCreated"))
+    ).map { docInfo =>
+      println(docInfo)
+
+      docInfo should not be None
+      docInfo.get.id should be (Some(fixedId))
+      docInfo.get.fileName should be ("dada.txt")
+      docInfo.get.text should be ("This is a very long long text. I am bored here.")
+      docInfo.get.charCount should be (200)
+      docInfo.get.wordCount should be (50)
+      // "comment" is not in the includes — ES returns only the listed fields.
+      docInfo.get.comment should be (None)
     }
   }
 

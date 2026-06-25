@@ -3,6 +3,7 @@ package org.edena.store.elastic.util
 import akka.stream.Materializer
 import org.edena.ws.{Timeouts, WSHelper}
 import play.api.libs.json.{JsBoolean, JsNumber, JsObject, JsValue, Json}
+import play.api.libs.ws.{StandaloneWSRequest, WSAuthScheme}
 import play.api.libs.ws.JsonBodyWritables._
 import play.api.libs.ws.DefaultBodyWritables._
 import play.api.libs.ws.JsonBodyReadables._
@@ -31,7 +32,9 @@ trait ElasticBaseWSService {
 
   def getCount(indexName: String): Future[Option[Int]]
 
-  def removeReadOnly(indexName: String): Future[String]
+  def setReadonlyBlock(indexName: String, flag: Boolean): Future[String]
+
+  def setWriteBlock(indexName: String, flag: Boolean): Future[String]
 }
 
 class ElasticBaseWSServiceDefaultImpl @Inject()(
@@ -45,6 +48,16 @@ trait ElasticBaseWSServiceImpl extends WSHelper with ElasticBaseWSService {
   private val coreUrl: String = "http://localhost:9200"
 
   private val timeout = 600000
+
+  protected lazy val credentials: Option[(String, String)] = for {
+    user <- sys.env.get("ELASTIC_USERNAME")
+    pass <- sys.env.get("ELASTIC_PASSWORD")
+  } yield (user, pass)
+
+  protected def request(url: String): StandaloneWSRequest = {
+    val base = client.url(url)
+    credentials.fold(base) { case (u, p) => base.withAuth(u, p, WSAuthScheme.BASIC) }
+  }
 
   override protected def timeouts: Timeouts = Timeouts(
     requestTimeout = Some(timeout),
@@ -78,7 +91,7 @@ trait ElasticBaseWSServiceImpl extends WSHelper with ElasticBaseWSService {
       ))
     }.getOrElse(preFinalJsonBody)
 
-    client.url(s"$coreUrl/$indexName")
+    request(s"$coreUrl/$indexName")
       .addHttpHeaders("Content-Type" -> "application/json")
       .put(finalJsonBody)
       .map(_.body)
@@ -99,7 +112,7 @@ trait ElasticBaseWSServiceImpl extends WSHelper with ElasticBaseWSService {
         |  }
         |}""".stripMargin
 
-    client.url(s"$coreUrl/_reindex")
+    request(s"$coreUrl/_reindex")
       .addHttpHeaders("Content-Type" -> "application/json")
       .post(jsonBody)
       .map(_.body)
@@ -108,20 +121,20 @@ trait ElasticBaseWSServiceImpl extends WSHelper with ElasticBaseWSService {
   override def getMapping(
     indexName: String
   ): Future[JsObject] =
-    client.url(s"$coreUrl/$indexName/_mapping")
+    request(s"$coreUrl/$indexName/_mapping")
       .get()
       .map(_.body[JsValue].as[JsObject])
 
   override def deleteIndex(
     indexName: String
   ): Future[String] = {
-    client.url(s"$coreUrl/$indexName")
+    request(s"$coreUrl/$indexName")
       .delete()
       .map(_.body)
   }
 
   override def getAllIndeces: Future[Seq[Seq[String]]] =
-    client.url(s"$coreUrl/_cat/indices")
+    request(s"$coreUrl/_cat/indices")
       .get()
       .map { response =>
         response.body.split("\n").map {
@@ -130,23 +143,44 @@ trait ElasticBaseWSServiceImpl extends WSHelper with ElasticBaseWSService {
       }
 
   override def getSettings(indexName: String) =
-    client.url(s"$coreUrl/$indexName/_settings")
+    request(s"$coreUrl/$indexName/_settings")
       .get()
       .map(_.body[JsValue].as[JsObject])
 
   override def getCount(indexName: String) =
-    client.url(s"$coreUrl/$indexName/_count")
+    request(s"$coreUrl/$indexName/_count")
       .get()
       .map(response => (response.body[JsValue].as[JsObject] \ "count").asOpt[Int])
 
-  override def removeReadOnly(indexName: String) = {
+  override def setReadonlyBlock(indexName: String, flag: Boolean) = {
+    val jsonBody =
+      if (flag)
+        s"""
+           |{
+           |  "index.blocks.read_only": true
+           |}""".stripMargin
+      else
+        s"""
+           |{
+           |  "index.blocks.read_only": null,
+           |  "index.blocks.read_only_allow_delete": null
+           |}""".stripMargin
+
+    request(s"$coreUrl/$indexName/_settings")
+      .addHttpHeaders("Content-Type" -> "application/json")
+      .put(jsonBody)
+      .map(_.body)
+  }
+
+  override def setWriteBlock(indexName: String, flag: Boolean) = {
+    val value = if (flag) "true" else "null"
     val jsonBody =
       s"""
          |{
-         |  "index.blocks.read_only_allow_delete": null
+         |  "index.blocks.write": $value
          |}""".stripMargin
 
-    client.url(s"$coreUrl/$indexName/_settings")
+    request(s"$coreUrl/$indexName/_settings")
       .addHttpHeaders("Content-Type" -> "application/json")
       .put(jsonBody)
       .map(_.body)

@@ -25,7 +25,7 @@ protected[docinfo] class ElasticDocStore @Inject()(
   )
 ) with StoreTypes.DocStore with ElasticCrudStoreExtraImpl[DocInfo, UUID] {
 
-  createIndexIfNeeded
+  createIndexIfNeeded()
 
   // exclude id and provide an explicit mapping
   override protected def fieldDefs =

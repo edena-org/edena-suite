@@ -57,7 +57,7 @@ private[elastic] final class ElasticJsonCrudStoreImpl @Inject()(
     }
 
   // TODO: should be called as a post-init method, since all vals must be instantiated (i.e. the order matters)
-  createIndexIfNeeded
+  createIndexIfNeeded()
 
   override def stringId(id: BSONObjectID) = id.stringify
 

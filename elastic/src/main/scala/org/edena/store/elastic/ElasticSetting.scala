@@ -89,3 +89,13 @@ object RefreshPolicy extends Enumeration {
   val Immediate = Value("immediate")
   val WaitFor = Value("wait_for")
 }
+
+/**
+ * Server-side `_source` filter applied during `get`. Whichever sets are non-empty
+ * map to the corresponding ES `_source` include/exclude patterns so the excluded
+ * fields never leave Elasticsearch.
+ */
+case class SourceFilter(
+  includes: Set[String] = Set.empty,
+  excludes: Set[String] = Set.empty
+)

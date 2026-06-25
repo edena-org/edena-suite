@@ -11,6 +11,14 @@ abstract class ElasticFormatCrudStore[E, ID](
   implicit val format: Format[E], identity: Identity[E, ID]
 ) extends ElasticCrudStore[E, ID](indexName, setting) with ElasticFormatSerializer[E] {
 
+  // Used only on the storedFields projection path, where ES always wraps values in arrays
+  // (even for scalar stored fields). Returning true here keeps the value as a List; false
+  // unwraps to .head. NestedField paths are the right "true" set because ES nested mappings
+  // imply an array in _source. The _source flatten path (projectSourceToValueMap in the
+  // parent store) preserves natural JSON shape and does not consult this predicate.
+  override protected def isMultiValued(fieldName: String): Boolean =
+    nestedFieldNames.contains(fieldName)
+
   override protected def createSaveDef(entity: E, id: ID) =
     ElasticDsl.indexInto(index) source entity id idToString(id)
 

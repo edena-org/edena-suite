@@ -4,7 +4,8 @@ import akka.actor.ActorSystem
 import akka.stream.Materializer
 import org.edena.core.store.Criterion._
 import org.edena.core.store.ValueMapAux._
-import org.edena.store.elastic.{ElasticBaseTest, FullTextSearchSettings, FullTextSearchType, KnnSearchSettings}
+import akka.stream.scaladsl.Sink
+import org.edena.store.elastic.{ElasticBaseTest, FullTextSearchSettings, FullTextSearchType, KnnResult, KnnSearchSettings}
 import org.scalatest.{AsyncFlatSpec, BeforeAndAfterAll, Matchers}
 
 import scala.concurrent.Await
@@ -441,6 +442,113 @@ class NestedOmniSearchTest extends AsyncFlatSpec
       // "Quantum Computing Frontiers" matches in sections.text ("Quantum computing harnesses...")
       results.nonEmpty shouldBe true
       results.exists(_.valueMap.getAs[String]("title").contains("Quantum Computing Frontiers")) shouldBe true
+    }
+  }
+
+  // ==================== Test 13: Projection with nested fields (criterion only) ====================
+
+  it should "13. return nested sections in values when projected with criterion-only search" in {
+    println("\n13. Test - projection with nested field 'sections' (criterion only)")
+
+    store.findAsValueMapOmni(
+      criterion = "category" #== "tech",
+      projection = Seq("title", "sections")
+    ).map { results =>
+      println(s"Found ${results.size} results with projection [title, sections]:")
+      results.foreach { result =>
+        val title = result.valueMap.getOrElse("title", "N/A")
+        val sections = result.valueMap.get("sections")
+        println(s"  Title: $title, sections present: ${sections.isDefined && sections.get.isDefined}, " +
+          s"keys: ${result.valueMap.keys.mkString(", ")}")
+      }
+
+      results should have size 2
+      // Sections should be present in values as a list (not collapsed to first element)
+      results.foreach { result =>
+        val sections = result.valueMap("sections")
+        println(s"  sections type: ${sections.map(_.getClass.getName)}, " +
+          s"is list: ${sections.exists(_.isInstanceOf[List[_]])}")
+      }
+      all(results.map(_.valueMap.get("sections"))) should not be empty
+      all(results.map(_.valueMap("sections"))) should not be None
+      // Verify sections are returned as lists (isMultiValued must be true)
+      all(results.map(_.valueMap("sections").get)) shouldBe a[List[_]]
+    }
+  }
+
+  // ==================== Test 14: Projection with nested sub-fields ====================
+
+  it should "14. return nested sub-fields when projected with full-text search" in {
+    println("\n14. Test - projection with nested sub-field 'sections.text' + full-text search")
+
+    store.findAsValueMapOmni(
+      fullTextQuery = Some("neural"),
+      fullTextFields = Seq("sections.text"),
+      fullTextSettings = FullTextSearchSettings(searchType = FullTextSearchType.Match),
+      projection = Seq("title", "sections.text")
+    ).map { results =>
+      println(s"Found ${results.size} results with projection [title, sections.text]:")
+      results.foreach { result =>
+        val title = result.valueMap.getOrElse("title", "N/A")
+        println(s"  Title: $title, keys: ${result.valueMap.keys.mkString(", ")}, " +
+          s"innerHits: ${result.innerHits.keys.mkString(", ")}")
+      }
+
+      results.nonEmpty shouldBe true
+      // Title should be present
+      all(results.map(_.valueMap.get("title"))) should not be empty
+    }
+  }
+
+  // ==================== Test 15: Streaming with projection containing nested fields ====================
+
+  it should "15. stream results with nested projection (criterion only)" in {
+    println("\n15. Test - streaming with nested projection [title, sections]")
+
+    for {
+      source <- store.findAsValueMapOmniStream(
+        criterion = "category" #== "tech",
+        projection = Seq("title", "sections")
+      )
+      results <- source.runFold(Seq.empty[KnnResult])(_ :+ _)
+    } yield {
+      println(s"Streamed ${results.size} results with projection [title, sections]:")
+      results.foreach { result =>
+        val title = result.valueMap.getOrElse("title", "N/A")
+        val sections = result.valueMap.get("sections")
+        println(s"  Title: $title, sections present: ${sections.isDefined && sections.get.isDefined}, " +
+          s"keys: ${result.valueMap.keys.mkString(", ")}")
+      }
+
+      results should have size 2
+      // Sections should be present in values
+      all(results.map(_.valueMap.get("sections"))) should not be empty
+      all(results.map(_.valueMap("sections"))) should not be None
+    }
+  }
+
+  // ==================== Test 16: Streaming with projection + full-text search ====================
+
+  it should "16. stream results with nested projection + full-text search" in {
+    println("\n16. Test - streaming with nested projection + full-text search")
+
+    for {
+      source <- store.findAsValueMapOmniStream(
+        fullTextQuery = Some("neural"),
+        fullTextFields = Seq("sections.text"),
+        fullTextSettings = FullTextSearchSettings(searchType = FullTextSearchType.Match),
+        projection = Seq("title", "sections.text")
+      )
+      results <- source.runFold(Seq.empty[KnnResult])(_ :+ _)
+    } yield {
+      println(s"Streamed ${results.size} results:")
+      results.foreach { result =>
+        val title = result.valueMap.getOrElse("title", "N/A")
+        println(s"  Title: $title, keys: ${result.valueMap.keys.mkString(", ")}")
+      }
+
+      results.nonEmpty shouldBe true
+      all(results.map(_.valueMap.get("title"))) should not be empty
     }
   }
 

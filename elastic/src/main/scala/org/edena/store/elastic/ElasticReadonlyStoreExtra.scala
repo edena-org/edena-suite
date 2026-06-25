@@ -51,6 +51,12 @@ import scala.concurrent.Future
  */
 trait ElasticReadonlyStoreExtra[E, ID] {
 
+  /**
+   * `get` by id with a server-side `_source` include/exclude filter. Excluded fields
+   * never leave Elasticsearch, so the JVM heap only ever sees the kept fields.
+   */
+  def get(id: ID, sourceFilter: SourceFilter): Future[Option[E]]
+
   def getMappings: Future[Map[String, Map[String, Any]]]
 
   def reindex(newIndexName: String): Future[_]
@@ -341,6 +347,9 @@ trait ElasticReadonlyStoreExtraImpl[E, ID] extends ElasticReadonlyStoreExtra[E, 
 
   this: ElasticReadonlyStore[E, ID] =>
 
+  override def get(id: ID, sourceFilter: SourceFilter): Future[Option[E]] =
+    getAux(id, Some(sourceFilter))
+
   override def getMappings: Future[Map[String, Map[String, Any]]] =
     for {
       mappings <- client execute {
@@ -596,8 +605,9 @@ trait ElasticReadonlyStoreExtraImpl[E, ID] extends ElasticReadonlyStoreExtra[E, 
     val projectionSeq = projection.map(toDBFieldName).toSeq
     val vectorLeafField = vectorField.split("\\.").last
 
-    val fetchSource = projection.isEmpty
-    val searchDef = createKnnSearchDef(knnQuery, projectionSeq, fetchSource, sort, None, None)
+    val useSourceInclude = projection.nonEmpty && projectionHasNestedFields(projection)
+    val fetchSource = projection.isEmpty || useSourceInclude
+    val searchDef = createKnnSearchDef(knnQuery, projectionSeq, fetchSource, sort, None, None, useSourceInclude)
 
     client
       .execute(searchDef)
@@ -623,14 +633,17 @@ trait ElasticReadonlyStoreExtraImpl[E, ID] extends ElasticReadonlyStoreExtra[E, 
     val projectionSeq = projection.map(toDBFieldName).toSeq
     val vectorLeafField = vectorField.split("\\.").last
 
+    val useSourceInclude = projection.nonEmpty && projectionHasNestedFields(projection)
+    val fetchSource = projection.isEmpty || useSourceInclude
     val scrollLimit = settings.k
     val searchDef = createKnnSearchDef(
       knnQuery,
       projectionSeq,
-      projection.isEmpty,
+      fetchSource,
       sort,
       Some(scrollLimit),
-      None
+      None,
+      useSourceInclude
     )
     val scrollDef = searchDef scroll scrollKeepAlive
 
@@ -639,7 +652,7 @@ trait ElasticReadonlyStoreExtraImpl[E, ID] extends ElasticReadonlyStoreExtra[E, 
     val source = Source.fromPublisher(publisher).map { hit =>
       serializeKnnHit(
         projectionSeq,
-        fetchSource = projection.isEmpty,
+        fetchSource = fetchSource,
         hit,
         Set(vectorLeafField)
       )
@@ -663,9 +676,12 @@ trait ElasticReadonlyStoreExtraImpl[E, ID] extends ElasticReadonlyStoreExtra[E, 
     val projectionSeq = projection.map(toDBFieldName).toSeq
     val vectorLeafField = vectorField.split("\\.").last
 
+    val useSourceInclude = projection.nonEmpty && projectionHasNestedFields(projection)
+    val fetchSource = projection.isEmpty || useSourceInclude
+
     // Create base search definition with kNN
     val baseDef =
-      createKnnSearchDef(knnQuery, projectionSeq, projection.isEmpty, sort, limit, skip)
+      createKnnSearchDef(knnQuery, projectionSeq, fetchSource, sort, limit, skip, useSourceInclude)
 
     // Add traditional query for hybrid search
     val traditionalQuery = toQuery(criterion)
@@ -685,7 +701,7 @@ trait ElasticReadonlyStoreExtraImpl[E, ID] extends ElasticReadonlyStoreExtra[E, 
         val result = getResultOrError(response, "findAsValueMapKnnHybrid")
         serializeKnnHits(
           projectionSeq,
-          projection.isEmpty,
+          fetchSource,
           result.hits.hits,
           Set(vectorLeafField)
         )
@@ -814,13 +830,17 @@ trait ElasticReadonlyStoreExtraImpl[E, ID] extends ElasticReadonlyStoreExtra[E, 
         )
     ).flatten
 
+    // ES storedFields doesn't support nested objects — use _source includes instead
+    val useSourceInclude = projection.nonEmpty && projectionHasNestedFields(projection)
+    val fetchSource = projection.isEmpty || useSourceInclude
+
     // Create search definition - with or without kNN
     val searchDef: SearchRequest = (vectorField, knnQueryVector) match {
       case (Some(vf), Some(qv)) =>
         // Include kNN search
         val knnQuery = createKnnQuery(vf, qv, NoCriterion, knnSettings)
         val baseDef =
-          createKnnSearchDef(knnQuery, projectionSeq, projection.isEmpty, sort, limit, skip)
+          createKnnSearchDef(knnQuery, projectionSeq, fetchSource, sort, limit, skip, useSourceInclude)
         if (shouldQueries.nonEmpty) {
           baseDef bool ElasticDsl.should(shouldQueries)
         } else {
@@ -829,9 +849,12 @@ trait ElasticReadonlyStoreExtraImpl[E, ID] extends ElasticReadonlyStoreExtra[E, 
 
       case _ =>
         // No kNN - just traditional query and/or full-text search
-        val baseDef = ElasticDsl.search(index).fetchSource(projection.isEmpty)
+        val baseDef = if (useSourceInclude)
+          ElasticDsl.search(index).sourceInclude(projectionSeq)
+        else
+          ElasticDsl.search(index).fetchSource(projection.isEmpty)
         val withProjection =
-          if (projectionSeq.nonEmpty) baseDef.storedFields(projectionSeq) else baseDef
+          if (projectionSeq.nonEmpty && !useSourceInclude) baseDef.storedFields(projectionSeq) else baseDef
         val withSort =
           if (sort.nonEmpty) withProjection.sortBy(toSort(sort)) else withProjection
         val withSkip = skip.map(s => withSort.start(s)).getOrElse(withSort)
@@ -849,7 +872,7 @@ trait ElasticReadonlyStoreExtraImpl[E, ID] extends ElasticReadonlyStoreExtra[E, 
       .execute(withMinScore)
       .map { response =>
         val result = getResultOrError(response, "findAsValueMapOmniSearch")
-        serializeKnnHits(projectionSeq, projection.isEmpty, result.hits.hits, vectorExcludes)
+        serializeKnnHits(projectionSeq, fetchSource, result.hits.hits, vectorExcludes)
       }
       .recover(handleExceptions)
   }
@@ -896,6 +919,9 @@ trait ElasticReadonlyStoreExtraImpl[E, ID] extends ElasticReadonlyStoreExtra[E, 
         )
     ).flatten
 
+    // ES storedFields doesn't support nested objects — use _source includes instead
+    val useSourceInclude = projection.nonEmpty && projectionHasNestedFields(projection)
+    val fetchSource = projection.isEmpty || useSourceInclude
     val scrollLimit = scrollBatchSize.getOrElse(setting.scrollBatchSize)
 
     // Create search definition - with or without kNN
@@ -906,10 +932,11 @@ trait ElasticReadonlyStoreExtraImpl[E, ID] extends ElasticReadonlyStoreExtra[E, 
         val baseDef = createKnnSearchDef(
           knnQuery,
           projectionSeq,
-          projection.isEmpty,
+          fetchSource,
           sort,
           Some(scrollLimit),
-          None
+          None,
+          useSourceInclude
         )
         if (shouldQueries.nonEmpty) {
           baseDef bool ElasticDsl.should(shouldQueries)
@@ -938,7 +965,7 @@ trait ElasticReadonlyStoreExtraImpl[E, ID] extends ElasticReadonlyStoreExtra[E, 
     val publisher = client publisher scrollDef
 
     val source = Source.fromPublisher(publisher).map { hit =>
-      serializeKnnHit(projectionSeq, fetchSource = projection.isEmpty, hit, vectorExcludes)
+      serializeKnnHit(projectionSeq, fetchSource = fetchSource, hit, vectorExcludes)
     }
 
     Future(source)
@@ -1149,12 +1176,17 @@ trait ElasticReadonlyStoreExtraImpl[E, ID] extends ElasticReadonlyStoreExtra[E, 
     fetchSource: Boolean,
     sort: Seq[Sort],
     limit: Option[Int],
-    skip: Option[Int]
+    skip: Option[Int],
+    useSourceInclude: Boolean = false
   ): SearchRequest = {
-    val baseDef = ElasticDsl.search(index).knn(knnQuery).fetchSource(fetchSource)
+    val baseDef = if (useSourceInclude) {
+      ElasticDsl.search(index).knn(knnQuery).sourceInclude(projectionSeq)
+    } else {
+      ElasticDsl.search(index).knn(knnQuery).fetchSource(fetchSource)
+    }
 
     val withProjection =
-      if (projectionSeq.nonEmpty) baseDef.storedFields(projectionSeq) else baseDef
+      if (projectionSeq.nonEmpty && !useSourceInclude) baseDef.storedFields(projectionSeq) else baseDef
     val withSort = if (sort.nonEmpty) withProjection.sortBy(toSort(sort)) else withProjection
     val withSkip = skip.map(s => withSort.start(s)).getOrElse(withSort)
     val withLimit = limit.map(l => withSkip.limit(l)).getOrElse(withSkip)

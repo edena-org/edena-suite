@@ -16,7 +16,7 @@ private[company] class ElasticCompanyStore @Inject()(
   ElasticSetting()
 ) with ElasticCrudStoreExtraImpl[Company, UUID] with StoreTypes.CompanyStore {
 
-  createIndexIfNeeded
+  createIndexIfNeeded()
 
   // Full explicit mapping for all fields
   // director: objectField - ElasticReadonlyStore won't wrap queries in NestedQuery

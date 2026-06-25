@@ -28,7 +28,7 @@ protected[knn] class ElasticArticleStore @Inject()(
 ) with ArticleStoreTypes.ArticleStore
   with ElasticCrudStoreExtraImpl[Article, UUID] {
 
-  createIndexIfNeeded
+  createIndexIfNeeded()
 
   override protected def fieldDefs = Seq(
     // ID field

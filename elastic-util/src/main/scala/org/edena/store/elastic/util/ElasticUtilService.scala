@@ -267,7 +267,7 @@ trait ElasticUtilServiceImpl extends ElasticUtilService {
 
       _ <- seqFutures(indexNames) { indexName =>
         logger.info(indexName)
-        elasticService.removeReadOnly(indexName).map { response =>
+        elasticService.setReadonlyBlock(indexName, flag = false).map { response =>
           logger.info(response)
         }
       }
