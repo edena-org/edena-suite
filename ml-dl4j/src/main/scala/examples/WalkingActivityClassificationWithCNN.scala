@@ -12,7 +12,8 @@ import org.edena.dl4j.{DL4JHelper, TimeSeriesClassificationSpec}
 object WalkingActivityClassificationWithCNN extends App with DL4JHelper {
 
   // download the DL4J-ready (normalized and segmented) data from https://bit.ly/2OnOYqI, unzip, and set the path bellow
-  private val path = "/data_path/"
+  // (or point WISDM_DATA_PATH at the unzipped WISDM_DL4J dir, with a trailing slash)
+  private val path = sys.env.getOrElse("WISDM_DATA_PATH", "/data_path/")
 
   // specification of a time-series classification
   val spec = TimeSeriesClassificationSpec(
@@ -27,7 +28,7 @@ object WalkingActivityClassificationWithCNN extends App with DL4JHelper {
     numColumns = 3,                // number of features / channels
     outputNum = 6,                 // number of output classes
     batchSize = 400,               // batch size for each epoch
-    numEpochs = 50,                // number of epochs
+    numEpochs = sys.env.get("WISDM_NUM_EPOCHS").map(_.toInt).getOrElse(50), // number of epochs (override for quick runs)
     learningRate = 0.001,
     kernelSize = 10,
     poolingKernelSize = 3,
