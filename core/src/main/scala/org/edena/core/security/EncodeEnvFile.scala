@@ -11,11 +11,11 @@ package org.edena.core.security
  *   - the line cannot be parsed unambiguously (e.g. junk after a closing quote) — passed through
  *     untouched rather than risk dropping content.
  *
- * Each newly-encrypted variable is annotated with `# original (last 4 letters): xxxx` so the
- * source value can be eyeballed without decrypting. For very short values (≤ 4 chars) the literal
- * is redacted instead — the whole secret is never written back. Surrounding quotes, indentation
- * and line endings (incl. CRLF) are preserved; any pre-existing (non-`no_enc`) trailing comment is
- * appended after the marker.
+ * Each newly-encrypted variable is annotated with a `# original (last 4 letters): xxxx` comment
+ * line placed directly above the `export` line, so the source value can be eyeballed without
+ * decrypting. For very short values (≤ 4 chars) the literal is redacted instead — the whole
+ * secret is never written back. Surrounding quotes, indentation and line endings (incl. CRLF) are
+ * preserved; any pre-existing (non-`no_enc`) trailing comment is appended after the marker.
  *
  * Only `export NAME=` lines are processed — a plain `NAME=value` assignment is left as-is (we
  * cannot tell which bare assignments are secrets). The CLI wrapper is [[EncodeEnvFileApp]].
@@ -84,7 +84,12 @@ object EncodeEnvFile {
                 else
                   s"# encrypted (original too short to hint safely)$priorComment"
 
-              (s"$exportPrefix$name=$valueToken   $marker$eol", sum.copy(encrypted = sum.encrypted + 1))
+              // Comment goes on its own line above the export line (matching its indentation),
+              // rather than trailing after the value, so the encrypted line stays copy-pasteable.
+              val indent = exportPrefix.takeWhile(_.isWhitespace)
+              val exportLine = s"$exportPrefix$name=$valueToken"
+
+              (s"$indent$marker$eol\n$exportLine$eol", sum.copy(encrypted = sum.encrypted + 1))
             }
         }
 

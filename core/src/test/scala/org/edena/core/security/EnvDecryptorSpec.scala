@@ -15,10 +15,10 @@ class EnvDecryptorSpec extends FlatSpec with Matchers {
     result shouldBe Map("API_KEY" -> "topsecret")
   }
 
-  it should "honor an allow-list of keys" in {
-    val env = Map("A" -> crypto.encrypt("a"), "B" -> crypto.encrypt("b"))
+  it should "decrypt every enc:v1: entry (no allow-list — all keys are scanned)" in {
+    val env = Map("A" -> crypto.encrypt("a"), "B" -> crypto.encrypt("b"), "C" -> "plain")
 
-    EnvDecryptor.decryptedEntries(env, crypto, Some(Set("A"))) shouldBe Map("A" -> "a")
+    EnvDecryptor.decryptedEntries(env, crypto) shouldBe Map("A" -> "a", "B" -> "b")
   }
 
   it should "fail loudly (naming the key) on a value that cannot be decrypted" in {
@@ -36,7 +36,8 @@ class EnvDecryptorSpec extends FlatSpec with Matchers {
     try {
       System.getenv(key) should startWith(SymmetricCrypto.Prefix)
 
-      EnvDecryptor.decryptInPlace(crypto, Some(Set(key))).rewritten shouldBe Seq(key)
+      // All env vars are scanned; assert on our seeded one (the JVM's other vars are plaintext).
+      EnvDecryptor.decryptInPlace(crypto).rewritten should contain(key)
 
       System.getenv(key) shouldBe "rotated-secret"
     } finally backing.remove(key)

@@ -14,6 +14,7 @@ class ConfigDecryptorSpec extends FlatSpec with Matchers {
     val encryptedSecret = crypto.encrypt("s3cr3t-password")
     val config = ConfigFactory.parseString(
       s"""
+         |${SymmetricCrypto.DiscoveryConfigKey} = false
          |${SymmetricCrypto.ConfigKey} = "$masterKey"
          |mongodb.password = "$encryptedSecret"
          |mongodb.host = "localhost:27017"
@@ -31,7 +32,8 @@ class ConfigDecryptorSpec extends FlatSpec with Matchers {
     val a = crypto.encrypt("key-A")
     val b = crypto.encrypt("key-B")
     val config = ConfigFactory.parseString(
-      s"""${SymmetricCrypto.ConfigKey} = "$masterKey"
+      s"""${SymmetricCrypto.DiscoveryConfigKey} = false
+         |${SymmetricCrypto.ConfigKey} = "$masterKey"
          |apiKeys = ["$a", "plain", "$b"]""".stripMargin
     )
 
@@ -48,6 +50,7 @@ class ConfigDecryptorSpec extends FlatSpec with Matchers {
   it should "fail loudly when an encrypted value cannot be decrypted" in {
     val config = ConfigFactory.parseString(
       s"""
+         |${SymmetricCrypto.DiscoveryConfigKey} = false
          |${SymmetricCrypto.ConfigKey} = "wrong-key"
          |secret = "${crypto.encrypt("value")}"
        """.stripMargin

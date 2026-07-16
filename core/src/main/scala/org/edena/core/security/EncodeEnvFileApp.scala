@@ -1,7 +1,7 @@
 package org.edena.core.security
 
 import com.typesafe.config.ConfigFactory
-import org.edena.core.util.writeStringAsStream
+import org.edena.core.util.{LoggingSupport, writeStringAsStream}
 
 import java.io.File
 import java.nio.file.{Files, StandardCopyOption}
@@ -17,7 +17,7 @@ import scala.io.Source
  * is not set — there is no fallback key, so encoding would be impossible. Writes in place by
  * default; pass a second path to write elsewhere. Idempotent: re-running re-encodes nothing.
  */
-object EncodeEnvFileApp extends App {
+object EncodeEnvFileApp extends App with LoggingSupport {
 
   if (args.isEmpty) {
     Console.err.println("Usage: EncodeEnvFileApp <env-file> [out-file]")
@@ -57,7 +57,7 @@ object EncodeEnvFileApp extends App {
   writeStringAsStream(encoded, tmpFile)
   Files.move(tmpFile.toPath, outFile.toPath, StandardCopyOption.REPLACE_EXISTING)
 
-  println(
+  logger.info(
     s"Encoded '$inPath' -> '$outPath': ${summary.encrypted} encrypted, " +
       s"${summary.skippedNoEnc} skipped (${EncodeEnvFile.NoEncMarker}), " +
       s"${summary.alreadyEncrypted} already encrypted, ${summary.skippedEmpty} empty, " +

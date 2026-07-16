@@ -58,8 +58,9 @@ class EncodeEnvFileSpec extends FlatSpec with Matchers {
     val lines = out.split("\n", -1)
     lines(0) shouldBe "# a header comment"
     lines(1) shouldBe ""
-    lines(2) should startWith("export FOO=" + SymmetricCrypto.Prefix)
-    lines(3) shouldBe "plain line"
+    lines(2) should startWith("# original (last 4 letters):")
+    lines(3) should startWith("export FOO=" + SymmetricCrypto.Prefix)
+    lines(4) shouldBe "plain line"
     summary.encrypted shouldBe 1
   }
 
@@ -99,8 +100,10 @@ class EncodeEnvFileSpec extends FlatSpec with Matchers {
     val (out, summary) = EncodeEnvFile.encode("export FOO=secret\r\nplain\r\n", crypto)
     val lines = out.split("\n", -1)
     lines(0) should endWith("\r")
-    lines(0) should startWith("export FOO=" + SymmetricCrypto.Prefix)
-    lines(1) shouldBe "plain\r"
+    lines(0) should startWith("# original (last 4 letters):")
+    lines(1) should endWith("\r")
+    lines(1) should startWith("export FOO=" + SymmetricCrypto.Prefix)
+    lines(2) shouldBe "plain\r"
     summary.encrypted shouldBe 1
   }
 }

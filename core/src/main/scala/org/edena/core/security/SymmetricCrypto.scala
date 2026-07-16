@@ -1,12 +1,17 @@
 package org.edena.core.security
 
 import com.typesafe.config.{Config, ConfigFactory}
+import org.edena.core.util.LoggingSupport
 
 import java.nio.charset.StandardCharsets
+import java.nio.file.attribute.PosixFilePermission
+import java.nio.file.{Files, Path, Paths}
 import java.security.MessageDigest
 import java.util.Base64
+import java.util.concurrent.ConcurrentHashMap
 import javax.crypto.spec.{GCMParameterSpec, SecretKeySpec}
 import javax.crypto.{Cipher, Mac}
+import scala.jdk.CollectionConverters._
 import scala.util.Try
 
 /**
@@ -21,6 +26,14 @@ import scala.util.Try
  *   - an OPTIONAL `pepper` (env `EDENA_ENCRYPTION_PEPPER`) is a deployment-held second factor.
  *     With a pepper the AES key is `HMAC-SHA256(pepper, masterKey)` (so the master key alone is
  *     not enough); without one it is simply `SHA-256(masterKey)` — no second factor, no constant.
+ *
+ * Both the master key and the pepper may alternatively be supplied from a file (so the secret never
+ * appears in the process environment or an `env` listing): an explicit pointer
+ * (`EDENA_ENCRYPTION_KEY_FILE` / `_PEPPER_FILE`), or one of several fixed fallback locations
+ * (systemd credentials, a Docker/K8s secret mount, `/etc/edena/secrets`, or `~/.config/edena`).
+ * The full precedence is documented on [[SymmetricCrypto.apply]]; file contents are trimmed and a
+ * file readable beyond its owner is warned about (but still used). Keep the pepper file on a
+ * DIFFERENT trust boundary than the key — co-located, it adds nothing.
  *
  * Changing the pepper (or setting/unsetting it) changes the derived key and therefore invalidates
  * all previously encrypted values.
@@ -111,7 +124,7 @@ class SymmetricCrypto(masterKey: String, pepper: Option[String] = None) {
     }
 }
 
-object SymmetricCrypto {
+object SymmetricCrypto extends LoggingSupport {
 
   /** Self-describing, versioned prefix marking an encrypted value (the `enc:<code>` tag). */
   val Prefix = "enc:v1:"
@@ -122,34 +135,196 @@ object SymmetricCrypto {
   /** Config path (env `EDENA_ENCRYPTION_PEPPER`) holding the optional pepper / second factor. */
   val PepperConfigKey = "edena.encryption-pepper"
 
+  /** Config path (env `EDENA_ENCRYPTION_KEY_FILE`) pointing at a file holding the master secret. */
+  val KeyFileConfigKey = "edena.encryption-key-file"
+
+  /** Config path (env `EDENA_ENCRYPTION_PEPPER_FILE`) pointing at a file holding the pepper. */
+  val PepperFileConfigKey = "edena.encryption-pepper-file"
+
+  /** Persistent bare-metal fallback dir for the MASTER KEY (`/etc/edena/secrets/encryption-key`). */
+  val EtcSecretsDir = "/etc/edena/secrets"
+
+  /**
+   * Persistent bare-metal fallback dir for the PEPPER (`/var/lib/edena/secrets/encryption-pepper`).
+   * Deliberately a DIFFERENT directory tree than [[EtcSecretsDir]] so the pepper can carry its own
+   * ownership / mount — a genuine second trust boundary — rather than sitting next to the key. Both
+   * are on-disk (unlike `/run/secrets`, which is tmpfs and lost on reboot).
+   */
+  val VarLibSecretsDir = "/var/lib/edena/secrets"
+
+  /**
+   * Config flag (default `true`): scan the ambient fixed fallback locations (systemd
+   * `$CREDENTIALS_DIRECTORY`, `/run/secrets`, the per-secret persistent dir, `~/.config/edena`). Set
+   * `false` to require secrets to come ONLY from the inline value or an explicit `*_FILE` pointer —
+   * forbids a shared host file meant for another app from leaking in, and keeps tests independent of
+   * host state.
+   */
+  val DiscoveryConfigKey = "edena.encryption-secret-discovery"
+
   private val Transformation = "AES/GCM/NoPadding"
   private val MacAlgorithm = "HmacSHA256"
   private val IvLength = 12 // 96-bit IV recommended for GCM
   private val TagBits = 128
   private val secureRandom = new java.security.SecureRandom()
 
-  /** True iff the master key is configured (env/config). */
-  def isKeyConfigured(config: Config): Boolean =
-    Try(config.getString(ConfigKey)).toOption.exists(_.trim.nonEmpty)
-
-  private def optionalString(config: Config, path: String): Option[String] =
-    Try(config.getString(path)).toOption.filter(_.trim.nonEmpty)
+  /** File permissions that mean "accessible beyond the owner" — warned about on a secret file. */
+  private val LoosePerms: Set[PosixFilePermission] = Set(
+    PosixFilePermission.GROUP_READ, PosixFilePermission.GROUP_WRITE,
+    PosixFilePermission.OTHERS_READ, PosixFilePermission.OTHERS_WRITE
+  )
 
   /**
-   * Build from a typesafe `Config`, reading the required master key `edena.encryption-key`
-   * (env `EDENA_ENCRYPTION_KEY`) and the optional pepper `edena.encryption-pepper`
-   * (env `EDENA_ENCRYPTION_PEPPER`). Throws when the master key is not set — there is no
-   * hardcoded fallback.
+   * One resolvable secret (the master key or the pepper) and every place it can come from.
+   *
+   * @param label           human name for error messages ("master key" / "pepper").
+   * @param shortName       file name under the systemd / `/etc` / XDG dirs (`encryption-key`).
+   * @param dockerName      file name under `/run/secrets` (`edena-encryption-key`).
+   * @param inlineConfigKey config path for the inline value (also the `${?ENV}` target).
+   * @param fileConfigKey   config path for an explicit file pointer.
+   * @param fileEnv         env var for an explicit file pointer (e.g. `EDENA_ENCRYPTION_KEY_FILE`).
+   * @param secretsDir      persistent bare-metal fallback dir holding `shortName` (per-secret, so the
+   *                        key and pepper live in separate directory trees).
+   */
+  private case class SecretSpec(
+    label: String,
+    shortName: String,
+    dockerName: String,
+    inlineConfigKey: String,
+    fileConfigKey: String,
+    fileEnv: String,
+    secretsDir: String
+  )
+
+  private val KeySpec = SecretSpec(
+    "master key", "encryption-key", "edena-encryption-key",
+    ConfigKey, KeyFileConfigKey, "EDENA_ENCRYPTION_KEY_FILE", EtcSecretsDir
+  )
+
+  private val PepperSpec = SecretSpec(
+    "pepper", "encryption-pepper", "edena-encryption-pepper",
+    PepperConfigKey, PepperFileConfigKey, "EDENA_ENCRYPTION_PEPPER_FILE", VarLibSecretsDir
+  )
+
+  /** True iff the master key can be resolved from any source (inline value or a fallback file). */
+  def isKeyConfigured(config: Config): Boolean = resolve(config, KeySpec).isDefined
+
+  /** Human-readable list of where the master key may be supplied (for error messages). */
+  def keySourcesHint: String = sourcesHint(KeySpec)
+
+  /**
+   * Build from a typesafe `Config`. The master key is REQUIRED, the pepper OPTIONAL; each is
+   * resolved through the same fallback chain — the FIRST source that yields a non-empty value wins
+   * (file contents are trimmed):
+   *
+   *   1. inline config value (`edena.encryption-key`, i.e. env `EDENA_ENCRYPTION_KEY` via `${?…}`);
+   *   2. explicit file pointer (`edena.encryption-key-file` / env `EDENA_ENCRYPTION_KEY_FILE`);
+   *   3. `$CREDENTIALS_DIRECTORY/encryption-key` (systemd `LoadCredential=`, tmpfs);
+   *   4. `/run/secrets/edena-encryption-key` (Docker/K8s secret mount, tmpfs);
+   *   5. `/etc/edena/secrets/encryption-key` (persistent bare-metal location);
+   *   6. `~/.config/edena/encryption-key` (`$XDG_CONFIG_HOME`, for dev).
+   *
+   * The pepper uses the parallel `encryption-pepper` / `edena-encryption-pepper` names, EXCEPT its
+   * persistent bare-metal dir is `/var/lib/edena/secrets` (not `/etc/edena/secrets`) — see
+   * [[VarLibSecretsDir]] — so the two secrets never share a directory. A secret file readable beyond
+   * its owner is warned about but still used. Throws when the master key is found in NO source —
+   * there is no hardcoded fallback.
    */
   def apply(config: Config): SymmetricCrypto = {
-    val key = optionalString(config, ConfigKey).getOrElse(
+    val key = resolve(config, KeySpec).getOrElse(
       throw new IllegalStateException(
-        s"'$ConfigKey' (env EDENA_ENCRYPTION_KEY) must be set to encrypt/decrypt $Prefix values."
+        s"No encryption ${KeySpec.label} found, required to encrypt/decrypt $Prefix values. " +
+          s"Supply it via $keySourcesHint."
       )
     )
-    new SymmetricCrypto(key, optionalString(config, PepperConfigKey))
+    new SymmetricCrypto(key, resolve(config, PepperSpec))
   }
 
   /** Convenience: build from the default loaded config. */
   def default: SymmetricCrypto = apply(ConfigFactory.load())
+
+  // -- secret resolution --
+
+  /** First non-empty source for `spec`: inline config value, else the fallback files in order. */
+  private def resolve(config: Config, spec: SecretSpec): Option[String] =
+    optionalString(config, spec.inlineConfigKey)
+      .orElse(candidatePaths(config, spec).iterator.flatMap(readSecretFile).nextOption())
+
+  /** Fallback file paths for `spec`, highest precedence first (explicit pointer → … → dev XDG). */
+  private def candidatePaths(config: Config, spec: SecretSpec): Seq[Path] = {
+    // An explicit file pointer is ALWAYS honored; the ambient well-known locations are only scanned
+    // when discovery is enabled (the default) — see [[DiscoveryConfigKey]].
+    val explicit = optionalString(config, spec.fileConfigKey)
+      .orElse(env(spec.fileEnv))
+      .map(Paths.get(_))
+
+    if (!discoveryEnabled(config)) explicit.toSeq
+    else {
+      val systemd = env("CREDENTIALS_DIRECTORY").map(d => Paths.get(d, spec.shortName))
+      val dockerSecret = Some(Paths.get("/run/secrets", spec.dockerName))
+      val persistent = Some(Paths.get(spec.secretsDir, spec.shortName))
+      val xdg = env("XDG_CONFIG_HOME").map(Paths.get(_))
+        .orElse(sys.props.get("user.home").filter(_.nonEmpty).map(h => Paths.get(h, ".config")))
+        .map(_.resolve("edena").resolve(spec.shortName))
+      Seq(explicit, systemd, dockerSecret, persistent, xdg).flatten
+    }
+  }
+
+  private def discoveryEnabled(config: Config): Boolean =
+    Try(config.getBoolean(DiscoveryConfigKey)).getOrElse(true)
+
+  // Paths already logged about, so the warn / audit lines are not repeated when the chain is
+  // resolved more than once per boot — the `EnvDecryptor` and `ConfigDecryptor` passes each build a
+  // crypto, `ConfigDecryptor` additionally pre-checks via `isKeyConfigured`, and apps may reload.
+  // JVM-lifetime, so it's exactly one warn + one audit line per file per process start.
+  private val loggedFilePaths = ConcurrentHashMap.newKeySet[String]()
+
+  /** Read a secret file: trimmed contents, or None if it is absent/unreadable/empty. */
+  private def readSecretFile(path: Path): Option[String] =
+    if (!Files.isRegularFile(path)) None
+    else {
+      val content =
+        try new String(Files.readAllBytes(path), StandardCharsets.UTF_8).trim
+        catch {
+          case e: Exception =>
+            logger.warn(s"Could not read encryption secret file '$path': ${e.getMessage}")
+            ""
+        }
+      if (content.isEmpty) None
+      else {
+        // Loose-perms warning + audit trail (path only, never the value) — once per file per JVM.
+        if (loggedFilePaths.add(path.toString)) {
+          warnIfLoosePerms(path)
+          logger.info(s"Loaded encryption secret from file '$path'.")
+        }
+        Some(content)
+      }
+    }
+
+  /** Warn (but do not fail) when a secret file is group/other-accessible. POSIX-only; else skipped. */
+  private def warnIfLoosePerms(path: Path): Unit =
+    try {
+      val loose = Files.getPosixFilePermissions(path).asScala.intersect(LoosePerms)
+      if (loose.nonEmpty)
+        logger.warn(
+          s"Encryption secret file '$path' is accessible beyond its owner " +
+            s"(${loose.toSeq.map(_.toString).sorted.mkString(", ")}) — tighten it with " +
+            s"`chmod 600 '$path'` and ensure it is owned by the service account."
+        )
+    } catch {
+      case _: UnsupportedOperationException => // non-POSIX filesystem (e.g. Windows) — skip the check
+    }
+
+  private def env(name: String): Option[String] =
+    Option(System.getenv(name)).map(_.trim).filter(_.nonEmpty)
+
+  private def optionalString(config: Config, path: String): Option[String] =
+    Try(config.getString(path)).toOption.filter(_.trim.nonEmpty)
+
+  private def sourcesHint(spec: SecretSpec): String = {
+    val inlineEnv = spec.fileEnv.stripSuffix("_FILE")
+    s"env $inlineEnv (config '${spec.inlineConfigKey}'); a file via env ${spec.fileEnv} " +
+      s"(config '${spec.fileConfigKey}'); or a file at $$CREDENTIALS_DIRECTORY/${spec.shortName}, " +
+      s"/run/secrets/${spec.dockerName}, ${spec.secretsDir}/${spec.shortName}, " +
+      s"or ~/.config/edena/${spec.shortName}"
+  }
 }

@@ -3,6 +3,8 @@ package org.edena.core.security
 import com.typesafe.config.ConfigFactory
 import org.scalatest._
 
+import java.nio.charset.StandardCharsets
+import java.nio.file.Files
 import java.util.Base64
 
 class SymmetricCryptoSpec extends FlatSpec with Matchers {
@@ -91,7 +93,9 @@ class SymmetricCryptoSpec extends FlatSpec with Matchers {
   }
 
   "SymmetricCrypto.apply" should "require the master key (no hardcoded fallback)" in {
-    val ex = the[IllegalStateException] thrownBy SymmetricCrypto(ConfigFactory.empty())
+    // Discovery off so the outcome doesn't depend on any ambient host fallback file being present.
+    val config = ConfigFactory.parseString(s"${SymmetricCrypto.DiscoveryConfigKey} = false")
+    val ex = the[IllegalStateException] thrownBy SymmetricCrypto(config)
     ex.getMessage should include(SymmetricCrypto.ConfigKey)
   }
 
@@ -103,5 +107,53 @@ class SymmetricCryptoSpec extends FlatSpec with Matchers {
     val fromConfig = SymmetricCrypto(config)
     val direct = new SymmetricCrypto("k", Some("p"))
     fromConfig.decrypt(direct.encrypt("secret")) shouldBe "secret"
+  }
+
+  it should "read the master key from a file pointer (trimming the trailing newline)" in {
+    val keyFile = Files.createTempFile("edena-key", ".txt")
+    try {
+      Files.write(keyFile, "file-master-key\n".getBytes(StandardCharsets.UTF_8))
+      val config = ConfigFactory.parseString(
+        s"""${SymmetricCrypto.DiscoveryConfigKey} = false
+           |${SymmetricCrypto.KeyFileConfigKey} = "${keyFile.toAbsolutePath}"""".stripMargin
+      )
+      val fromFile = SymmetricCrypto(config)
+      // The trailing newline is trimmed on read, so the derived key matches the direct one.
+      val direct = new SymmetricCrypto("file-master-key")
+      fromFile.decrypt(direct.encrypt("secret")) shouldBe "secret"
+    } finally Files.deleteIfExists(keyFile)
+  }
+
+  it should "prefer the inline key over a file pointer" in {
+    val keyFile = Files.createTempFile("edena-key", ".txt")
+    try {
+      Files.write(keyFile, "file-master-key".getBytes(StandardCharsets.UTF_8))
+      val config = ConfigFactory.parseString(
+        s"""${SymmetricCrypto.DiscoveryConfigKey} = false
+           |${SymmetricCrypto.ConfigKey} = "inline-key"
+           |${SymmetricCrypto.KeyFileConfigKey} = "${keyFile.toAbsolutePath}"""".stripMargin
+      )
+      val resolved = SymmetricCrypto(config)
+      // The inline key wins: a value encrypted with it round-trips...
+      resolved.decrypt(new SymmetricCrypto("inline-key").encrypt("x")) shouldBe "x"
+      // ...while one encrypted with the (ignored) file key does not.
+      a[Exception] should be thrownBy
+        resolved.decrypt(new SymmetricCrypto("file-master-key").encrypt("x"))
+    } finally Files.deleteIfExists(keyFile)
+  }
+
+  it should "read the optional pepper from a file pointer" in {
+    val pepperFile = Files.createTempFile("edena-pepper", ".txt")
+    try {
+      Files.write(pepperFile, " file-pepper \n".getBytes(StandardCharsets.UTF_8))
+      val config = ConfigFactory.parseString(
+        s"""${SymmetricCrypto.DiscoveryConfigKey} = false
+           |${SymmetricCrypto.ConfigKey} = "k"
+           |${SymmetricCrypto.PepperFileConfigKey} = "${pepperFile.toAbsolutePath}"""".stripMargin
+      )
+      val fromFile = SymmetricCrypto(config)
+      val direct = new SymmetricCrypto("k", Some("file-pepper"))
+      fromFile.decrypt(direct.encrypt("secret")) shouldBe "secret"
+    } finally Files.deleteIfExists(pepperFile)
   }
 }

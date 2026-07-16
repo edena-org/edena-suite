@@ -36,15 +36,21 @@ object ConfigDecryptor extends LoggingSupport {
     else {
       if (!SymmetricCrypto.isKeyConfigured(config))
         throw new IllegalStateException(
-          s"${encryptedPaths.size} encrypted config value(s) found but '${SymmetricCrypto.ConfigKey}' " +
-            "(env EDENA_ENCRYPTION_KEY) is not set — cannot decrypt."
+          s"${encryptedPaths.size} encrypted config value(s) found but no encryption master key " +
+            s"is set — cannot decrypt. Supply it via ${SymmetricCrypto.keySourcesHint}."
         )
 
       val crypto = SymmetricCrypto(config)
 
-      encryptedPaths.foldLeft(config) { (acc, path) =>
+      val result = encryptedPaths.foldLeft(config) { (acc, path) =>
         acc.withValue(path, decryptValue(acc.getValue(path), crypto, path))
       }
+
+      // Audit trail (paths only, never values) so it's visible in the logs that decryption ran.
+      logger.info(
+        s"Decrypted ${encryptedPaths.size} encrypted config value(s): ${encryptedPaths.sorted.mkString(", ")}"
+      )
+      result
     }
   }
 
