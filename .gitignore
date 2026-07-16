@@ -25,3 +25,4 @@ dataImports
 /ml-spark/project/build.properties
 # Apache Ignite runtime artifact
 /ignite/README.txt
+application.log
