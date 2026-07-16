@@ -1,7 +1,7 @@
 package org.edena.play.controllers
 
 import org.edena.core.util.firstCharToLowerCase
-import play.api.data.Form
+import play.api.data.{Form, FormError}
 import play.api.mvc.{AnyContent, Request}
 import org.edena.play.util.WebUtil.getRequestParamValue
 import play.twirl.api.Html
@@ -29,6 +29,11 @@ trait HasCreateEditSubTypeFormViews[T, ID] extends HasBasicFormCreateView[T] wit
   override protected def fillForm(entity: T): Form[T] = {
     val concreteClassName = entity.getClass.getName
     getForm(concreteClassName).asInstanceOf[Form[T]].fill(entity)
+  }
+
+  override protected def jsonItemFormValidationErrors(item: T): Seq[FormError] = {
+    val concreteClassName = item.getClass.getName
+    getForm(concreteClassName).asInstanceOf[Form[T]].fillAndValidate(item).errors
   }
 
   override protected def formFromRequest(implicit request: Request[AnyContent]): Form[T] = {

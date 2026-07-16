@@ -1,6 +1,11 @@
 package org.edena.play.controllers
 
+import akka.actor.ActorSystem
+import akka.stream.Materializer
+import akka.stream.scaladsl.Source
+import javax.inject.Inject
 import org.edena.core.store.ReadonlyStore
+import play.api.http.HeaderNames.CONTENT_DISPOSITION
 import play.api.libs.json._
 import play.api.mvc._
 import org.edena.core.FilterCondition
@@ -103,8 +108,84 @@ abstract class ReadonlyControllerImpl[E: Format, ID] extends BaseController
     }.recover(handleGetExceptions(id))
   }
 
+  // -- JSONL export (triggered on find/listAll via the `format=jsonl` query param) --
+
+  // Field-injected (like the BaseController resources) so no subclass constructor changes; kept
+  // non-implicit under distinctive names to avoid clashing with subclasses' own implicit
+  // system/materializer (e.g. those injected for ExportableAction).
+  @Inject protected var jsonlExportActorSystem: ActorSystem = _
+  @Inject protected var jsonlExportMaterializer: Materializer = _
+
+  /** Query param requesting an alternative response format (currently only `jsonl`). */
+  protected val exportFormatParamName = "format"
+
+  protected val jsonlMimeType = "application/x-ndjson"
+
+  /**
+   * Kill-switch for the generic JSONL export riding on find/listAll. Disable (override to false)
+   * for controllers whose bulk download must be gated by its own permission — e.g. record-level
+   * data set browsing, where the dedicated export action carries a separate permission and the
+   * list action must not quietly grant a full dump.
+   */
+  protected def jsonlExportEnabled: Boolean = true
+
+  /**
+   * Refuse a JSONL export when more than this many items match, so a single list URL can never
+   * trigger an unbounded collection scan. Read from config `export.jsonl.maxCount` (default
+   * 10000); override to `None` for no cap.
+   */
+  protected def jsonlExportMaxCount: Option[Int] =
+    Some(configuration.getOptional[Int]("export.jsonl.maxCount").getOrElse(10000))
+
+  protected def isJsonlRequested(implicit request: Request[_]): Boolean =
+    request.getQueryString(exportFormatParamName).contains("jsonl")
+
+  protected def jsonlFileName: String =
+    entityName.toLowerCase.replaceAll("\\W+", "_") + "s.jsonl"
+
+  /**
+   * Streamed newline-delimited JSON attachment of all the items matching the filter. Backed by
+   * `store.findAsStream`, so stores with native streaming support never hold the full result set
+   * in memory. Projected to [[listViewColumns]] (when defined) so the export exposes exactly the
+   * columns the list view does. Guarded by [[jsonlExportEnabled]] and the [[jsonlExportMaxCount]]
+   * pre-count check.
+   */
+  protected def jsonlExportResult(
+    orderBy: String,
+    conditions: Seq[FilterCondition] = Nil
+  ): Future[Result] =
+    if (!jsonlExportEnabled)
+      Future.successful(Forbidden(s"JSONL export is not enabled for $entityName."))
+    else
+      toCriterion(conditions).flatMap { criterion =>
+        def stream: Future[Result] =
+          store.findAsStream(criterion, toSort(orderBy), listViewColumns.getOrElse(Nil))(
+            jsonlExportActorSystem, jsonlExportMaterializer
+          ).map { source =>
+            val lines = source.map(item => Json.stringify(toJson(item)) + "\n")
+            Ok.chunked(lines)
+              .as(jsonlMimeType)
+              .withHeaders(CONTENT_DISPOSITION -> s"attachment; filename=$jsonlFileName")
+          }
+
+        jsonlExportMaxCount.map(max =>
+          store.count(criterion).flatMap(count =>
+            if (count > max)
+              Future.successful(BadRequest(
+                s"JSONL export refused: $count items match, exceeding the cap of $max. " +
+                  "Narrow the filter, or raise 'export.jsonl.maxCount'."
+              ))
+            else
+              stream
+          )
+        ).getOrElse(stream)
+      }
+
   /**
     * Display the paginated list.
+    *
+    * When the `format=jsonl` query param is present, ALL items matching the filter (not just the
+    * current page) are exported as a JSONL attachment instead.
     *
     * @param page Current page number (starts from 0)
     * @param orderBy Column to be sorted
@@ -115,7 +196,9 @@ abstract class ReadonlyControllerImpl[E: Format, ID] extends BaseController
     orderBy: String,
     conditions: Seq[FilterCondition]
   ) = AuthAction { implicit request =>
-    {
+    if (isJsonlRequested)
+      jsonlExportResult(orderBy, conditions).recover(handleFindExceptions)
+    else {
       for {
         (items, count) <- getFutureItemsAndCount(page, orderBy, conditions)
 
@@ -136,10 +219,15 @@ abstract class ReadonlyControllerImpl[E: Format, ID] extends BaseController
   /**
    * Display all items in a paginated fashion.
    *
+   * When the `format=jsonl` query param is present, all items are exported as a JSONL attachment
+   * instead.
+   *
    * @param orderBy Column to be sorted
    */
   def listAll(orderBy: String) = AuthAction { implicit request =>
-    {
+    if (isJsonlRequested)
+      jsonlExportResult(orderBy).recover(handleListAllExceptions)
+    else {
       for {
         (items, count) <- getFutureItemsAndCount(None, orderBy, Nil, Nil, None)
 
