@@ -518,6 +518,111 @@ tr.clickable-row:hover,
     border-right: none;
 }
 
+/* --- global form controls: rounded inputs and modern selects --- */
+
+input[type="text"],
+input[type="password"],
+input[type="email"],
+input[type="number"],
+input[type="search"],
+textarea {
+    border: 1px solid #CBD5E1;
+    border-radius: 8px;
+    padding: 4px 10px;
+    background-color: #fff;
+    color: #334155;
+    transition: border-color .15s ease-in-out, box-shadow .15s ease-in-out;
+}
+
+input[type="text"]:focus,
+input[type="password"]:focus,
+input[type="email"]:focus,
+input[type="number"]:focus,
+input[type="search"]:focus,
+textarea:focus {
+    border-color: #0097cf;
+    box-shadow: 0 0 0 3px rgba(0, 151, 207, 0.15);
+    outline: none;
+}
+
+select:not([multiple]):not([size]) {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    border: 1px solid #CBD5E1;
+    border-radius: 8px;
+    padding: 4px 28px 4px 10px;
+    background-color: #fff;
+    color: #334155;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath fill='none' stroke='%2364748B' stroke-width='1.5' stroke-linecap='round' d='m1 1 4 4 4-4'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    cursor: pointer;
+    transition: border-color .15s ease-in-out, box-shadow .15s ease-in-out;
+}
+
+select:not([multiple]):not([size]):focus {
+    border-color: #0097cf;
+    box-shadow: 0 0 0 3px rgba(0, 151, 207, 0.15);
+    outline: none;
+}
+
+/* keep bootstrap's .form-control components on the same look */
+.form-control {
+    border-color: #CBD5E1;
+    border-radius: 8px;
+}
+
+/* modal forms: a form-group placed directly in a flex row (legacy BS3 markup used by several
+   dynamic-table modals) must span the full width, otherwise the fields shrink and flow inline */
+
+.modal-body > .row > .form-group.row {
+    flex: 0 0 100%;
+    max-width: 100%;
+    margin-left: 0;
+    margin-right: 0;
+}
+
+/* modal header: keep the pull-right (&rarr;) and close (&times;) buttons together on the right
+   (both have BS4's margin-left: auto, which otherwise splits them apart) */
+
+.modal-header .close:not(:last-child) {
+    margin-right: 0;
+}
+
+.modal-header .close + .close {
+    margin-left: 0;
+}
+
+/* widget spec add/edit modal: align control sizes with the typeaheads */
+
+#add_widgetSpecModal .modal-body input[type="text"]:not(.typeahead),
+#edit_widgetSpecModal .modal-body input[type="text"]:not(.typeahead),
+#add_widgetSpecModal .modal-body select,
+#edit_widgetSpecModal .modal-body select {
+    height: 30px;
+    min-width: 180px;
+    font-size: 14px;
+}
+
+/* widgets screen (distribution, scatter, heatmap, correlation, ...) */
+
+.widgets-main {
+    flex: 1 1 auto;
+    min-width: 0; /* keeps wide charts from overflowing the flex container */
+}
+
+.widgets-input-card {
+    background-color: #F8FAFC;
+    border: 1px solid #E2E8F0;
+    border-radius: 8px;
+    margin-bottom: 1.25rem;
+}
+
+.widgets-input-card > .card-body {
+    padding: 1rem 1rem 0.75rem 1rem;
+}
+
 .category-node {
     color:dodgerblue;
 }
