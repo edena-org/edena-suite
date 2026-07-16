@@ -1,5 +1,6 @@
 package org.edena.ada.server.models
 
+import org.edena.core.calc.impl.DateBinsType
 import reactivemongo.api.bson.BSONObjectID
 
 abstract class WidgetSpec {
@@ -43,7 +44,7 @@ case class DistributionWidgetSpec(
   subFilterId: Option[BSONObjectID] = None,
   relativeValues: Boolean = false,
   numericBinCount: Option[Int] = None, // TODO: rename to binCount
-  useDateMonthBins: Boolean = false,
+  dateBinsType: Option[DateBinsType] = None, // calendar binning for date fields (overrides numericBinCount)
   displayOptions: MultiChartDisplayOptions = MultiChartDisplayOptions()
 ) extends WidgetSpec {
   override val fieldNames = Seq(groupFieldName, Some(fieldName)).flatten
@@ -63,7 +64,7 @@ case class CumulativeCountWidgetSpec(
   subFilterId: Option[BSONObjectID] = None,
   relativeValues: Boolean = false,
   numericBinCount: Option[Int] = None,
-  useDateMonthBins: Boolean = false,
+  dateBinsType: Option[DateBinsType] = None, // calendar binning for date fields (overrides numericBinCount)
   displayOptions: MultiChartDisplayOptions = MultiChartDisplayOptions()
 ) extends WidgetSpec {
   override val fieldNames = Seq(groupFieldName, Some(fieldName)).flatten
@@ -99,7 +100,7 @@ case class ValueScatterWidgetSpec(
 }
 
 object AggType extends Enumeration {
-  val Mean, Max, Min, Variance = Value
+  val Mean, Max, Min, Variance, Median = Value
 }
 
 case class HeatmapAggWidgetSpec(
@@ -115,6 +116,29 @@ case class HeatmapAggWidgetSpec(
   override val fieldNames = Seq(xFieldName, yFieldName, valueFieldName)
 }
 
+case class BinnedBoxWidgetSpec(
+  xFieldName: String,
+  valueFieldName: String,
+  xBinCount: Option[Int] = None,
+  useMinMaxWhiskers: Boolean = false,
+  subFilterId: Option[BSONObjectID] = None,
+  displayOptions: BasicDisplayOptions = BasicDisplayOptions()
+) extends WidgetSpec {
+  override val fieldNames = Seq(xFieldName, valueFieldName)
+}
+
+case class XBinnedAggWidgetSpec(
+  xFieldName: String,
+  valueFieldName: String,
+  xBinCount: Option[Int] = None,
+  aggType: AggType.Value = AggType.Mean,
+  showMinMaxBand: Boolean = false,
+  subFilterId: Option[BSONObjectID] = None,
+  displayOptions: BasicDisplayOptions = BasicDisplayOptions()
+) extends WidgetSpec {
+  override val fieldNames = Seq(xFieldName, valueFieldName)
+}
+
 case class GridDistributionCountWidgetSpec(
   xFieldName: String,
   yFieldName: String,
@@ -127,7 +151,7 @@ case class GridDistributionCountWidgetSpec(
 }
 
 object CorrelationType extends Enumeration {
-  val Pearson, Matthews = Value
+  val Pearson, Matthews, Spearman = Value
 }
 
 case class CorrelationWidgetSpec(

@@ -23,13 +23,18 @@ private[calc] class GroupNumericDistributionCountsCalc[G] extends Calculator[Gro
   override def fun(options: OPT) = { inputs =>
     val grouped = inputs.toGroupMap
 
-    val effectiveOptions = if (options.sharedMinMax && options.customBinEdges.isEmpty) {
+    val effectiveOptions = if ((options.sharedMinMax || options.dateBinsType.isDefined) && options.customBinEdges.isEmpty) {
       val allDefinedValues = inputs.collect { case (_, Some(v)) => v }
       if (allDefinedValues.nonEmpty) {
         val globalMin = allDefinedValues.min
         val globalMax = allDefinedValues.max
-        val stepSize = calcStepSize(options.binCount, globalMin, globalMax, options.specialBinForMax)
-        val edges = (0 to options.binCount).map(i => globalMin + (stepSize * i).toDouble)
+
+        val dateBinEdges = options.dateBinsType.flatMap(calcDateBinEdges(_, globalMin, globalMax))
+
+        val edges = dateBinEdges.getOrElse {
+          val stepSize = calcStepSize(options.binCount, globalMin, globalMax, options.specialBinForMax)
+          (0 to options.binCount).map(i => globalMin + (stepSize * i).toDouble)
+        }
         options.copy(customBinEdges = Some(edges))
       } else {
         options
@@ -44,7 +49,7 @@ private[calc] class GroupNumericDistributionCountsCalc[G] extends Calculator[Gro
   }
 
   override def flow(options: FLOW_OPT) = {
-    val bucketIndexFn: Double => Int = options.customBinEdges match {
+    val bucketIndexFn: Double => Int = effectiveBinEdges(options.customBinEdges, options.dateBinsType, options.min, options.max) match {
       case Some(edges) =>
         val edgesBd = edges.map(BigDecimal(_))
         calcCustomBucketIndex(edgesBd)
@@ -67,9 +72,11 @@ private[calc] class GroupNumericDistributionCountsCalc[G] extends Calculator[Gro
   }
 
   override def postFlow(options: FLOW_OPT) = { elements =>
-    val binCount = options.customBinEdges.map(_.length - 1).getOrElse(options.binCount)
+    val binEdges = effectiveBinEdges(options.customBinEdges, options.dateBinsType, options.min, options.max)
 
-    val (xValues: Seq[BigDecimal]) = options.customBinEdges match {
+    val binCount = binEdges.map(_.length - 1).getOrElse(options.binCount)
+
+    val (xValues: Seq[BigDecimal]) = binEdges match {
       case Some(edges) =>
         edges.init.map(BigDecimal(_))
 

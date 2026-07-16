@@ -14,6 +14,7 @@ import org.edena.core.akka.AkkaStreamUtil
 import org.edena.core.util.{GroupMapList, LoggingSupport}
 import org.edena.store.json.StoreTypes.JsonReadonlyStore
 import org.edena.core.calc.CalculatorTypePack
+import org.edena.core.calc.impl.DateBinsType
 import org.edena.ada.server.services.StatsService
 import org.edena.core.calc.CalculatorHelperExt._
 import org.edena.ada.server.field.FieldUtil._
@@ -130,13 +131,17 @@ class WidgetGenerationServiceImpl @Inject() (
     def isScalar(fieldName: String) =
       nameFieldMap.get(fieldName).map(!_.isArray).getOrElse(true)
 
+    // calendar date binning is not supported by the repo (store-side) path
+    def isDateBinned(dateBinsType: Option[DateBinsType], fieldName: String) =
+      dateBinsType.isDefined && nameFieldMap.get(fieldName).exists(_.isDate)
+
     val splitWidgetSpecs: Traversable[Either[WidgetSpec, WidgetSpec]] =
       if (genMethod.isRepoBased) {
         widgetSpecs.collect {
-          case p: DistributionWidgetSpec => if (isScalar(p.fieldName)) Left(p) else Right(p)
+          case p: DistributionWidgetSpec => if (isScalar(p.fieldName) && !isDateBinned(p.dateBinsType, p.fieldName)) Left(p) else Right(p)
           case p: CategoricalCheckboxWidgetSpec => if (isScalar(p.fieldName)) Left(p) else Right(p)
           case p: BoxWidgetSpec => if (isScalar(p.fieldName)) Left(p) else Right(p)
-          case p: CumulativeCountWidgetSpec => if (p.numericBinCount.isDefined && isScalar(p.fieldName)) Left(p) else Right(p)
+          case p: CumulativeCountWidgetSpec => if (p.numericBinCount.isDefined && isScalar(p.fieldName) && !isDateBinned(p.dateBinsType, p.fieldName)) Left(p) else Right(p)
           case p: CustomHtmlWidgetSpec => Left(p)
           case p: GridDistributionCountWidgetSpec => Left(p)
           case p: WidgetSpec => Right(p)
@@ -741,7 +746,7 @@ class WidgetGenerationServiceImpl @Inject() (
         aux(CategoricalDistributionWidgetGenerator)
 
       case spec: DistributionWidgetSpec if spec.groupFieldName.isEmpty && (fields(0).isDouble || fields(0).isDate || (fields(0).isInteger && spec.numericBinCount.isDefined)) =>
-        aux(NumericDistributionWidgetGenerator(minMax))
+        aux(NumericDistributionWidgetGenerator(minMax, spec.dateBinsType.filter(_ => fields(0).isDate)))
 
       case spec: DistributionWidgetSpec if spec.groupFieldName.isEmpty && fields(0).isInteger && spec.numericBinCount.isEmpty =>
         aux(UniqueIntDistributionWidgetGenerator)
@@ -750,7 +755,7 @@ class WidgetGenerationServiceImpl @Inject() (
         aux(GroupCategoricalDistributionWidgetGenerator)
 
       case spec: DistributionWidgetSpec if spec.groupFieldName.isDefined && (fields(1).isDouble || fields(1).isDate || (fields(1).isInteger && spec.numericBinCount.isDefined)) =>
-        aux(GroupNumericDistributionWidgetGenerator(minMax))
+        aux(GroupNumericDistributionWidgetGenerator(minMax, spec.dateBinsType.filter(_ => fields(1).isDate)))
 
       case spec: DistributionWidgetSpec if spec.groupFieldName.isDefined && fields(1).isInteger && spec.numericBinCount.isEmpty =>
         aux(GroupUniqueLongDistributionWidgetGenerator)
@@ -766,11 +771,11 @@ class WidgetGenerationServiceImpl @Inject() (
       // cumulative Count //
       //////////////////////
 
-      case spec: CumulativeCountWidgetSpec if spec.numericBinCount.isDefined && spec.groupFieldName.isEmpty =>
-        aux(CumulativeNumericBinCountWidgetGenerator(minMax))
+      case spec: CumulativeCountWidgetSpec if (spec.numericBinCount.isDefined || (spec.dateBinsType.isDefined && fields(0).isDate)) && spec.groupFieldName.isEmpty =>
+        aux(CumulativeNumericBinCountWidgetGenerator(minMax, spec.dateBinsType.filter(_ => fields(0).isDate)))
 
-      case spec: CumulativeCountWidgetSpec if spec.numericBinCount.isDefined && spec.groupFieldName.isDefined =>
-        aux(GroupCumulativeNumericBinCountWidgetGenerator(minMax))
+      case spec: CumulativeCountWidgetSpec if (spec.numericBinCount.isDefined || (spec.dateBinsType.isDefined && fields(1).isDate)) && spec.groupFieldName.isDefined =>
+        aux(GroupCumulativeNumericBinCountWidgetGenerator(minMax, spec.dateBinsType.filter(_ => fields(1).isDate)))
 
       case spec: CumulativeCountWidgetSpec if spec.numericBinCount.isEmpty && fields(0).isNumeric && spec.groupFieldName.isEmpty =>
         aux(NumericCumulativeCountWidgetGenerator)
@@ -817,6 +822,23 @@ class WidgetGenerationServiceImpl @Inject() (
       case spec: XLineWidgetSpec if spec.groupFieldName.isDefined =>
         aux(GroupLineWidgetGenerator[Any])
 
+      ////////////////////
+      // binned box plot //
+      ////////////////////
+
+      case spec: BinnedBoxWidgetSpec =>
+        aux(BinnedBoxWidgetGenerator(spec.useMinMaxWhiskers, minMax))
+
+      ///////////////////////////
+      // binned aggregate line //
+      ///////////////////////////
+
+      case spec: XBinnedAggWidgetSpec if spec.showMinMaxBand =>
+        aux(XBinnedMeanMinMaxWidgetGenerator(minMax))
+
+      case spec: XBinnedAggWidgetSpec if !spec.showMinMaxBand =>
+        aux(XBinnedAggWidgetGenerator(spec.aggType, minMax))
+
       /////////////////////////
       // heatmap aggregation //
       /////////////////////////
@@ -842,6 +864,9 @@ class WidgetGenerationServiceImpl @Inject() (
 
       case spec: CorrelationWidgetSpec if spec.correlationType == CorrelationType.Matthews =>
         aux(MatthewsCorrelationWidgetGenerator(Some(streamedCorrelationCalcParallelism)))
+
+      case spec: CorrelationWidgetSpec if spec.correlationType == CorrelationType.Spearman =>
+        aux(SpearmanCorrelationWidgetGenerator.apply)
 
       /////////////////
       // basic stats //
@@ -892,11 +917,17 @@ class WidgetGenerationServiceImpl @Inject() (
       case spec: DistributionWidgetSpec if spec.groupFieldName.isDefined && (fields(1).isDouble || fields(1).isDate || (fields(1).isInteger && spec.numericBinCount.isDefined)) =>
         Seq(fields(1))
 
-      case spec: CumulativeCountWidgetSpec if spec.numericBinCount.isDefined && spec.groupFieldName.isEmpty =>
+      case spec: CumulativeCountWidgetSpec if (spec.numericBinCount.isDefined || (spec.dateBinsType.isDefined && fields(0).isDate)) && spec.groupFieldName.isEmpty =>
         Seq(fields(0))
 
-      case spec: CumulativeCountWidgetSpec if spec.numericBinCount.isDefined && spec.groupFieldName.isDefined =>
+      case spec: CumulativeCountWidgetSpec if (spec.numericBinCount.isDefined || (spec.dateBinsType.isDefined && fields(1).isDate)) && spec.groupFieldName.isDefined =>
         Seq(fields(1))
+
+      case spec: BinnedBoxWidgetSpec =>
+        Seq(fields(0))
+
+      case spec: XBinnedAggWidgetSpec =>
+        Seq(fields(0))
 
       case spec: HeatmapAggWidgetSpec =>
         Seq(fields(0), fields(1))

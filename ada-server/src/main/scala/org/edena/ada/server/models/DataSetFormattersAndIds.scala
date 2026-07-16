@@ -10,6 +10,7 @@ import play.api.libs.json._
 import play.api.libs.json.{Format, JsObject, Json}
 import reactivemongo.api.bson.BSONObjectID
 import org.edena.ada.server.models.NavigationItem.navigationItemFormat
+import org.edena.core.calc.impl.DateBinsType
 import org.edena.core.field.FieldTypeId
 
 // JSON converters and identities
@@ -50,6 +51,18 @@ object DataSetFormattersAndIds {
   implicit val chartTypeFormat = EnumFormat(ChartType)
   implicit val aggTypeFormat = EnumFormat(AggType)
   implicit val correlationTypeFormat = EnumFormat(CorrelationType)
+
+  implicit val dateBinsTypeFormat: Format[DateBinsType] = new Format[DateBinsType] {
+    override def reads(json: JsValue) = json match {
+      case JsString(name) =>
+        DateBinsType.fromString(name)
+          .map(JsSuccess(_))
+          .getOrElse(JsError(s"Unknown date bins type: '$name'."))
+      case _ => JsError("String value expected for a date bins type.")
+    }
+
+    override def writes(binsType: DateBinsType) = JsString(binsType.toString)
+  }
   implicit val basicDisplayOptionsFormat = Json.format[BasicDisplayOptions]
   implicit val distributionDisplayOptionsFormat = Json.format[MultiChartDisplayOptions]
 
@@ -62,6 +75,8 @@ object DataSetFormattersAndIds {
       RuntimeClassFormat(Json.format[ScatterWidgetSpec]),
       RuntimeClassFormat(Json.format[ValueScatterWidgetSpec]),
       RuntimeClassFormat(Json.format[HeatmapAggWidgetSpec]),
+      RuntimeClassFormat(Json.using[Json.WithDefaultValues].format[BinnedBoxWidgetSpec]),
+      RuntimeClassFormat(Json.using[Json.WithDefaultValues].format[XBinnedAggWidgetSpec]),
       RuntimeClassFormat(Json.format[GridDistributionCountWidgetSpec]),
       RuntimeClassFormat(Json.format[CorrelationWidgetSpec]),
       RuntimeClassFormat(Json.format[IndependenceTestWidgetSpec]),

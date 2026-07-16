@@ -11,14 +11,25 @@ trait AllDefinedQuartilesCalcTypePack[T] extends FullDataCalculatorTypePack {
 
 private class AllDefinedQuartilesCalc[T: Ordering] extends FullDataCalculatorAdapter[AllDefinedQuartilesCalcTypePack[T]] {
 
+  override def fun(toDouble: T => Double) =
+    QuartilesCalcHelper.calcQuartiles(_, toDouble)
+}
+
+object QuartilesCalcHelper {
+
   /**
     * Calculate quartiles for boxplots.
     * Generation is meant for Tukey boxplots.
     *
     * @param elements sequence of elements.
-    * @return 5-value tuple with (lower 1.5 IQR whisker, lower quartile, median, upper quartile, upper 1.5 IQR whisker)
+    * @param useMinMaxWhiskers if true the whiskers are the min and max values, otherwise 1.5 IQR (clamped to the data)
+    * @return 5-value tuple with (lower whisker, lower quartile, median, upper quartile, upper whisker)
     */
-  override def fun(toDouble: T => Double)  = { elements =>
+  def calcQuartiles[T: Ordering](
+    elements: Traversable[T],
+    toDouble: T => Double,
+    useMinMaxWhiskers: Boolean = false
+  ): Option[Quartiles[T]] =
     elements.headOption.map { _ =>
       val sorted = elements.toSeq.sorted
       val length = sorted.size
@@ -32,19 +43,24 @@ private class AllDefinedQuartilesCalc[T: Ordering] extends FullDataCalculatorAda
       // lower quartile
       val lowerQuartile = sorted(length / 4)
 
-      val upperQuartileDouble = toDouble(upperQuartile)
-      val lowerQuartileDouble = toDouble(lowerQuartile)
-      val iqr = upperQuartileDouble - lowerQuartileDouble
+      val (lowerWhisker, upperWhisker) =
+        if (useMinMaxWhiskers)
+          (sorted.head, sorted.last)
+        else {
+          val upperQuartileDouble = toDouble(upperQuartile)
+          val lowerQuartileDouble = toDouble(lowerQuartile)
+          val iqr = upperQuartileDouble - lowerQuartileDouble
 
-      val upperWhiskerValue = upperQuartileDouble + 1.5 * iqr
-      val lowerWhiskerValue = lowerQuartileDouble - 1.5 * iqr
+          val upperWhiskerValue = upperQuartileDouble + 1.5 * iqr
+          val lowerWhiskerValue = lowerQuartileDouble - 1.5 * iqr
 
-      val lowerWhisker = sorted.find(value => toDouble(value) >= lowerWhiskerValue).getOrElse(sorted.last)
-      val upperWhisker = sorted.reverse.find(value => toDouble(value) <= upperWhiskerValue).getOrElse(sorted.head)
+          val lower = sorted.find(value => toDouble(value) >= lowerWhiskerValue).getOrElse(sorted.last)
+          val upper = sorted.reverse.find(value => toDouble(value) <= upperWhiskerValue).getOrElse(sorted.head)
+          (lower, upper)
+        }
 
       Quartiles(lowerWhisker, lowerQuartile, median, upperQuartile, upperWhisker)
     }
-  }
 }
 
 case class Quartiles[T <% Ordered[T]](

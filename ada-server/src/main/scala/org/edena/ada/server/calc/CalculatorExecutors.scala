@@ -250,6 +250,11 @@ trait CalculatorExecutors {
   def pearsonCorrelationAllDefinedExec =
     withSeq(AllDefinedPearsonCorrelationCalc)
 
+  // Spearman (rank) correlation
+
+  def spearmanCorrelationExec =
+    withSeq(SpearmanCorrelationCalc)
+
   // Matthews (binary class) correlation
 
   def matthewsBinaryClassCorrelationExec =
@@ -294,6 +299,18 @@ trait CalculatorExecutors {
 
   def seqBinCountAllDefinedExec =
     withSeq(AllDefinedSeqBinCountCalc.apply)
+
+  def seqBinQuartilesExec(useMinMaxWhiskers: Boolean = false) =
+    withSeq(SeqBinQuartilesCalc(useMinMaxWhiskers))
+
+  def seqBinQuartilesAllDefinedExec(useMinMaxWhiskers: Boolean = false) =
+    withSeq(AllDefinedSeqBinQuartilesCalc(useMinMaxWhiskers))
+
+  def seqBinMeanMinMaxExec =
+    withSeq(SeqBinMeanMinMaxCalc.apply)
+
+  def seqBinMeanMinMaxAllDefinedExec =
+    withSeq(AllDefinedSeqBinMeanMinMaxCalc.apply)
 
   // Independence Tests
 

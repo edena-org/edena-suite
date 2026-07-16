@@ -9,17 +9,18 @@ import org.edena.core.DefaultTypes.Seq
 
 private class CumulativeNumericBinCountWidgetGenerator(
   flowMin: Double,
-  flowMax: Double
+  flowMax: Double,
+  dateBinsType: Option[DateBinsType]
 ) extends CalculatorWidgetGenerator[CumulativeCountWidgetSpec, NumericalCountWidget[Any], CumulativeNumericBinCountsCalcTypePack]
   with CumulativeCountWidgetGeneratorHelper {
 
   override protected val seqExecutor = cumulativeNumericBinCountsSeqExec
 
   override protected def specToOptions = (spec: CumulativeCountWidgetSpec) =>
-    NumericDistributionOptions(spec.numericBinCount.getOrElse(defaultNumericBinCount))
+    NumericDistributionOptions(spec.numericBinCount.getOrElse(defaultNumericBinCount), dateBinsType = dateBinsType)
 
   override protected def specToFlowOptions = (spec: CumulativeCountWidgetSpec) =>
-    NumericDistributionFlowOptions(spec.numericBinCount.getOrElse(defaultNumericBinCount), flowMin, flowMax)
+    NumericDistributionFlowOptions(spec.numericBinCount.getOrElse(defaultNumericBinCount), flowMin, flowMax, dateBinsType = dateBinsType)
 
   override protected def specToSinkOptions = specToFlowOptions
 
@@ -48,17 +49,24 @@ object CumulativeNumericBinCountWidgetGenerator {
 
   def apply(
     flowMin: Double,
-    flowMax: Double
-  ): GEN = new CumulativeNumericBinCountWidgetGenerator(flowMin, flowMax)
+    flowMax: Double,
+    dateBinsType: Option[DateBinsType] = None
+  ): GEN = new CumulativeNumericBinCountWidgetGenerator(flowMin, flowMax, dateBinsType)
 
   def apply(
     flowMinMax: (Double, Double)
   ): GEN = apply(flowMinMax._1, flowMinMax._2)
+
+  def apply(
+    flowMinMax: (Double, Double),
+    dateBinsType: Option[DateBinsType]
+  ): GEN = apply(flowMinMax._1, flowMinMax._2, dateBinsType)
 }
 
 private class GroupCumulativeNumericBinCountWidgetGenerator(
   flowMin: Double,
-  flowMax: Double
+  flowMax: Double,
+  dateBinsType: Option[DateBinsType]
 ) extends CalculatorWidgetGenerator[CumulativeCountWidgetSpec, NumericalCountWidget[Any], GroupCumulativeNumericBinCountsCalcTypePack[Any]]
   with CumulativeCountWidgetGeneratorHelper {
 
@@ -67,10 +75,10 @@ private class GroupCumulativeNumericBinCountWidgetGenerator(
   override protected val seqExecutor = groupCumulativeNumericBinCountsSeqExec[Any]
 
   override protected def specToOptions = (spec: CumulativeCountWidgetSpec) =>
-    NumericDistributionOptions(spec.numericBinCount.getOrElse(defaultNumericBinCount))
+    NumericDistributionOptions(spec.numericBinCount.getOrElse(defaultNumericBinCount), dateBinsType = dateBinsType)
 
   override protected def specToFlowOptions = (spec: CumulativeCountWidgetSpec) =>
-    NumericDistributionFlowOptions(spec.numericBinCount.getOrElse(defaultNumericBinCount), flowMin, flowMax)
+    NumericDistributionFlowOptions(spec.numericBinCount.getOrElse(defaultNumericBinCount), flowMin, flowMax, dateBinsType = dateBinsType)
 
   override protected def specToSinkOptions = specToFlowOptions
 
@@ -115,10 +123,16 @@ object GroupCumulativeNumericBinCountWidgetGenerator {
 
   def apply(
     flowMin: Double,
-    flowMax: Double
-  ): GEN = new GroupCumulativeNumericBinCountWidgetGenerator(flowMin, flowMax)
+    flowMax: Double,
+    dateBinsType: Option[DateBinsType] = None
+  ): GEN = new GroupCumulativeNumericBinCountWidgetGenerator(flowMin, flowMax, dateBinsType)
 
   def apply(
     flowMinMax: (Double, Double)
   ): GEN = apply(flowMinMax._1, flowMinMax._2)
+
+  def apply(
+    flowMinMax: (Double, Double),
+    dateBinsType: Option[DateBinsType]
+  ): GEN = apply(flowMinMax._1, flowMinMax._2, dateBinsType)
 }

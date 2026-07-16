@@ -15,6 +15,7 @@
 @import views.html.dataset.dynamicFieldTable
 @import org.edena.ada.web.controllers.dataset.DataSetWebContext
 @import org.edena.ada.web.controllers.dataset.DataSetWebContext._
+@import org.edena.core.calc.impl.DateBinsType
 
 @import views.html.table.dynamicTableInnerModal
 @import views.html.dataset.dynamicFieldTableModalInner
@@ -97,6 +98,16 @@
                     ("yFieldNameTypeahead", x.yFieldName),
                     ("valueFieldNameTypeahead", x.valueFieldName)
                 ))
+            case x: BinnedBoxWidgetSpec =>
+                fieldLabelElements(Seq(
+                    ("xFieldNameTypeahead", x.xFieldName),
+                    ("valueFieldNameTypeahead", x.valueFieldName)
+                ))
+            case x: XBinnedAggWidgetSpec =>
+                fieldLabelElements(Seq(
+                    ("xFieldNameTypeahead", x.xFieldName),
+                    ("valueFieldNameTypeahead", x.valueFieldName)
+                ))
             case x: GridDistributionCountWidgetSpec =>
                 fieldLabelElements(Seq(
                     ("xFieldNameTypeahead", x.xFieldName),
@@ -170,19 +181,32 @@
                         Seq(
                             x.numericBinCount.map( count => "Numeric Bin Count: " + count),
                             Some(s"Show Relative Values: ${x.relativeValues}"),
-                            Some(s"Date Month Bins: ${x.useDateMonthBins}")
+                            x.dateBinsType.map( binsType => "Date Bins: " + binsType)
                         )
                     case x: CumulativeCountWidgetSpec =>
                         Seq(
                             x.numericBinCount.map( count => "Numeric Bin Count: " + count),
                             Some(s"Show Relative Values: ${x.relativeValues}"),
-                            Some(s"Date Month Bins: ${x.useDateMonthBins}")
+                            x.dateBinsType.map( binsType => "Date Bins: " + binsType)
                         )
                     case x: HeatmapAggWidgetSpec =>
                         Seq(
                             Some("X Bin Count: " + x.xBinCount),
                             Some("Y Bin Count: " + x.yBinCount),
                             Some("Agg Type: " + x.aggType)
+                        )
+
+                    case x: BinnedBoxWidgetSpec =>
+                        Seq(
+                            x.xBinCount.map( count => "X Bin Count: " + count),
+                            Some("Min/Max Whiskers: " + x.useMinMaxWhiskers)
+                        )
+
+                    case x: XBinnedAggWidgetSpec =>
+                        Seq(
+                            x.xBinCount.map( count => "X Bin Count: " + count),
+                            Some("Agg Type: " + x.aggType),
+                            Some("Min/Max Band: " + x.showMinMaxBand)
                         )
 
                     case x: GridDistributionCountWidgetSpec =>
@@ -260,6 +284,8 @@
         var isValueScatterType = concreteClass == "@{classOf[ValueScatterWidgetSpec].getName}"
         var isCorrelationType = concreteClass == "@{classOf[CorrelationWidgetSpec].getName}"
         var isHeatmapAggType = concreteClass == "@{classOf[HeatmapAggWidgetSpec].getName}"
+        var isBinnedBoxType = concreteClass == "@{classOf[BinnedBoxWidgetSpec].getName}"
+        var isXBinnedAggType = concreteClass == "@{classOf[XBinnedAggWidgetSpec].getName}"
         var isGridDistributionCountType = concreteClass == "@{classOf[GridDistributionCountWidgetSpec].getName}"
         var isXYLineWidgetType = concreteClass == "@{classOf[XLineWidgetSpec].getName}"
         var isIndependenceTest = concreteClass == "@{classOf[IndependenceTestWidgetSpec].getName}"
@@ -294,6 +320,14 @@
 
         if (isHeatmapAggType) {
             isDefined = xyFieldsDefined && values["valueFieldName"] != null && values["valueFieldName"].length > 0 && values["xBinCount"].length > 0 && values["yBinCount"].length > 0 && values["aggType"].length > 0
+        }
+
+        if (isBinnedBoxType) {
+            isDefined = xFieldDefined && values["valueFieldName"] != null && values["valueFieldName"].length > 0
+        }
+
+        if (isXBinnedAggType) {
+            isDefined = xFieldDefined && values["valueFieldName"] != null && values["valueFieldName"].length > 0 && values["aggType"].length > 0
         }
 
         if (isCorrelationType) {
@@ -343,7 +377,8 @@
                     displayElements.push("Numeric Bin Count: " + numericBinCount)
 
                 displayElements.push("Show Relative Values: " + values["relativeValues"])
-                displayElements.push("Date Month Bins: " + values["useDateMonthBins"])
+                if (values["dateBinsType"])
+                    displayElements.push("Date Bins: " + values["dateBinsType"])
              }
 
             // template html
@@ -363,6 +398,23 @@
 
             if (isHeatmapAggType) {
                 displayElements.push("Agg Type: " + values["aggType"])
+            }
+
+            // binned box
+            if (isBinnedBoxType) {
+                if (values["xBinCount"])
+                    displayElements.push("X Bin Count: " + values["xBinCount"])
+
+                displayElements.push("Min/Max Whiskers: " + values["useMinMaxWhiskers"])
+            }
+
+            // binned aggregate line
+            if (isXBinnedAggType) {
+                if (values["xBinCount"])
+                    displayElements.push("X Bin Count: " + values["xBinCount"])
+
+                displayElements.push("Agg Type: " + values["aggType"])
+                displayElements.push("Min/Max Band: " + values["showMinMaxBand"])
             }
 
             // independence test
@@ -468,7 +520,7 @@
     <div class="row">
         <input type="hidden" id="rowIndex">
 
-        <div id="concreteClassDiv">
+        <div id="concreteClassDiv" class="col-12">
             @labelValueAux("concreteClass", "Type") {
                 <select id="concreteClass" onchange="updateModalItems('@modalName');">
                     @concreteClassOptions
@@ -476,48 +528,48 @@
             }
         </div>
 
-        <div id="fieldNameDiv" style="display: none">
+        <div id="fieldNameDiv" class="col-12" style="display: none">
             @labelValueAux("fieldName", "Field") {
                 <input type="text" id="fieldNameTypeahead" class="typeahead">
                 <input type="hidden" id="fieldName">
             }
         </div>
 
-        <div id="xFieldNameDiv" style="display: none">
+        <div id="xFieldNameDiv" class="col-12" style="display: none">
             @labelValueAux("xFieldName", "X Field") {
                 <input type="text" id="xFieldNameTypeahead" class="typeahead">
                 <input type="hidden" id="xFieldName">
             }
         </div>
 
-        <div id="yFieldNameDiv" style="display: none">
+        <div id="yFieldNameDiv" class="col-12" style="display: none">
             @labelValueAux("yFieldName", "Y Field") {
                 <input type="text" id="yFieldNameTypeahead" class="typeahead">
                 <input type="hidden" id="yFieldName">
             }
         </div>
 
-        <div id="groupFieldNameDiv" style="display: none">
+        <div id="groupFieldNameDiv" class="col-12" style="display: none">
             @labelValueAux("groupFieldName", "Group Field") {
                 <input type="text" id="groupFieldNameTypeahead" class="typeahead">
                 <input type="hidden" id="groupFieldName">
             }
         </div>
 
-        <div id="valueFieldNameDiv" style="display: none">
+        <div id="valueFieldNameDiv" class="col-12" style="display: none">
             @labelValueAux("valueFieldName", "Value Field") {
                 <input type="text" id="valueFieldNameTypeahead" class="typeahead">
                 <input type="hidden" id="valueFieldName">
             }
         </div>
 
-        <div id="fieldNamesDiv" style="display: none">
+        <div id="fieldNamesDiv" class="col-12" style="display: none">
             @labelValueAux("fieldNames", "Fields") {
                 <input type="text" id="fieldNames">
             }
         </div>
 
-        <div id="yFieldNamesDiv" style="display: none">
+        <div id="yFieldNamesDiv" class="col-12" style="display: none">
             @labelValueAux("yFieldNames", "Y Fields") {
                 @dynamicFieldTable(
                     modalName + "-yFieldName", Nil, createModal = false, itemsName = Some("yFieldNames[]"), gridWidth = 12
@@ -525,77 +577,96 @@
             }
         </div>
 
-        <div id="inputFieldNamesDiv" style="display: none">
+        <div id="inputFieldNamesDiv" class="col-12" style="display: none">
             @labelValueAux("inputFieldNames", "Input Fields") {
                 <input type="text" id="inputFieldNames">
             }
         </div>
 
-        <div id="contentDiv" style="display: none">
+        <div id="contentDiv" class="col-12" style="display: none">
             @labelValueAux("content", "Content") {
                 <textarea id="content" rows="15" cols="35"></textarea>
             }
         </div>
 
-        <div id="aggTypeDiv" style="display: none">
+        <div id="aggTypeDiv" class="col-12" style="display: none">
             @labelValueAux("aggType", "Aggregation Type") {
                 @selectEnum("aggType", AggType, false)
             }
         </div>
 
-        <div id="numericBinCountDiv" style="display: none">
+        <div id="numericBinCountDiv" class="col-12" style="display: none">
             @labelValueAux("numericBinCount", "Numeric Bin #") {
                 <input type="text" id="numericBinCount">
             }
         </div>
 
-        <div id="relativeValuesDiv" style="display: none">
+        <div id="relativeValuesDiv" class="col-12" style="display: none">
             @labelValueAux("relativeValues", "Relative Values?") {
                 <input type="checkbox" id="relativeValues"/>
             }
         </div>
 
-        <div id="useDateMonthBinsDiv" style="display: none">
-            @labelValueAux("useDateMonthBins", "Date Month Bins?") {
-                <input type="checkbox" id="useDateMonthBins"/>
+        <div id="dateBinsTypeDiv" class="col-12" style="display: none">
+            @labelValueAux("dateBinsType", "Date Bins") {
+                <select id="dateBinsType">
+                    <option value=""></option>
+                    @DateBinsType.values.map { binsType =>
+                        <option value="@binsType">@binsType</option>
+                    }
+                </select>
             }
         </div>
 
-        <div id="xBinCountDiv" style="display: none">
+        <div id="xBinCountDiv" class="col-12" style="display: none">
             @labelValueAux("xBinCount", "X Bins #") {
                 <input type="text" id="xBinCount">
             }
         </div>
 
-        <div id="yBinCountDiv" style="display: none">
+        <div id="yBinCountDiv" class="col-12" style="display: none">
             @labelValueAux("yBinCount", "Y Bins #") {
                 <input type="text" id="yBinCount">
             }
         </div>
 
-        <div id="keepUndefinedDiv" style="display: none">
+        <div id="useMinMaxWhiskersDiv" class="col-12" style="display: none">
+            @labelValueAux("useMinMaxWhiskers", "Min/Max Whiskers?") {
+                <input type="checkbox" id="useMinMaxWhiskers"/>
+            }
+        </div>
+
+        <div id="showMinMaxBandDiv" class="col-12" style="display: none">
+            @labelValueAux("showMinMaxBand", "Min/Max Band?") {
+                <input type="checkbox" id="showMinMaxBand"/>
+            }
+        </div>
+
+        <div id="keepUndefinedDiv" class="col-12" style="display: none">
             @labelValueAux("keepUndefined", "Keep Undefined?") {
                 <input type="checkbox" id="keepUndefined"/>
             }
         </div>
 
-        <div id="topCountDiv" style="display: none">
+        <div id="topCountDiv" class="col-12" style="display: none">
             @labelValueAux("topCount", "Top Count") {
                 <input type="text" id="topCount">
             }
         </div>
 
 
-        <div id="correlationTypeDiv" style="display: none">
+        <div id="correlationTypeDiv" class="col-12" style="display: none">
             @labelValueAux("correlationType", "Type") {
                 @selectEnum("correlationType", CorrelationType, false)
             }
         </div>
 
-        @labelValueAux("subFilterId", "Sub Filter") {
-            <input type="text" id="subFilterTypeahead" class="typeahead">
-            <input type="hidden" id="subFilterId">
-        }
+        <div id="subFilterIdDiv" class="col-12">
+            @labelValueAux("subFilterId", "Sub Filter") {
+                <input type="text" id="subFilterTypeahead" class="typeahead">
+                <input type="hidden" id="subFilterId">
+            }
+        </div>
     </div>
 }
 
@@ -732,8 +803,11 @@
         // relative values is boolean hence we need to do the setting again
         setIfNotNull(output, "relativeValues", getBoolValue("relativeValues"))
 
-        // useDateMonthBins is boolean hence we need to do the setting again
-        setIfNotNull(output, "useDateMonthBins", getBoolValue("useDateMonthBins"))
+        // useMinMaxWhiskers is boolean hence we need to do the setting again
+        setIfNotNull(output, "useMinMaxWhiskers", getBoolValue("useMinMaxWhiskers"))
+
+        // showMinMaxBand is boolean hence we need to do the setting again
+        setIfNotNull(output, "showMinMaxBand", getBoolValue("showMinMaxBand"))
 
         // x bin count is integer hence we need to do the setting again
         setIfNotNull(output, "xBinCount", getIntValue("xBinCount", 20))
@@ -788,7 +862,9 @@
         $("#" + modalName + " #relativeValuesDiv").hide();
         $("#" + modalName + " #xBinCountDiv").hide();
         $("#" + modalName + " #yBinCountDiv").hide();
-        $("#" + modalName + " #useDateMonthBinsDiv").hide();
+        $("#" + modalName + " #dateBinsTypeDiv").hide();
+        $("#" + modalName + " #useMinMaxWhiskersDiv").hide();
+        $("#" + modalName + " #showMinMaxBandDiv").hide();
         $("#" + modalName + " #excludeUndefinedDiv").hide();
         $("#" + modalName + " #topCountDiv").hide();
         $("#" + modalName + " #correlationTypeDiv").hide();
@@ -823,8 +899,10 @@
         $('#edit_widgetSpecModal #yBinCount').val(model["yBinCount"]);
 
         $('#edit_widgetSpecModal #aggType').val(model["aggType"]);
+        $('#edit_widgetSpecModal #dateBinsType').val(model["dateBinsType"]);
         $('#edit_widgetSpecModal #relativeValues').prop('checked', model["relativeValues"]);
-        $('#edit_widgetSpecModal #useDateMonthBins').prop('checked', model["useDateMonthBins"]);
+        $('#edit_widgetSpecModal #useMinMaxWhiskers').prop('checked', model["useMinMaxWhiskers"]);
+        $('#edit_widgetSpecModal #showMinMaxBand').prop('checked', model["showMinMaxBand"]);
         $('#edit_widgetSpecModal #keepUndefined').prop('checked', model["keepUndefined"]);
         $('#edit_widgetSpecModal #topCount').val(model["topCount"]);
 
@@ -912,6 +990,12 @@
                 break;
             case "@{classOf[HeatmapAggWidgetSpec].getName}" :
                 labelFields = ["xFieldNameTypeahead", "yFieldNameTypeahead", "valueFieldNameTypeahead"];
+                break;
+            case "@{classOf[BinnedBoxWidgetSpec].getName}" :
+                labelFields = ["xFieldNameTypeahead", "valueFieldNameTypeahead"];
+                break;
+            case "@{classOf[XBinnedAggWidgetSpec].getName}" :
+                labelFields = ["xFieldNameTypeahead", "valueFieldNameTypeahead"];
                 break;
             case "@{classOf[GridDistributionCountWidgetSpec].getName}" :
                 labelFields = ["xFieldNameTypeahead", "yFieldNameTypeahead"];

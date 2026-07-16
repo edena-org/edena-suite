@@ -87,9 +87,13 @@ private class HeatmapAggWidgetGenerator(
     val xFlowMax: Double,
     val yFlowMin: Double,
     val yFlowMax: Double
-  ) extends HeatmapWidgetGenerator[HeatmapAggWidgetSpec, Any, Option[Double]] {
+  ) extends HeatmapWidgetGenerator[HeatmapAggWidgetSpec, Any, Any] {
 
-  override protected def aggToDouble = identity
+  override protected def aggToDouble = {
+    case Some(quartiles: Quartiles[_]) => Some(quartiles.median.asInstanceOf[Double])
+    case Some(value: Double) => Some(value)
+    case _ => None
+  }
 
   override protected def specToBinCounts =
     (spec: HeatmapAggWidgetSpec) => (spec.xBinCount, spec.yBinCount)
@@ -104,8 +108,9 @@ private class HeatmapAggWidgetGenerator(
       case AggType.Max => seqBinMaxExec
       case AggType.Min => seqBinMinExec
       case AggType.Variance => seqBinVarianceExec
+      case AggType.Median => seqBinQuartilesExec()
     }
-    executor.asInstanceOf[CalculatorExecutor[SeqBinCalcTypePack[Any, Option[Double]], Seq[Field]]]
+    executor.asInstanceOf[CalculatorExecutor[SeqBinCalcTypePack[Any, Any], Seq[Field]]]
   }
 }
 
@@ -130,7 +135,7 @@ private class GridDistributionCountWidgetGenerator(
 
 object HeatmapAggWidgetGenerator {
 
-  type GEN = CalculatorWidgetGenerator[HeatmapAggWidgetSpec, HeatmapWidget, SeqBinCalcTypePack[Any, Option[Double]]]
+  type GEN = CalculatorWidgetGenerator[HeatmapAggWidgetSpec, HeatmapWidget, SeqBinCalcTypePack[Any, Any]]
 
   def apply(
     aggType: AggType.Value)(

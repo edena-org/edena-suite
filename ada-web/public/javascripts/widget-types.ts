@@ -32,10 +32,13 @@ export type FieldTypeId =
 export type ChartType = "Pie" | "Column" | "Bar" | "Line" | "Spline" | "Polar";
 
 /** org.edena.ada.server.models.AggType */
-export type AggType = "Mean" | "Max" | "Min" | "Variance";
+export type AggType = "Mean" | "Max" | "Min" | "Variance" | "Median";
 
 /** org.edena.ada.server.models.CorrelationType */
-export type CorrelationType = "Pearson" | "Matthews";
+export type CorrelationType = "Pearson" | "Matthews" | "Spearman";
+
+/** org.edena.core.calc.impl.DateBinsType — calendar binning for date fields */
+export type DateBinsType = "Day" | "Month" | "Year";
 
 // ---------------------------------------------------------------------------
 // Display Options
@@ -267,6 +270,8 @@ export interface LineWidget extends WidgetBase {
  * Box-and-whisker plot.
  *
  * `data` series tuples: ["groupName", {lowerWhisker, lowerQuantile, median, upperQuantile, upperWhisker}]
+ *
+ * Also produced by BinnedBoxWidgetSpec, in which case the group names are numeric x-bin starts.
  */
 export interface BoxWidget extends WidgetBase {
   concreteClass: "org.edena.ada.web.models.BoxWidget";
@@ -372,7 +377,7 @@ export interface DistributionWidgetSpec extends WidgetSpecBase {
   groupFieldName?: string | null;
   relativeValues: boolean;
   numericBinCount?: number | null;
-  useDateMonthBins: boolean;
+  dateBinsType?: DateBinsType | null;
   displayOptions: MultiChartDisplayOptions;
 }
 
@@ -383,7 +388,7 @@ export interface CumulativeCountWidgetSpec extends WidgetSpecBase {
   groupFieldName?: string | null;
   relativeValues: boolean;
   numericBinCount?: number | null;
-  useDateMonthBins: boolean;
+  dateBinsType?: DateBinsType | null;
   displayOptions: MultiChartDisplayOptions;
 }
 
@@ -429,6 +434,30 @@ export interface HeatmapAggWidgetSpec extends WidgetSpecBase {
   xBinCount: number;
   yBinCount: number;
   aggType: AggType;
+  displayOptions: BasicDisplayOptions;
+}
+
+/** Binned box plot spec: uniform x-bins, a quartiles box of the value field per bin (renders as BoxWidget) */
+export interface BinnedBoxWidgetSpec extends WidgetSpecBase {
+  concreteClass: "org.edena.ada.server.models.BinnedBoxWidgetSpec";
+  xFieldName: string;
+  valueFieldName: string;
+  xBinCount?: number | null;
+  useMinMaxWhiskers: boolean;
+  displayOptions: BasicDisplayOptions;
+}
+
+/**
+ * Binned aggregate line spec: uniform x-bins, an aggregate of the value field per bin (renders as LineWidget).
+ * With showMinMaxBand the widget shows three series (Mean, Min, Max) instead of the single aggType one.
+ */
+export interface XBinnedAggWidgetSpec extends WidgetSpecBase {
+  concreteClass: "org.edena.ada.server.models.XBinnedAggWidgetSpec";
+  xFieldName: string;
+  valueFieldName: string;
+  xBinCount?: number | null;
+  aggType: AggType;
+  showMinMaxBand: boolean;
   displayOptions: BasicDisplayOptions;
 }
 
@@ -492,6 +521,8 @@ export type WidgetSpec =
   | ScatterWidgetSpec
   | ValueScatterWidgetSpec
   | HeatmapAggWidgetSpec
+  | BinnedBoxWidgetSpec
+  | XBinnedAggWidgetSpec
   | GridDistributionCountWidgetSpec
   | CorrelationWidgetSpec
   | IndependenceTestWidgetSpec

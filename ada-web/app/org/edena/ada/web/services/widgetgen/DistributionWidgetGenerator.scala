@@ -37,17 +37,18 @@ object CategoricalDistributionWidgetGenerator extends CalculatorWidgetGenerator[
 
 private class NumericDistributionWidgetGenerator(
     flowMin: Double,
-    flowMax: Double
+    flowMax: Double,
+    dateBinsType: Option[DateBinsType]
   ) extends CalculatorWidgetGenerator[DistributionWidgetSpec, NumericalCountWidget[Any], NumericDistributionCountsCalcTypePack]
     with DistributionWidgetGeneratorHelper {
 
   override protected val seqExecutor = numericDistributionCountsSeqExec
 
   override protected def specToOptions = (spec: DistributionWidgetSpec) =>
-    NumericDistributionOptions(spec.numericBinCount.getOrElse(defaultNumericBinCount))
+    NumericDistributionOptions(spec.numericBinCount.getOrElse(defaultNumericBinCount), dateBinsType = dateBinsType)
 
   override protected def specToFlowOptions = (spec: DistributionWidgetSpec) =>
-    NumericDistributionFlowOptions(spec.numericBinCount.getOrElse(defaultNumericBinCount), flowMin, flowMax)
+    NumericDistributionFlowOptions(spec.numericBinCount.getOrElse(defaultNumericBinCount), flowMin, flowMax, dateBinsType = dateBinsType)
 
   override protected def specToSinkOptions = specToFlowOptions
 
@@ -76,12 +77,18 @@ object NumericDistributionWidgetGenerator {
 
   def apply(
     flowMin: Double,
-    flowMax: Double
-  ): GEN = new NumericDistributionWidgetGenerator(flowMin, flowMax)
+    flowMax: Double,
+    dateBinsType: Option[DateBinsType] = None
+  ): GEN = new NumericDistributionWidgetGenerator(flowMin, flowMax, dateBinsType)
 
   def apply(
     flowMinMax: (Double, Double)
   ): GEN = apply(flowMinMax._1, flowMinMax._2)
+
+  def apply(
+    flowMinMax: (Double, Double),
+    dateBinsType: Option[DateBinsType]
+  ): GEN = apply(flowMinMax._1, flowMinMax._2, dateBinsType)
 }
 
 object UniqueIntDistributionWidgetGenerator extends CalculatorWidgetGenerator[DistributionWidgetSpec, NumericalCountWidget[Any], UniqueDistributionCountsCalcTypePack[Long]]
@@ -135,7 +142,8 @@ object GroupCategoricalDistributionWidgetGenerator extends CalculatorWidgetGener
 
 private class GroupNumericDistributionWidgetGenerator(
     flowMin: Double,
-    flowMax: Double
+    flowMax: Double,
+    dateBinsType: Option[DateBinsType]
   ) extends CalculatorWidgetGenerator[DistributionWidgetSpec, NumericalCountWidget[Any], GroupNumericDistributionCountsCalcTypePack[Any]]
     with DistributionWidgetGeneratorHelper {
 
@@ -144,10 +152,10 @@ private class GroupNumericDistributionWidgetGenerator(
   override protected val seqExecutor = groupNumericDistributionCountsSeqExec[Any]
 
   override protected def specToOptions = (spec: DistributionWidgetSpec) =>
-    NumericDistributionOptions(spec.numericBinCount.getOrElse(defaultNumericBinCount))
+    NumericDistributionOptions(spec.numericBinCount.getOrElse(defaultNumericBinCount), dateBinsType = dateBinsType)
 
   override protected def specToFlowOptions = (spec: DistributionWidgetSpec) =>
-    NumericDistributionFlowOptions(spec.numericBinCount.getOrElse(defaultNumericBinCount), flowMin, flowMax)
+    NumericDistributionFlowOptions(spec.numericBinCount.getOrElse(defaultNumericBinCount), flowMin, flowMax, dateBinsType = dateBinsType)
 
   override protected def specToSinkOptions = specToFlowOptions
 
@@ -178,12 +186,18 @@ object GroupNumericDistributionWidgetGenerator {
 
   def apply(
     flowMin: Double,
-    flowMax: Double
-  ): GEN = new GroupNumericDistributionWidgetGenerator(flowMin, flowMax)
+    flowMax: Double,
+    dateBinsType: Option[DateBinsType] = None
+  ): GEN = new GroupNumericDistributionWidgetGenerator(flowMin, flowMax, dateBinsType)
 
   def apply(
     flowMinMax: (Double, Double)
   ): GEN = apply(flowMinMax._1, flowMinMax._2)
+
+  def apply(
+    flowMinMax: (Double, Double),
+    dateBinsType: Option[DateBinsType]
+  ): GEN = apply(flowMinMax._1, flowMinMax._2, dateBinsType)
 }
 
 object GroupUniqueLongDistributionWidgetGenerator extends CalculatorWidgetGenerator[DistributionWidgetSpec, NumericalCountWidget[Any], GroupUniqueDistributionCountsCalcTypePack[Any, Long]]

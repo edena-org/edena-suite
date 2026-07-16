@@ -32,7 +32,7 @@
         <div class="flex-grow-1">
             @fixedTableRow("filtersTr") {
                 @filters.zipWithIndex.map { case (filterSpec, index) =>
-                    <td style='padding-left: 10px; vertical-align:top'>
+                    <td class="align-top pl-2">
                         @dataSetFilter(Some(filterSpec), setting.filterShowFieldStyle, filterLabel = if(filters.size > 1) s"Filter ${index + 1}" else "Filter")
                     </td>
                 }
@@ -40,7 +40,7 @@
         </div>
 
         @if(extraActions.isDefined) {
-            <div class="ml-auto" style="padding-top: 10px;">
+            <div class="ml-auto pl-3 pt-2">
                 @extraActions.get
             </div>
         }
@@ -85,29 +85,29 @@
             })
         })
 
-        function populateFullTypeahead(fieldPrefix, isFucus) {
+        function populateFullTypeahead(fieldPrefix, isFocus) {
             var url = '@Html(dataSetRouter.fieldNamesAndLabels(Seq(FieldTypeId.Enum, FieldTypeId.String, FieldTypeId.Boolean, FieldTypeId.Double, FieldTypeId.Integer, FieldTypeId.Date)).url)'
-            populateFieldTypeaheadFromUrlAux(fieldPrefix, url, isFucus)
+            populateFieldTypeaheadFromUrlAux(fieldPrefix, url, isFocus)
         }
 
-        function populateCategoricalTypeahead(fieldPrefix, isFucus) {
+        function populateCategoricalTypeahead(fieldPrefix, isFocus) {
             var url = '@Html(dataSetRouter.fieldNamesAndLabels(Seq(FieldTypeId.Enum, FieldTypeId.String, FieldTypeId.Boolean, FieldTypeId.Json)).url)'
-            populateFieldTypeaheadFromUrlAux(fieldPrefix, url, isFucus)
+            populateFieldTypeaheadFromUrlAux(fieldPrefix, url, isFocus)
         }
 
-        function populateNumericalTypeahead(fieldPrefix, isFucus) {
+        function populateNumericalTypeahead(fieldPrefix, isFocus) {
             var url = '@Html(dataSetRouter.fieldNamesAndLabels(Seq(FieldTypeId.Integer, FieldTypeId.Double, FieldTypeId.Date)).url)'
-            populateFieldTypeaheadFromUrlAux(fieldPrefix, url, isFucus)
+            populateFieldTypeaheadFromUrlAux(fieldPrefix, url, isFocus)
         }
 
-        function populateBooleanTypeahead(fieldPrefix, isFucus) {
+        function populateBooleanTypeahead(fieldPrefix, isFocus) {
             var url = '@Html(dataSetRouter.fieldNamesAndLabels(Seq(FieldTypeId.Boolean)).url)'
-            populateFieldTypeaheadFromUrlAux(fieldPrefix, url, isFucus)
+            populateFieldTypeaheadFromUrlAux(fieldPrefix, url, isFocus)
         }
 
-        function populateMultiNumericalTypeahead(fieldPrefixes, isFucus) {
+        function populateMultiNumericalTypeahead(fieldPrefixes, isFocus) {
             var url = '@Html(dataSetRouter.fieldNamesAndLabels(Seq(FieldTypeId.Integer, FieldTypeId.Double, FieldTypeId.Date)).url)'
-            populateMultiFieldTypeaheadFromUrlAux(fieldPrefixes, url, isFucus)
+            populateMultiFieldTypeaheadFromUrlAux(fieldPrefixes, url, isFocus)
         }
 
         function populateFieldTypeaheadFromUrlAux(fieldPrefix, url, isFocus) {
@@ -321,34 +321,38 @@
         @actions
     </div>
 
-    <hr/>
-
     @if(widgetsDivOnRight) {
-        <table>
-            <tr>
-                <td style="vertical-align: top;">
-                    <button type="button" class="btn btn-secondary btn-circle" data-toggle="collapse" data-target="#inputDiv" title="Show/Hide">
-                        <span class="bi bi-arrows-expand"></span>
-                    </button>
-                </td>
-                <td style="width: 100%;">
-                    <div class="row vertical-divider">
-                        <div id="inputDiv" class="col-md-4 col-sm-12 collapse show">
-                            @inputElements
-                        </div>
-
-                        <div id="widgetsDiv" class="col-md-8 col-sm-12">
+        <div class="d-flex align-items-start">
+            <div class="mr-2">
+                <button type="button" class="btn btn-secondary btn-circle" data-toggle="collapse" data-target="#inputDiv" title="Show / hide the input panel">
+                    <span class="bi bi-sliders"></span>
+                </button>
+            </div>
+            <div class="widgets-main">
+                <div class="row vertical-divider">
+                    <div id="inputDiv" class="col-md-4 col-sm-12 collapse show">
+                        <div class="card widgets-input-card">
+                            <div class="card-body">
+                                @inputElements
+                            </div>
                         </div>
                     </div>
-                </td>
-            </tr>
-        </table>
+
+                    <div id="widgetsDiv" class="col-md-8 col-sm-12">
+                    </div>
+                </div>
+            </div>
+        </div>
     } else {
-        <div id="inputDiv" class="row">
-           @inputElements
+        <div class="card widgets-input-card">
+            <div class="card-body">
+                <div id="inputDiv" class="row">
+                    @inputElements
+                </div>
+            </div>
         </div>
 
-        <div id="widgetsDiv" style="margin-top: 30px">
+        <div id="widgetsDiv" class="mt-4">
         </div>
     }
 

@@ -154,6 +154,26 @@ class AllDefinedSeqBinCountCalcConverter extends AllDefinedSeqDoubleConverter {
   override def specificUseClass = Some(classOf[AllDefinedSeqBinCountCalc])
 }
 
+class SeqBinQuartilesCalcConverter extends SeqDoubleConverter {
+  override def specificUseClass = Some(classOf[SeqBinQuartilesCalcAux])
+}
+
+class AllDefinedSeqBinQuartilesCalcConverter extends AllDefinedSeqDoubleConverter {
+  override def specificUseClass = Some(classOf[AllDefinedSeqBinQuartilesCalc])
+}
+
+class SeqBinMeanMinMaxCalcConverter extends SeqDoubleConverter {
+  override def specificUseClass = Some(SeqBinMeanMinMaxCalcAux.getClass)
+}
+
+class AllDefinedSeqBinMeanMinMaxCalcConverter extends AllDefinedSeqDoubleConverter {
+  override def specificUseClass = Some(classOf[AllDefinedSeqBinMeanMinMaxCalc])
+}
+
+class SpearmanCorrelationConverter extends SeqDoubleConverter {
+  override def specificUseClass = Some(SpearmanCorrelationCalc.getClass)
+}
+
 class OneWayAnovaTestConverter extends GroupScalarDoubleConverter[Any] {
   override def specificUseClass = Some(classOf[OneWayAnovaTestCalc[_]])
 }

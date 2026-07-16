@@ -20,7 +20,7 @@ private class AllDefinedNumericDistributionCountsCalc extends Calculator[AllDefi
 
   override def fun(options: NumericDistributionOptions) = { values =>
     if (values.nonEmpty) {
-      options.customBinEdges match {
+      effectiveBinEdges(options.customBinEdges, options.dateBinsType, values.min, values.max) match {
         case Some(edges) =>
           val edgesBd = edges.map(BigDecimal(_))
           val binCount = edgesBd.length - 1
@@ -57,7 +57,9 @@ private class AllDefinedNumericDistributionCountsCalc extends Calculator[AllDefi
   }
 
   override def flow(options: FLOW_OPT) = {
-    val bucketIndexFn: Double => Int = options.customBinEdges match {
+    val binEdges = effectiveBinEdges(options.customBinEdges, options.dateBinsType, options.min, options.max)
+
+    val bucketIndexFn: Double => Int = binEdges match {
       case Some(edges) =>
         val edgesBd = edges.map(BigDecimal(_))
         calcCustomBucketIndex(edgesBd)
@@ -68,7 +70,7 @@ private class AllDefinedNumericDistributionCountsCalc extends Calculator[AllDefi
         calcBucketIndex(stepSize, options.binCount, minBg, options.max)
     }
 
-    val binCount = options.customBinEdges.map(_.length - 1).getOrElse(options.binCount)
+    val binCount = binEdges.map(_.length - 1).getOrElse(options.binCount)
 
     Flow[IN].fold[INTER](
       mutable.ArraySeq.fill(binCount)(0)
@@ -82,7 +84,7 @@ private class AllDefinedNumericDistributionCountsCalc extends Calculator[AllDefi
   override def postFlow(options: SINK_OPT) = { array =>
     val columnCount = array.length
 
-    options.customBinEdges match {
+    effectiveBinEdges(options.customBinEdges, options.dateBinsType, options.min, options.max) match {
       case Some(edges) =>
         val edgesBd = edges.map(BigDecimal(_))
         (0 until columnCount).map { index =>
@@ -141,6 +143,63 @@ trait NumericDistributionCountsHelper {
     else
       ((doubleValue - minBg) / stepSize).setScale(0, RoundingMode.FLOOR).toInt
 
+  // Date bins support
+
+  // safety fall-back to uniform bins for pathological date ranges
+  private val maxDateBinCount = 2000
+
+  /**
+   * Calendar bin edges (day/month/year starts in the default time zone) covering the given
+   * epoch-millis range: [floorToUnit(min), ..., floorToUnit(max) + 1 unit].
+   * Returns None if the range spans too many bins.
+   */
+  def calcDateBinEdges(
+    binsType: DateBinsType,
+    minMillis: Double,
+    maxMillis: Double
+  ): Option[Seq[Double]] = {
+    import java.time.{Instant, LocalDate, ZoneId}
+
+    val zone = ZoneId.systemDefault()
+
+    def floorToUnit(millis: Double): LocalDate = {
+      val date = Instant.ofEpochMilli(millis.toLong).atZone(zone).toLocalDate
+      binsType match {
+        case DateBinsType.Day => date
+        case DateBinsType.Month => date.withDayOfMonth(1)
+        case DateBinsType.Year => date.withDayOfYear(1)
+      }
+    }
+
+    def nextUnit(date: LocalDate): LocalDate =
+      binsType match {
+        case DateBinsType.Day => date.plusDays(1)
+        case DateBinsType.Month => date.plusMonths(1)
+        case DateBinsType.Year => date.plusYears(1)
+      }
+
+    val start = floorToUnit(minMillis)
+    val endInclusive = nextUnit(floorToUnit(maxMillis))
+
+    val edges = Iterator.iterate(start)(nextUnit)
+      .takeWhile(!_.isAfter(endInclusive))
+      .take(maxDateBinCount + 2)
+      .map(_.atStartOfDay(zone).toInstant.toEpochMilli.toDouble)
+      .toSeq
+
+    if (edges.size > maxDateBinCount + 1) None else Some(edges)
+  }
+
+  protected def effectiveBinEdges(
+    customBinEdges: Option[Seq[Double]],
+    dateBinsType: Option[DateBinsType],
+    min: => Double,
+    max: => Double
+  ): Option[Seq[Double]] =
+    customBinEdges.orElse(
+      dateBinsType.flatMap(calcDateBinEdges(_, min, max))
+    )
+
   // Custom bin edges support
 
   /**
@@ -176,7 +235,8 @@ case class NumericDistributionOptions(
   binCount: Int,
   specialBinForMax: Boolean = false,
   customBinEdges: Option[Seq[Double]] = None,
-  sharedMinMax: Boolean = true
+  sharedMinMax: Boolean = true,
+  dateBinsType: Option[DateBinsType] = None
 )
 
 case class NumericDistributionFlowOptions(
@@ -184,5 +244,6 @@ case class NumericDistributionFlowOptions(
   min: Double,
   max: Double,
   specialBinForMax: Boolean = false,
-  customBinEdges: Option[Seq[Double]] = None
+  customBinEdges: Option[Seq[Double]] = None,
+  dateBinsType: Option[DateBinsType] = None
 )
