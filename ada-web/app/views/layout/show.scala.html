@@ -10,7 +10,8 @@
 	sideBar: Option[Html] = None,
 	topContentBar: Option[Html] = None,
 	isFullDisplayName: Boolean = false,
-	showMessageBox: Boolean = true
+	showMessageBox: Boolean = true,
+	headerActions: Option[Html] = None
 )(
 	implicit context: WebContext
 )
@@ -18,6 +19,9 @@
 @main(if(isFullDisplayName) displayName else Messages("show.title", displayName), sideBar, topContentBar, showMessageBox = showMessageBox) {
 
 	<div class="page-header">
+		@headerActions.map { actions =>
+			<div class="float-right">@actions</div>
+		}
 		<h3>@{if(isFullDisplayName) displayName else Messages("show.title", displayName)}</h3>
 	</div>
 

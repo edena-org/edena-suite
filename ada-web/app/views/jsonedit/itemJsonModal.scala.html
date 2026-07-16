@@ -1,0 +1,72 @@
+@import views.html.jsonedit.jsonEditorImport
+
+@(
+    modalId: String,
+    entityName: String,
+    getCall: Call,
+    updateCall: Option[Call] = None
+)(
+    implicit request: RequestHeader
+)
+
+@********************************************************************************
+ * Button + modal displaying an item as (pretty-printed) JSON, fetched from the
+ * item's regular get action so permissions apply unchanged. A copy-to-clipboard
+ * button is always present; when updateCall is given the JSON is editable and an
+ * Update button (with a confirmation step) posts it back to the regular update
+ * action.
+ ********************************************************************************@
+
+@editorBody = {
+    <div id="@{modalId}Editor" style="height: 420px; width: 100%; border: 1px solid #ced4da; border-radius: 4px;"></div>
+    @if(updateCall.isDefined) {
+        <small class="form-text text-muted" style="font-size: 11px;">
+            The JSON is editable; <i>Update</i> overwrites the item. The id from the page is authoritative — an <code>_id</code> inside the JSON is ignored.
+        </small>
+    }
+}
+
+@editorButtons = {
+    <button type="button" class="btn btn-secondary" title="Copy to clipboard" onclick="copyJsonEditor('@modalId'); return false;">
+        <span class="bi bi-copy" aria-hidden="true"></span> Copy
+    </button>
+    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+    @if(updateCall.isDefined) {
+        <button type="button" class="btn btn-primary" onclick="$('#@modalId').modal('hide'); $('#@{modalId}Confirm').modal('show'); return false;">Update</button>
+    }
+}
+
+<a class="btn btn-outline-secondary btn-sm" data-toggle="modal" data-target="#@modalId" title="@if(updateCall.isDefined){Show / edit as JSON}else{Show as JSON}">
+    <span class="bi bi-filetype-json" aria-hidden="true"></span> JSON
+</a>
+
+@modal(modalId, entityName + " as JSON", editorBody, None, Some(editorButtons), Some("modal-lg"))
+
+@if(updateCall.isDefined) {
+    @* Compact confirmation dialog (hand-rolled: no pull-right arrow, small + centered). *@
+    <div class="modal fade" id="@{modalId}Confirm" tabindex="-1" role="dialog" aria-labelledby="@{modalId}ConfirmTitle">
+        <div class="modal-dialog modal-dialog-centered modal-sm" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="@{modalId}ConfirmTitle">Update @{entityName.toLowerCase}?</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                </div>
+                <div class="modal-body" style="font-size: 14px;">
+                    The @{entityName.toLowerCase} will be overwritten with the edited JSON.
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="$('#@{modalId}Confirm').modal('hide'); $('#@modalId').modal('show'); return false;">Back</button>
+                    <button type="button" class="btn btn-primary btn-sm" onclick="$('#@{modalId}Confirm').modal('hide'); updateItemJsonFromEditor('@modalId', '@updateCall.get.url'); return false;">Update</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@jsonEditorImport()
+
+<script type="text/javascript">
+    $(function () {
+        registerItemJsonModal('@modalId', '@getCall.url', @updateCall.isDefined);
+    });
+</script>

@@ -107,6 +107,11 @@ protected[controllers] class DataSetControllerImpl @Inject() (
   // therefore it should not be stored as val
   override protected def store = dsa.dataSetStore
 
+  // Record-level bulk download must go through the dedicated export actions (guarded by their own
+  // dispatcher permission) — the generic find/listAll JSONL ride-along would quietly grant a full
+  // dump to anyone with list access.
+  override protected def jsonlExportEnabled = false
+
   // TODO: replace with a proper cache
   private val jsonWidgetResponseCache = MMap[String, Future[Seq[JsArray]]]()
 

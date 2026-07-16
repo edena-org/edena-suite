@@ -32,5 +32,11 @@
 	cancelCall = routes.HtmlSnippetController.listAll(),
     deleteCall = Some(routes.HtmlSnippetController.delete(data.id)),
     None,
-    None
+    None,
+    headerActions = Some(views.html.jsonedit.itemJsonModal(
+        "htmlSnippetJson",
+        "HTML Snippet",
+        routes.HtmlSnippetController.get(data.id),
+        Some(routes.HtmlSnippetController.update(data.id))
+    ))
 )

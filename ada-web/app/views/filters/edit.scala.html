@@ -38,5 +38,11 @@
     filterRouter.plainList,
     Some(filterRouter.delete(id)),
     Some(datasetMenu(dataSpaceMetaInfos)),
-    Some(datasetSubNavWithJs(setting))
+    Some(datasetSubNavWithJs(setting)),
+    headerActions = Some(views.html.jsonedit.itemJsonModal(
+        "filterJson",
+        "Filter",
+        filterRouter.get(id),
+        Some(filterRouter.update(id))
+    ))
 )

@@ -54,7 +54,15 @@
                 @importLink(classOf[LDA], "LDA")
                 @importLink(classOf[BisectingKMeans], "Bisecting K-Means")
                 @importLink(classOf[GaussianMixture], "Gaussian Mixture")
+                <div class="dropdown-divider"></div>
+                <li>
+                    <a href="#" data-toggle="modal" data-target="#clusteringSaveJson">
+                        From JSON
+                    </a>
+                </li>
             </ul>
+            @views.html.jsonedit.saveJsonModal("clusteringSaveJson", "Clustering", route.save, withTrigger = false)
+            @views.html.jsonedit.jsonlExportLink(route.find(0, "concreteClass", conditions))
         </div>
     </div>
 }

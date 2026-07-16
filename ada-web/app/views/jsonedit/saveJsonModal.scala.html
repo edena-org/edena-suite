@@ -1,0 +1,70 @@
+@import views.html.jsonedit.jsonEditorImport
+
+@(
+    modalId: String,
+    entityName: String,
+    saveCall: Call,
+    withTrigger: Boolean = true
+)(
+    implicit request: RequestHeader
+)
+
+@********************************************************************************
+ * Modal for creating new item(s) from pasted JSON: a single object, a JSON
+ * array, or JSONL (one object per line). Posts to the item's regular save
+ * action so permissions apply unchanged; the selected key-handling mode rides
+ * along as the keyMode query param.
+ *
+ * With withTrigger = false only the modal (+ scripts) is rendered — place the
+ * partial outside the menu and open it from a dropdown item:
+ *   <li><a href="#" data-toggle="modal" data-target="#@modalId">From JSON</a></li>
+ ********************************************************************************@
+
+@editorBody = {
+    <div id="@{modalId}Editor" style="height: 420px; width: 100%; border: 1px solid #ced4da; border-radius: 4px;"></div>
+    <small class="form-text text-muted" style="font-size: 11px;">
+        Paste a single JSON object, a JSON array, or JSONL (one object per line).
+        Item ids (e.g. <code>"_id": {"$oid": "507f..."}</code> or <code>"id": "&lt;uuid&gt;"</code>) are handled per the option below.
+    </small>
+    <div class="form-group mt-2 mb-0" style="font-size: 14px;">
+        <div class="form-check">
+            <input class="form-check-input" type="radio" name="keyMode" id="@{modalId}KeyModeKeep" value="keep" checked>
+            <label class="form-check-label" for="@{modalId}KeyModeKeep">
+                Keep keys &mdash; ids are used as pasted (a missing id is generated; a duplicate fails)
+            </label>
+        </div>
+        <div class="form-check">
+            <input class="form-check-input" type="radio" name="keyMode" id="@{modalId}KeyModeRegenerate" value="regenerate">
+            <label class="form-check-label" for="@{modalId}KeyModeRegenerate">
+                Regenerate keys &mdash; every item gets a fresh id (always saved as new)
+            </label>
+        </div>
+        <div class="form-check">
+            <input class="form-check-input" type="radio" name="keyMode" id="@{modalId}KeyModeReplace" value="replace">
+            <label class="form-check-label" for="@{modalId}KeyModeReplace">
+                Replace existing &mdash; an item whose id already exists is updated, others are saved as new
+            </label>
+        </div>
+    </div>
+}
+
+@editorButtons = {
+    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+    <button type="button" class="btn btn-primary" onclick="saveItemsJsonFromEditor('@modalId', '@saveCall.url'); return false;">Save</button>
+}
+
+@if(withTrigger) {
+    <a class="btn btn-outline-secondary btn-sm" data-toggle="modal" data-target="#@modalId" title="Add new @{entityName.toLowerCase}(s) from JSON or JSONL">
+        <span class="bi bi-filetype-json" aria-hidden="true"></span> Add from JSON
+    </a>
+}
+
+@modal(modalId, "New " + entityName + " from JSON", editorBody, None, Some(editorButtons), Some("modal-lg"))
+
+@jsonEditorImport()
+
+<script type="text/javascript">
+    $(function () {
+        registerSaveJsonModal('@modalId');
+    });
+</script>

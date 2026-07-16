@@ -29,7 +29,21 @@
             )
         </div>
         <div class="ml-auto d-flex align-items-center" style="gap: 6px; padding-top: 10px;">
-            <a class="btn btn-info btn-sm" id="add" href="@dataSpaceMetaInfoRoutes.create">Add a new data space</a>
+            <div class="dropdown">
+                <button class="btn btn-info btn-sm dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" title="Add a new data space">
+                    <span class="bi bi-plus-circle" aria-hidden="true"></span> Add a new data space
+                </button>
+                <ul class="dropdown-menu dropdown-menu-right">
+                    <li>
+                        <a href="@dataSpaceMetaInfoRoutes.create">New</a>
+                    </li>
+                    <li>
+                        <a href="#" data-toggle="modal" data-target="#dataSpaceSaveJson">From JSON</a>
+                    </li>
+                </ul>
+            </div>
+            @views.html.jsonedit.saveJsonModal("dataSpaceSaveJson", "Data Space", dataSpaceMetaInfoRoutes.save, withTrigger = false)
+            @views.html.jsonedit.jsonlExportLink(dataSpaceMetaInfoRoutes.find(0, "name", conditions))
         </div>
     </div>
 }

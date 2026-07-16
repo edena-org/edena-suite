@@ -33,18 +33,19 @@ trait CategoryControllerFactory {
 }
 
 protected[controllers] class CategoryControllerImpl @Inject() (
-    @Assisted val dataSetId: String,
-    dsaf: DataSetAccessorFactory,
-    dataSpaceService: DataSpaceService,
-    val controllerComponents: ControllerComponents
-  ) extends AdaCrudControllerImpl[Category, BSONObjectID](dsaf.applySync(dataSetId).get.categoryStore)
+  @Assisted val dataSetId: String,
+  dsaf: DataSetAccessorFactory,
+  dataSpaceService: DataSpaceService,
+  val controllerComponents: ControllerComponents
+) extends AdaCrudControllerImpl[Category, BSONObjectID](
+      dsaf.applySync(dataSetId).get.categoryStore
+    )
     with CategoryController
     with HasFormShowEqualEditView[Category, BSONObjectID] {
 
 //  implicit val ec = ExecutionContexts.fixed1000ThreadEC
 
   protected val dsa: DataSetAccessor = dsaf.applySync(dataSetId).get
-
 
   protected val fieldRepo = dsa.fieldStore
 
@@ -58,13 +59,22 @@ protected[controllers] class CategoryControllerImpl @Inject() (
       "name" -> nonEmptyText,
       "label" -> optional(nonEmptyText),
       "parentId" -> optional(nonEmptyText)
-    ) { (id, name, label, parentId) =>
-      Category(id, name, label, parentId.map(BSONObjectID.parse(_).get))
-    }
-    ((category: Category) => Some(category._id, category.name, category.label, category.parentId.map(_.stringify)))
+    ) {
+      (
+        id,
+        name,
+        label,
+        parentId
+      ) =>
+        Category(id, name, label, parentId.map(BSONObjectID.parse(_).get))
+    }((category: Category) =>
+      Some(category._id, category.name, category.label, category.parentId.map(_.stringify))
+    )
   )
 
-  private implicit def dataSetWebContext(implicit context: WebContext) = DataSetWebContext(dataSetId)
+  private implicit def dataSetWebContext(
+    implicit context: WebContext
+  ) = DataSetWebContext(dataSetId)
 
   protected val router = new CategoryRouter(dataSetId)
   protected val jsRouter = new CategoryJsRouter(dataSetId)
@@ -87,8 +97,7 @@ protected[controllers] class CategoryControllerImpl @Inject() (
     for {
       dataSetName <- dataSetNameFuture
       allCategories <- categoriesFuture
-    } yield
-      (dataSetName + " Category", form, allCategories)
+    } yield (dataSetName + " Category", form, allCategories)
   }
 
   override protected def createView = { implicit ctx =>
@@ -135,8 +144,7 @@ protected[controllers] class CategoryControllerImpl @Inject() (
 
       // get the setting
       setting <- dataSetSettingFuture
-    } yield
-      (dataSetName + " Category", id, form, allCategories, fields, setting, tree)
+    } yield (dataSetName + " Category", id, form, allCategories, fields, setting, tree)
   }
 
   override protected def editView = { implicit ctx =>
@@ -165,14 +173,14 @@ protected[controllers] class CategoryControllerImpl @Inject() (
       tree <- treeFuture
       dataSetName <- nameFuture
       setting <- dataSetSettingFuture
-    } yield
-      (dataSetName + " Category", page, conditions, setting, tree)
+    } yield (dataSetName + " Category", page, conditions, setting, tree)
   }
 
   override protected def listView = { implicit ctx => (view.list(_, _, _, _, _)).tupled }
 
   override protected def deleteCall(
-    id: BSONObjectID)(
+    id: BSONObjectID
+  )(
     implicit request: AuthenticatedRequest[AnyContent]
   ) = {
     // relocate the children to a new parent
@@ -180,21 +188,19 @@ protected[controllers] class CategoryControllerImpl @Inject() (
       for {
         Some(category) <- store.get(id)
         children <- store.find("parentId" #== Some(id))
-      } yield
-        children.map { child =>
-          child.parentId = category.parentId
-          store.update(child)
-        }
+      } yield children.map { child =>
+        child.parentId = category.parentId
+        store.update(child)
+      }
 
     // remove the field category refs
     val updateFieldFutures =
       for {
         fields <- fieldRepo.find("categoryId" #== Some(id))
-      } yield
-        fields.map { field =>
-          field.categoryId = None
-          fieldRepo.update(field)
-        }
+      } yield fields.map { field =>
+        field.categoryId = None
+        fieldRepo.update(field)
+      }
 
     // finally, combine all the futures and delete the category
     for {
@@ -202,44 +208,51 @@ protected[controllers] class CategoryControllerImpl @Inject() (
       updateFutures2 <- updateFieldFutures
       _ <- Future.sequence(updateFutures1)
       _ <- Future.sequence(updateFutures2)
-    } yield
-      store.delete(id)
+    } yield store.delete(id)
   }
 
   override protected def updateCall(
-    category: Category)(
+    category: Category
+  )(
     implicit request: AuthenticatedRequest[AnyContent]
   ) =
-    for {
-      // collect the fields previously associated with a category
-      oldFields <- fieldRepo.find("categoryId" #== category._id)
+    // A JSON-body update edits the category entity alone. The field associations come from the
+    // HTML form's `fields[]` param, which a JSON request does not carry — and running the
+    // disassociate/reassociate flow without it would silently wipe the existing associations.
+    if (request.body.asJson.isDefined)
+      store.update(category)
+    else
+      for {
+        // collect the fields previously associated with a category
+        oldFields <- fieldRepo.find("categoryId" #== category._id)
 
-      // disassociate the old fields
-      _ <- {
-        val disassociatedFields = oldFields.map(_.copy(categoryId = None))
-        fieldRepo.update(disassociatedFields).map(_ => Some(()))
-      }
+        // disassociate the old fields
+        _ <- {
+          val disassociatedFields = oldFields.map(_.copy(categoryId = None))
+          fieldRepo.update(disassociatedFields).map(_ => Some(()))
+        }
 
-      // colect the newly associated fileds
-      newFields <- {
-        val fieldNames = getRequestParamMap(request).get("fields[]").getOrElse(Nil)
-        fieldRepo.find(FieldIdentity.name #-> fieldNames)
-      }
+        // colect the newly associated fileds
+        newFields <- {
+          val fieldNames = getRequestParamMap(request).get("fields[]").getOrElse(Nil)
+          fieldRepo.find(FieldIdentity.name #-> fieldNames)
+        }
 
-      // update them
-      _ <- {
-        val associatedFields = newFields.map(_.copy(categoryId = category._id))
-        fieldRepo.update(associatedFields).map(_ => Some(()))
-      }
+        // update them
+        _ <- {
+          val associatedFields = newFields.map(_.copy(categoryId = category._id))
+          fieldRepo.update(associatedFields).map(_ => Some(()))
+        }
 
-      // update the category itself
-      id <- store.update(category)
-    } yield
-      id
+        // update the category itself
+        id <- store.update(category)
+      } yield id
 
   override def getCategoryD3Root = Action.async { implicit request =>
     allCategoriesFuture.map { categories =>
-      val idD3NodeMap = categories.map(category => (category._id.get, D3Node(category._id, category.name, None))).toMap
+      val idD3NodeMap = categories
+        .map(category => (category._id.get, D3Node(category._id, category.name, None)))
+        .toMap
 
       categories.foreach { category =>
         if (category.parentId.isDefined) {
@@ -251,14 +264,22 @@ protected[controllers] class CategoryControllerImpl @Inject() (
 
       val layerOneCategories = categories.filter(_.parentId.isEmpty)
 
-      val root = D3Node(None, "Root", None, layerOneCategories.map(category => idD3NodeMap(category._id.get)).toSeq)
+      val root = D3Node(
+        None,
+        "Root",
+        None,
+        layerOneCategories.map(category => idD3NodeMap(category._id.get)).toSeq
+      )
 
       Ok(Json.toJson(root))
     }
   }
 
-  override def relocateToParent(id: BSONObjectID, parentId: Option[BSONObjectID]) = Action.async { implicit request =>
-    store.get(id).flatMap{ category =>
+  override def relocateToParent(
+    id: BSONObjectID,
+    parentId: Option[BSONObjectID]
+  ) = Action.async { implicit request =>
+    store.get(id).flatMap { category =>
       if (category.isEmpty)
         Future(notFoundCategory(id))
       else if (parentId.isDefined)
@@ -277,8 +298,8 @@ protected[controllers] class CategoryControllerImpl @Inject() (
     }
   }
 
-  override def saveForName(name: String) = Action.async{ implicit request =>
-    store.save(Category(None, name)).map( id => Ok(Json.toJson(id)))
+  override def saveForName(name: String) = Action.async { implicit request =>
+    store.save(Category(None, name)).map(id => Ok(Json.toJson(id)))
   }
 
   override def addFields(
@@ -297,10 +318,9 @@ protected[controllers] class CategoryControllerImpl @Inject() (
 
         case None => Future(None)
       }
-    } yield
-      response.fold(
-        NotFound(s"Category '#${categoryId.stringify}' not found")
-      ) { _ => Ok("Done")}
+    } yield response.fold(
+      NotFound(s"Category '#${categoryId.stringify}' not found")
+    ) { _ => Ok("Done") }
   }
 
   override def idAndNames = Action.async { implicit request =>
@@ -315,16 +335,23 @@ protected[controllers] class CategoryControllerImpl @Inject() (
   }
 
   private def notFoundCategory(id: BSONObjectID) =
-    NotFound(s"Category with id #${id.stringify} not found. It has been probably deleted (by a different user). It's highly recommended to refresh your screen.")
+    NotFound(
+      s"Category with id #${id.stringify} not found. It has been probably deleted (by a different user). It's highly recommended to refresh your screen."
+    )
 
-  override def updateLabel(id: BSONObjectID, label: String) = Action.async { implicit request =>
-    store.get(id).flatMap(_.fold(
-      Future(NotFound(s"Category '$id' not found"))
-    ){ category =>
-      store.update(category.copy(label = Some(label))).map(_ =>
-        Ok("Done")
+  override def updateLabel(
+    id: BSONObjectID,
+    label: String
+  ) = Action.async { implicit request =>
+    store
+      .get(id)
+      .flatMap(
+        _.fold(
+          Future(NotFound(s"Category '$id' not found"))
+        ) { category =>
+          store.update(category.copy(label = Some(label))).map(_ => Ok("Done"))
+        }
       )
-    })
   }
 
   protected def allCategoriesFuture =

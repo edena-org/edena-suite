@@ -46,6 +46,7 @@
             )
         </div>
         <div class="ml-auto d-flex align-items-center" style="gap: 6px; padding-top: 10px;">
+            @views.html.jsonedit.saveJsonModal("fieldSaveJson", "Field", dictionaryRouter.save, withTrigger = false)
             @exportDropdown(
                 dictionaryRouter.exportCsv(_, true, None, _, _),
                 dictionaryRouter.exportJson,
@@ -64,6 +65,12 @@
                     <li>
                         <a href="@dictionaryRouter.convertLabelsToCamelCase">
                             Convert Labels to Camelcase
+                        </a>
+                    </li>
+                    <div class="dropdown-divider"></div>
+                    <li>
+                        <a href="#" data-toggle="modal" data-target="#fieldSaveJson">
+                            Add Fields from JSON
                         </a>
                     </li>
                 </ul>

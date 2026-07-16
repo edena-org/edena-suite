@@ -89,5 +89,11 @@
     Some(datasetMenu(dataSpaceMetaInfos)),
     None,
     isFullDisplayName = true,
-    showMessageBox = false
+    showMessageBox = false,
+    headerActions = Some(views.html.jsonedit.itemJsonModal(
+        "dataSpaceJson",
+        "Data Space",
+        dataSpaceMetaInfoRoutes.get(dataSpaceMetaInfo._id.get),
+        None
+    ))
 )

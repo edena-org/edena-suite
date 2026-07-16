@@ -25,5 +25,11 @@
 	cancelCall = routes.RunnableController.listAll(),
     deleteCall = Some(routes.RunnableController.delete(data.id)),
     None,
-    None
+    None,
+    headerActions = Some(views.html.jsonedit.itemJsonModal(
+        "runnableSpecJson",
+        "Runnable Spec",
+        routes.RunnableController.get(data.id),
+        Some(routes.RunnableController.update(data.id))
+    ))
 )

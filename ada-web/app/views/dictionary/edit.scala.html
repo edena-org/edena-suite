@@ -45,5 +45,11 @@
     dictionaryRouter.plainList,
     deleteCall = None,
     Some(datasetMenu(dataSpaceMetaInfos)),
-    Some(datasetSubNavWithJs(setting))
+    Some(datasetSubNavWithJs(setting)),
+    headerActions = Some(views.html.jsonedit.itemJsonModal(
+        "fieldJson",
+        "Field",
+        dictionaryRouter.get(fieldName),
+        Some(dictionaryRouter.update(fieldName))
+    ))
 )

@@ -32,5 +32,11 @@
     Some(dataSpaceMetaInfoRoutes.delete(id)),
     Some(datasetMenu(dataSpaceMetaInfos)),
     None,
-    extraButtons = Some(showDataSetsButton)
+    extraButtons = Some(showDataSetsButton),
+    headerActions = Some(views.html.jsonedit.itemJsonModal(
+        "dataSpaceJson",
+        "Data Space",
+        dataSpaceMetaInfoRoutes.get(id),
+        Some(dataSpaceMetaInfoRoutes.update(id))
+    ))
 )

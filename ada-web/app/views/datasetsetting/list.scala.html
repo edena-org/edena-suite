@@ -32,6 +32,9 @@
                 Some(FilterShowFieldStyle.LabelsOnly)
             )
         </div>
+        <div class="col-md-4 text-right" style="padding-top: 10px;">
+            @views.html.jsonedit.jsonlExportLink(dataSetSettingRoutes.find(0, "dataSetId", conditions))
+        </div>
     </div>
 }
 

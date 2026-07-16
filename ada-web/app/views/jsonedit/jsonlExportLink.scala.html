@@ -1,0 +1,16 @@
+@(
+    call: Call,
+    title: String = "Export as JSONL"
+)
+
+@********************************************************************************
+ * Toolbar link downloading a list view as JSONL: appends format=jsonl to the
+ * controller's regular find/listAll call, so filters and permissions apply
+ * unchanged (see ReadonlyControllerImpl).
+ ********************************************************************************@
+
+@defining(call.url + (if (call.url.contains("?")) "&" else "?") + "format=jsonl") { url =>
+    <a class="btn btn-outline-secondary btn-sm" href="@url" title="@title">
+        <span class="bi bi-download" aria-hidden="true"></span> JSONL
+    </a>
+}

@@ -18,7 +18,8 @@
     deleteConfirmationPrompt: Boolean = true,
     formArgs: Seq[(Symbol, String)] = Nil,
     extraButtons: Option[Html] = None,
-    withFieldsetWrapper: Boolean = true
+    withFieldsetWrapper: Boolean = true,
+    headerActions: Option[Html] = None
 )(
     implicit context: WebContext
 )
@@ -37,6 +38,9 @@
 @main(Messages("edit.title", displayName), sideBar, topContentBar, None, bottomResources, Some(formErrors(messagePrefix, errors))) {
 
     <div class="page-header">
+        @headerActions.map { actions =>
+            <div class="float-right">@actions</div>
+        }
         <h3>@Messages("edit.title", displayName)</h3>
     </div>
 

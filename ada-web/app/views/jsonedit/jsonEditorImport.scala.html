@@ -1,0 +1,13 @@
+@import org.edena.play.routes.CustomDirAssets
+
+@()
+
+@********************************************************************************
+ * Script imports for the generic JSON item editor (Ace + the shared JS module).
+ * Included by itemJsonModal / saveJsonModal — at most one of them per page.
+ ********************************************************************************@
+
+<script type="text/javascript" src="@CustomDirAssets.versioned("javascripts/ace/ace-1.32.6.js")"></script>
+<script type="text/javascript" src="@CustomDirAssets.versioned("javascripts/ace/mode-json-1.32.6.js")"></script>
+<script type="text/javascript" src="@CustomDirAssets.versioned("javascripts/ace/theme-github-1.32.6.js")"></script>
+<script type="text/javascript" src="@CustomDirAssets.versioned("javascripts/jsonItemEditor.js")"></script>

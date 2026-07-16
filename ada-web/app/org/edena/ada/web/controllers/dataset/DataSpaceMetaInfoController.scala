@@ -9,7 +9,10 @@ import org.edena.ada.web.controllers.core.AdaCrudControllerImpl
 import org.edena.ada.server.dataaccess.StoreTypes.{DataSetSettingStore, DataSpaceMetaInfoStore}
 import org.edena.core.store.Criterion.Infix
 import org.edena.store.json.BSONObjectIDFormat
-import org.edena.ada.server.dataaccess.dataset.{DataSetAccessorFactory, DataSetMetaInfoStoreFactory}
+import org.edena.ada.server.dataaccess.dataset.{
+  DataSetAccessorFactory,
+  DataSetMetaInfoStoreFactory
+}
 import play.api.data.Forms._
 import play.api.mvc._
 import reactivemongo.api.bson.BSONObjectID
@@ -32,7 +35,7 @@ class DataSpaceMetaInfoController @Inject() (
   dataSpaceService: DataSpaceService,
   dataSetMetaInfoRepoFactory: DataSetMetaInfoStoreFactory,
   val controllerComponents: ControllerComponents
-  ) extends AdaCrudControllerImpl[DataSpaceMetaInfo, BSONObjectID](repo)
+) extends AdaCrudControllerImpl[DataSpaceMetaInfo, BSONObjectID](repo)
     with AdminRestrictedCrudController[BSONObjectID]
     with HasBasicFormCreateView[DataSpaceMetaInfo]
     with HasBasicListView[DataSpaceMetaInfo] {
@@ -42,15 +45,15 @@ class DataSpaceMetaInfoController @Inject() (
 
   override protected[controllers] val form = Form(
     mapping(
-    "id" -> ignored(Option.empty[BSONObjectID]),
-    "name" -> nonEmptyText,
-    "sortOrder" -> number,
-    "timeCreated" -> ignored(new java.util.Date()),
-    "dataSetMetaInfos" -> ignored(Seq[DataSetMetaInfo]())
-  ) (DataSpaceMetaInfo(_, _, _, _, _))(
-      (item: DataSpaceMetaInfo) =>
-        Some((item._id, item.name, item.sortOrder, item.timeCreated, item.dataSetMetaInfos))
-  ))
+      "id" -> ignored(Option.empty[BSONObjectID]),
+      "name" -> nonEmptyText,
+      "sortOrder" -> number,
+      "timeCreated" -> ignored(new java.util.Date()),
+      "dataSetMetaInfos" -> ignored(Seq[DataSetMetaInfo]())
+    )(DataSpaceMetaInfo(_, _, _, _, _))((item: DataSpaceMetaInfo) =>
+      Some((item._id, item.name, item.sortOrder, item.timeCreated, item.dataSetMetaInfos))
+    )
+  )
 
   override protected val homeCall = org.edena.ada.web.controllers.routes.AppController.dataSets
 
@@ -70,7 +73,7 @@ class DataSpaceMetaInfoController @Inject() (
   )
 
   // get is allowed for all the logged users
-  override def get(id: BSONObjectID) = restrictSubjectPresentAny(noCaching = true) (
+  override def get(id: BSONObjectID) = restrictSubjectPresentAny(noCaching = true)(
     toAuthenticatedAction(super[AdaCrudControllerImpl].get(id))
   )
 
@@ -83,13 +86,23 @@ class DataSpaceMetaInfoController @Inject() (
       user <- currentUser()
 
       // get the edit-form data
-      (_, newForm, subDataSpaceCount, subDataSetCount, dataSetSizes, tree) <- getFormEditViewData(id, form)(request)
+      (_, newForm, subDataSpaceCount, subDataSetCount, dataSetSizes, tree) <-
+        getFormEditViewData(id, form)(request)
     } yield {
-      newForm.value.map( dataSpace =>
-        (dataSpace, subDataSpaceCount, subDataSetCount, user.map(_.isAdmin).getOrElse(false), dataSetSizes, tree)
-      ).getOrElse(
-        throw new AdaException(s"Cannot access the data space '${id.stringify}'.")
-      )
+      newForm.value
+        .map(dataSpace =>
+          (
+            dataSpace,
+            subDataSpaceCount,
+            subDataSetCount,
+            user.map(_.isAdmin).getOrElse(false),
+            dataSetSizes,
+            tree
+          )
+        )
+        .getOrElse(
+          throw new AdaException(s"Cannot access the data space '${id.stringify}'.")
+        )
     }
   }
 
@@ -123,13 +136,15 @@ class DataSpaceMetaInfoController @Inject() (
 
       // calc the sizes of the children data sets
       dataSetSizes <- dataSpace match {
-        case None => Future(Map[String, Int]())
+        case None            => Future(Map[String, Int]())
         case Some(dataSpace) => getDataSetSizes(dataSpace)
       }
     } yield {
       val (subDataSpaceCount, subDataSetCount) = dataSpace.map { dataSpaceWithChildren =>
-        val subDataSpaceCount = dataSpaceService.countDataSpacesNumRecursively(dataSpaceWithChildren)
-        val subDataSetCount = dataSpaceService.countDataSetsNumRecursively(dataSpaceWithChildren)
+        val subDataSpaceCount =
+          dataSpaceService.countDataSpacesNumRecursively(dataSpaceWithChildren)
+        val subDataSetCount =
+          dataSpaceService.countDataSetsNumRecursively(dataSpaceWithChildren)
 
         (subDataSpaceCount - 1, subDataSetCount)
       }.getOrElse((0, 0))
@@ -149,133 +164,171 @@ class DataSpaceMetaInfoController @Inject() (
   }
 
   override protected def updateCall(
-    item: DataSpaceMetaInfo)(
+    item: DataSpaceMetaInfo
+  )(
     implicit request: AuthenticatedRequest[AnyContent]
   ) =
-    for {
-      Some(existingItem) <- repo.get(item._id.get)
-      // copy existing data set meta infos
-      newDataSetMetaInfos = {
-        val requestMap = request.body.asFormUrlEncoded.get
-        val ids = requestMap.get("dataSetMetaInfos.id").getOrElse(Nil)
-        val newDataSetNames = requestMap.get("dataSetMetaInfos.name").getOrElse(Nil)
-        val newDataSetSortOrders = requestMap.get("dataSetMetaInfos.sortOrder").getOrElse(Nil)
-        val newHides = requestMap.get("dataSetMetaInfos.hide").getOrElse(Nil)
+    // A JSON-body update carries the complete entity (incl. dataSetMetaInfos, timeCreated,
+    // parentId), so no form-param merging is needed — just persist it and propagate the nested
+    // data set meta infos, exactly as the form flow does below.
+    if (request.body.asJson.isDefined)
+      for {
+        id <- repo.update(item)
 
-        val existingDataSetMetaInfos = existingItem.dataSetMetaInfos
-        val dataSetMetaInfoIdMap = existingDataSetMetaInfos.map( info => (info._id.get, info)).toMap
-
-        ((ids, newDataSetNames, newDataSetSortOrders).zipped, newHides).zipped.map{ case ((id, newDataSetName, newDataSetSortOrder), newHide) =>
-          val existingDataSetMetaInfo = dataSetMetaInfoIdMap(BSONObjectID.parse(id).get)
-
-          val newSortOrder = try {
-            newDataSetSortOrder.toInt
-          } catch {
-            // if it's not an int use an existing sort order
-            case e: NumberFormatException => existingDataSetMetaInfo.sortOrder
-          }
-
-          existingDataSetMetaInfo.copy(name = newDataSetName, sortOrder = newSortOrder, hide = newHide.equals("true"))
-        }
-      }
-
-      // update the data space meta info
-      id <-
-        repo.update(item.copy(
-          dataSetMetaInfos = newDataSetMetaInfos.toSeq,
-          timeCreated = existingItem.timeCreated,
-          parentId = existingItem.parentId
-        ))
-
-      // update the individual data set meta infos
-      _ <- Future.sequence(
-          newDataSetMetaInfos.map( newDataSetMetaInfo =>
-            dsaf.applySync(newDataSetMetaInfo.id).map { dsa =>
-              dsa.updateMetaInfo(newDataSetMetaInfo)
-            }.getOrElse(
-              Future(())
-            )
+        _ <- Future.sequence(
+          item.dataSetMetaInfos.map(dataSetMetaInfo =>
+            dsaf
+              .applySync(dataSetMetaInfo.id)
+              .map { dsa =>
+                dsa.updateMetaInfo(dataSetMetaInfo)
+              }
+              .getOrElse(
+                Future(())
+              )
           )
         )
-    } yield
-      id
+      } yield id
+    else
+      for {
+        Some(existingItem) <- repo.get(item._id.get)
+        // copy existing data set meta infos
+        newDataSetMetaInfos = {
+          val requestMap = request.body.asFormUrlEncoded.get
+          val ids = requestMap.get("dataSetMetaInfos.id").getOrElse(Nil)
+          val newDataSetNames = requestMap.get("dataSetMetaInfos.name").getOrElse(Nil)
+          val newDataSetSortOrders =
+            requestMap.get("dataSetMetaInfos.sortOrder").getOrElse(Nil)
+          val newHides = requestMap.get("dataSetMetaInfos.hide").getOrElse(Nil)
+
+          val existingDataSetMetaInfos = existingItem.dataSetMetaInfos
+          val dataSetMetaInfoIdMap =
+            existingDataSetMetaInfos.map(info => (info._id.get, info)).toMap
+
+          ((ids, newDataSetNames, newDataSetSortOrders).zipped, newHides).zipped.map {
+            case ((id, newDataSetName, newDataSetSortOrder), newHide) =>
+              val existingDataSetMetaInfo = dataSetMetaInfoIdMap(BSONObjectID.parse(id).get)
+
+              val newSortOrder =
+                try {
+                  newDataSetSortOrder.toInt
+                } catch {
+                  // if it's not an int use an existing sort order
+                  case e: NumberFormatException => existingDataSetMetaInfo.sortOrder
+                }
+
+              existingDataSetMetaInfo.copy(
+                name = newDataSetName,
+                sortOrder = newSortOrder,
+                hide = newHide.equals("true")
+              )
+          }
+        }
+
+        // update the data space meta info
+        id <-
+          repo.update(
+            item.copy(
+              dataSetMetaInfos = newDataSetMetaInfos.toSeq,
+              timeCreated = existingItem.timeCreated,
+              parentId = existingItem.parentId
+            )
+          )
+
+        // update the individual data set meta infos
+        _ <- Future.sequence(
+          newDataSetMetaInfos.map(newDataSetMetaInfo =>
+            dsaf
+              .applySync(newDataSetMetaInfo.id)
+              .map { dsa =>
+                dsa.updateMetaInfo(newDataSetMetaInfo)
+              }
+              .getOrElse(
+                Future(())
+              )
+          )
+        )
+      } yield id
 
   // if update successful redirect to get/show instead of list
-  override def update(id: BSONObjectID) = restrictAdminAny(noCaching = true) (
-    toAuthenticatedAction(update(id, _ => Redirect(routes.DataSpaceMetaInfoController.get(id))))
+  override def update(id: BSONObjectID) = restrictAdminAny(noCaching = true)(
+    toAuthenticatedAction(
+      update(id, _ => Redirect(routes.DataSpaceMetaInfoController.get(id)))
+    )
   )
 
   def deleteDataSet(id: BSONObjectID) = restrictAdminAny(noCaching = true) {
     implicit request =>
       implicit val msg = messagesApi.preferred(request)
-      repo.get(id).flatMap(_.fold(
-        Future(NotFound(s"Entity #$id not found"))
-      ) { dataSpaceInfo =>
-        val requestMap = request.body.asFormUrlEncoded.get
-        val dataSetId = requestMap.get("dataSetId").get.head
-        val actionChoice = requestMap.get("actionChoice").get.head
+      repo
+        .get(id)
+        .flatMap(
+          _.fold(
+            Future(NotFound(s"Entity #$id not found"))
+          ) { dataSpaceInfo =>
+            val requestMap = request.body.asFormUrlEncoded.get
+            val dataSetId = requestMap.get("dataSetId").get.head
+            val actionChoice = requestMap.get("actionChoice").get.head
 
-        val dsa = dsaf.applySync(dataSetId).get
+            val dsa = dsaf.applySync(dataSetId).get
 
-        def unregisterDataSet: Future[_] =
-          dataSpaceService.unregister(dataSpaceInfo, dataSetId)
+            def unregisterDataSet: Future[_] =
+              dataSpaceService.unregister(dataSpaceInfo, dataSetId)
 
-        def deleteDataSet: Future[_] =
-          for {
-            _ <- dsa.updateDataSetStore
-            _ <- dsa.dataSetStore.deleteAll
-          } yield
-            ()
+            def deleteDataSet: Future[_] =
+              for {
+                _ <- dsa.updateDataSetStore
+                _ <- dsa.dataSetStore.deleteAll
+              } yield ()
 
-        def deleteFields: Future[_] =
-          dsa.fieldStore.deleteAll
+            def deleteFields: Future[_] =
+              dsa.fieldStore.deleteAll
 
-        def deleteCategories: Future[_] =
-          dsa.categoryStore.deleteAll
+            def deleteCategories: Future[_] =
+              dsa.categoryStore.deleteAll
 
-        def deleteViews: Future[_] =
-          dsa.dataViewStore.deleteAll
+            def deleteViews: Future[_] =
+              dsa.dataViewStore.deleteAll
 
-        def deleteFilters: Future[_] =
-          dsa.filterStore.deleteAll
+            def deleteFilters: Future[_] =
+              dsa.filterStore.deleteAll
 
-        def deleteSetting: Future[_] =
-          dsa.setting.flatMap ( setting =>
-            dataSetSettingRepo.delete(setting._id.get)
-          )
+            def deleteSetting: Future[_] =
+              dsa.setting.flatMap(setting => dataSetSettingRepo.delete(setting._id.get))
 
-        val future = actionChoice match {
+            val future = actionChoice match {
 
-          case "1" =>
-            unregisterDataSet
+              case "1" =>
+                unregisterDataSet
 
-          case "2" => for {
-            _ <- unregisterDataSet
-            _ <- deleteDataSet
-          } yield ()
+              case "2" =>
+                for {
+                  _ <- unregisterDataSet
+                  _ <- deleteDataSet
+                } yield ()
 
-          case "3" => for {
-            _ <- unregisterDataSet
-            _ <- deleteDataSet
-            _ <- deleteFields
-            _ <- deleteCategories
-          } yield ()
+              case "3" =>
+                for {
+                  _ <- unregisterDataSet
+                  _ <- deleteDataSet
+                  _ <- deleteFields
+                  _ <- deleteCategories
+                } yield ()
 
-          case "4" => for {
-            _ <- unregisterDataSet
-            _ <- deleteDataSet
-            _ <- deleteFields
-            _ <- deleteCategories
-            _ <- deleteSetting
-            _ <- deleteViews
-            _ <- deleteFilters
-          } yield ()
-        }
+              case "4" =>
+                for {
+                  _ <- unregisterDataSet
+                  _ <- deleteDataSet
+                  _ <- deleteFields
+                  _ <- deleteCategories
+                  _ <- deleteSetting
+                  _ <- deleteViews
+                  _ <- deleteFilters
+                } yield ()
+            }
 
-        future.map(_ =>
-          Redirect(routes.DataSpaceMetaInfoController.edit(id))
+            future.map(_ => Redirect(routes.DataSpaceMetaInfoController.edit(id)))
+          }
         )
-      })
   }
 
   private def getDataSetSizesRecurrently(
@@ -288,10 +341,10 @@ class DataSpaceMetaInfoController @Inject() (
       simpleMap <- singleMapfuture
       mergeSubMap <-
         Future.sequence(recFutures).map { maps =>
-        maps.foldLeft(Map[String, Int]()) { case (a, b) =>
-          a ++ b
+          maps.foldLeft(Map[String, Int]()) { case (a, b) =>
+            a ++ b
+          }
         }
-      }
     } yield {
       simpleMap ++ mergeSubMap
     }
@@ -324,12 +377,13 @@ class DataSpaceMetaInfoController @Inject() (
       }.getOrElse(
         Future(None)
       )
-    } yield
-      spaceName.map { name =>
-        Redirect(homeCall).flashing("success" -> s"Data space '${name}' successfully relocated.")
-      }.getOrElse(
-        BadRequest(s"Data space '${spaceId.stringify}' or '${parentId.map(_.stringify).getOrElse("N/A")}' not found.")
+    } yield spaceName.map { name =>
+      Redirect(homeCall).flashing("success" -> s"Data space '${name}' successfully relocated.")
+    }.getOrElse(
+      BadRequest(
+        s"Data space '${spaceId.stringify}' or '${parentId.map(_.stringify).getOrElse("N/A")}' not found."
       )
+    )
   }
 
   private def moveAux(
@@ -345,18 +399,19 @@ class DataSpaceMetaInfoController @Inject() (
         }.getOrElse(
           Future(None)
         )
-    } yield
-      spaceName
+    } yield spaceName
 
   def showDataSetIds(
-    spaceId: BSONObjectID,
+    spaceId: BSONObjectID
   ) = restrictAdminAny(noCaching = true) { implicit request =>
     for {
       spaceOption <- repo.get(spaceId)
     } yield {
       spaceOption.map { space =>
         val ids = space.dataSetMetaInfos.map(_.id)
-        Redirect(homeCall).flashing("success" -> s"Data space '${space.name}' has the following data sets:\n${ids.mkString("\n")}")
+        Redirect(homeCall).flashing(
+          "success" -> s"Data space '${space.name}' has the following data sets:\n${ids.mkString("\n")}"
+        )
       }.getOrElse(
         BadRequest(s"Data space '${spaceId.stringify}' not found.")
       )
@@ -367,9 +422,9 @@ class DataSpaceMetaInfoController @Inject() (
     for {
       spaces <- repo.find()
     } yield {
-      val idAndNames = spaces.toSeq.sortBy(_.name).map( space =>
-        Json.obj("_id" -> space._id.get, "name" -> space.name)
-      )
+      val idAndNames = spaces.toSeq
+        .sortBy(_.name)
+        .map(space => Json.obj("_id" -> space._id.get, "name" -> space.name))
       Ok(JsArray(idAndNames))
     }
   }

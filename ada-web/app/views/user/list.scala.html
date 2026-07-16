@@ -84,7 +84,9 @@
             )
         </div>
         <div class="col-md-4 text-right">
-            <div class="dropdown">
+            @views.html.jsonedit.saveJsonModal("userSaveJson", "User", routes.UserController.save, withTrigger = false)
+            @views.html.jsonedit.jsonlExportLink(routes.UserController.find(0, "userId", conditions))
+            <div class="dropdown d-inline-block">
                 <button class="btn btn-info btn-sm dropdown-toggle" type="button" id="dropdownMenu" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                     Actions
                 </button>
@@ -92,6 +94,11 @@
                     <li>
                         <a href="@routes.UserController.create">
                             Add a new user
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" data-toggle="modal" data-target="#userSaveJson" title="Add New User(s) From JSON">
+                            Add a new user from JSON
                         </a>
                     </li>
                     <li>

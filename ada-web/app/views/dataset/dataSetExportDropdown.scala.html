@@ -88,6 +88,15 @@
         )),
         Right(Html("<div class='dropdown-divider'></div>")),
         Left((
+            "exportAllJsonlModal", "Export All as JSONL",
+            exportAllJsonlModal(exportJsonCall)
+        )),
+        Left((
+            "exportFilteredJsonlModal", "Export Filtered as JSONL",
+            exportFilteredJsonlModal(exportJsonCall, Nil, Some(displayChoiceElement))
+        )),
+        Right(Html("<div class='dropdown-divider'></div>")),
+        Left((
             "exportTranSMARTDataModal", "Export TranSMART Data",
             exportModal("exportTranSMARTDataModal", "CSV TranSMART Data Export", dataSetRouter.exportTranSMARTData, transmartModalBody("\\t"))
         )),

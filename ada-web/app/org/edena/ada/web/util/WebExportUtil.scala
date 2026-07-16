@@ -47,6 +47,15 @@ object WebExportUtil {
     streamToFile(stringStream, filename, charset)
   }
 
+  def jsonStreamToJsonlFile(
+    source: Source[JsObject, _],
+    filename: String,
+    charset: String = DEFAULT_CHARSET
+  ): Result = {
+    val stringStream = source.map(_.toString).intersperse("\n")
+    streamToFile(stringStream, filename, charset)
+  }
+
   private def replaceAll(
     replacements: Traversable[(String, String)])(
     value : String

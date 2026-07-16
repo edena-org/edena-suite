@@ -20,5 +20,11 @@
     updateCall = dataSetSettingRoutes.update(id),
     cancelCall = dataSetSettingRoutes.listAll(),
     deleteCall = None,
-    bottomResources = Some(fieldTypeaheadsActivationJs(form))
+    bottomResources = Some(fieldTypeaheadsActivationJs(form)),
+    headerActions = Some(views.html.jsonedit.itemJsonModal(
+        "dataSetSettingJson",
+        "Data Set Setting",
+        dataSetSettingRoutes.get(id),
+        Some(dataSetSettingRoutes.update(id))
+    ))
 )

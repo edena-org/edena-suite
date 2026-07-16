@@ -214,11 +214,20 @@ protected[controllers] class FilterControllerImpl @Inject() (
       id <- {
         val mergedFilter =
           existingFilterOption.fold(filter) { existingFilter =>
-            filter.copy(
-              createdById = existingFilter.createdById,
-              timeCreated = existingFilter.timeCreated,
-              conditions = existingFilter.conditions
-            )
+            // a JSON-body update (item JSON editor) carries the full entity incl. the conditions,
+            // whereas the HTML form edits the name/isPrivate only, so its conditions
+            // must be taken over from the existing filter
+            if (request.body.asJson.isDefined)
+              filter.copy(
+                createdById = existingFilter.createdById,
+                timeCreated = existingFilter.timeCreated
+              )
+            else
+              filter.copy(
+                createdById = existingFilter.createdById,
+                timeCreated = existingFilter.timeCreated,
+                conditions = existingFilter.conditions
+              )
           }
         store.update(mergedFilter)
       }

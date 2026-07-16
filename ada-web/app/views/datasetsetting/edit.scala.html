@@ -1,6 +1,7 @@
 @import views.html.layout
 @import views.html.datasetsetting.{elements, fieldTypeaheadsActivationJs}
 @import views.html.dataset.{datasetMenu, datasetSubNavWithJs}
+@import org.edena.ada.web.controllers.dataset.routes.{DataSetSettingController => dataSetSettingRoutes}
 @import org.edena.ada.server.models.DataSpaceMetaInfo
 @import org.edena.ada.server.models.DataSetSetting
 @import org.edena.ada.web.controllers.dataset.DataSetWebContext._
@@ -25,5 +26,13 @@
     deleteCall = None,
     sideBar = Some(datasetMenu(dataSpaceMetaInfos)),
     topContentBar = form.value.map(setting => datasetSubNavWithJs(setting)),
-    bottomResources = Some(fieldTypeaheadsActivationJs(form))
+    bottomResources = Some(fieldTypeaheadsActivationJs(form)),
+    headerActions = form.value.flatMap(_._id).map(id =>
+        views.html.jsonedit.itemJsonModal(
+            "dataSetSettingJson",
+            "Data Set Setting",
+            dataSetSettingRoutes.get(id),
+            Some(updateCall)
+        )
+    )
 )

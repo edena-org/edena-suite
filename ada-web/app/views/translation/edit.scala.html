@@ -21,5 +21,11 @@
 	cancelCall = routes.TranslationController.listAll(),
     deleteCall = Some(routes.TranslationController.delete(data.id)),
     None,
-    None
+    None,
+    headerActions = Some(views.html.jsonedit.itemJsonModal(
+        "translationJson",
+        "Translation",
+        routes.TranslationController.get(data.id),
+        Some(routes.TranslationController.update(data.id))
+    ))
 )

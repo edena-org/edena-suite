@@ -25,5 +25,11 @@
 	routes.UserController.listAll(),
     Some(routes.UserController.delete(id)),
     None,
-    None
+    None,
+    headerActions = Some(views.html.jsonedit.itemJsonModal(
+        "userJson",
+        "User",
+        routes.UserController.get(id),
+        Some(routes.UserController.update(id))
+    ))
 )

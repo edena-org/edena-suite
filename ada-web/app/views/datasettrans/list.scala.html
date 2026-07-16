@@ -55,11 +55,19 @@
                 </button>
                 <ul class="dropdown-menu dropdown-menu-right">
                     @classDisplayNameMap.toSeq.sortBy(_._2).map((transformationLink(_, _)).tupled)
+                    <div class="dropdown-divider"></div>
+                    <li>
+                        <a href="#" data-toggle="modal" data-target="#dataSetTransformationSaveJson">
+                            From JSON
+                        </a>
+                    </li>
                 </ul>
             </div>
             <a class="btn btn-info btn-sm" href="#" data-toggle="modal" data-target="#dataSetTransformationSelectionModal" title="Copy Data Set Transformation">
                 <span class="bi bi-files"></span>
             </a>
+            @views.html.jsonedit.saveJsonModal("dataSetTransformationSaveJson", "Data Set Transformation", dataSetTransformationRoutes.save, withTrigger = false)
+            @views.html.jsonedit.jsonlExportLink(dataSetTransformationRoutes.find(0, "-timeCreated", conditions))
         </div>
     </div>
     @typeaheadSelectionModal("dataSetTransformationSelectionModal", "dataSetTransformation", "Data Set Transformation", dataSetTransformationRoutes.idAndNames, Some(dataSetTransformationRoutes.copy(BSONObjectID.generate)))

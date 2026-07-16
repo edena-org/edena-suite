@@ -33,9 +33,21 @@
             )
         </div>
         <div class="ml-auto d-flex align-items-center" style="gap: 6px; padding-top: 10px;">
-            <a class="btn btn-info btn-sm" href="@filterRouter.create" data-toggle="tooltip" title="Add New Filter">
-                <span class="bi bi-plus-circle"></span>
-            </a>
+            <div class="dropdown">
+                <button class="btn btn-info btn-sm dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" title="Add New Filter">
+                    <span class="bi bi-plus-circle" aria-hidden="true"></span>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-right">
+                    <li>
+                        <a href="@filterRouter.create">New</a>
+                    </li>
+                    <li>
+                        <a href="#" data-toggle="modal" data-target="#filterSaveJson">From JSON</a>
+                    </li>
+                </ul>
+            </div>
+            @views.html.jsonedit.saveJsonModal("filterSaveJson", "Filter", filterRouter.save, withTrigger = false)
+            @views.html.jsonedit.jsonlExportLink(filterRouter.list(0, "name", conditions))
         </div>
     </div>
 }

@@ -38,5 +38,11 @@
     Some(dataViewRouter.delete(id)),
     Some(datasetMenu(dataSpaceMetaInfos)),
     Some(datasetSubNav(dataSetSetting)),
-    Some(bottomResources)
+    Some(bottomResources),
+    headerActions = Some(views.html.jsonedit.itemJsonModal(
+        "dataViewJson",
+        "Data View",
+        dataViewRouter.get(id),
+        Some(updateCall(id))
+    ))
 )

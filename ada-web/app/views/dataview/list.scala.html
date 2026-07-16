@@ -34,12 +34,24 @@
             )
         </div>
         <div class="ml-auto d-flex align-items-center" style="gap: 6px; padding-top: 10px;">
-            <a class="btn btn-info btn-sm" href="@dataViewRouter.create" data-toggle="tooltip" title="Add New View">
-                <span class="bi bi-plus-circle"></span>
-            </a>
+            <div class="dropdown">
+                <button class="btn btn-info btn-sm dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" title="Add New View">
+                    <span class="bi bi-plus-circle" aria-hidden="true"></span>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-right">
+                    <li>
+                        <a href="@dataViewRouter.create">New</a>
+                    </li>
+                    <li>
+                        <a href="#" data-toggle="modal" data-target="#dataViewSaveJson">From JSON</a>
+                    </li>
+                </ul>
+            </div>
             <a class="btn btn-info btn-sm" href="#" data-toggle="modal" data-target="#dataViewSelectionModal" title="Copy View">
                 <span class="bi bi-files"></span>
             </a>
+            @views.html.jsonedit.saveJsonModal("dataViewSaveJson", "Data View", dataViewRouter.save, withTrigger = false)
+            @views.html.jsonedit.jsonlExportLink(dataViewRouter.list(0, "name", conditions))
         </div>
     </div>
     @dataViewSelectionModal("dataViewSelectionModal", dataViewRouter, Some(dataViewRouter.copy(BSONObjectID.generate)))

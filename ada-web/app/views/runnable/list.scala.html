@@ -45,6 +45,8 @@
             )
         </div>
         <div class="col-md-4 text-right">
+            @views.html.jsonedit.saveJsonModal("runnableSpecSaveJson", "Runnable Spec", routes.RunnableController.save, withTrigger = false)
+            @views.html.jsonedit.jsonlExportLink(routes.RunnableController.find(0, "-timeCreated", conditions))
             <div class="dropdown d-inline-block">
                 <button class="btn btn-info btn-sm dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                     <span class="bi bi-plus-circle" aria-hidden="true"></span>
@@ -63,6 +65,12 @@
                     <li>
                         <a class="dropdown-item" href="#" data-toggle="modal" data-target="#runnableIdSelectionModal">
                             Copy
+                        </a>
+                    </li>
+                    <div class="dropdown-divider"></div>
+                    <li>
+                        <a class="dropdown-item" href="#" data-toggle="modal" data-target="#runnableSpecSaveJson">
+                            From JSON
                         </a>
                     </li>
                 </ul>

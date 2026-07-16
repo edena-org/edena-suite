@@ -60,5 +60,11 @@
     categoryRouter.plainList,
     Some(categoryRouter.delete(id)),
     Some(datasetMenu(dataSpaceMetaInfos)),
-    Some(datasetSubNavWithJs(setting))
+    Some(datasetSubNavWithJs(setting)),
+    headerActions = Some(views.html.jsonedit.itemJsonModal(
+        "categoryJson",
+        "Category",
+        categoryRouter.get(id),
+        Some(categoryRouter.update(id))
+    ))
 )

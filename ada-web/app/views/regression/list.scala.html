@@ -55,7 +55,15 @@
                 @importLink(classOf[RegressionTree], "Regression Tree")
                 @importLink(classOf[RandomRegressionForest], "Random Regression Forest")
                 @importLink(classOf[GradientBoostRegressionTree], "Gradient Boost Regression Tree")
+                <div class="dropdown-divider"></div>
+                <li>
+                    <a href="#" data-toggle="modal" data-target="#regressorSaveJson">
+                        From JSON
+                    </a>
+                </li>
             </ul>
+            @views.html.jsonedit.saveJsonModal("regressorSaveJson", "Regressor", regressorRoutes.save, withTrigger = false)
+            @views.html.jsonedit.jsonlExportLink(regressorRoutes.find(0, "concreteClass", conditions))
         </div>
     </div>
 }

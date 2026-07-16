@@ -1,0 +1,25 @@
+@import org.edena.core.FilterCondition
+@import views.html.export.exportModal
+
+@(
+    exportCall: (Seq[FilterCondition], Boolean) => Call,
+    conditions: Seq[FilterCondition],
+    elements: Option[Html] = None
+)(
+    implicit request: RequestHeader
+)
+
+@jsonlBody = {
+    <fieldset>
+        @elements.getOrElse {
+            <p>Do you want to proceed?</p>
+        }
+    </fieldset>
+}
+
+@jsonlCall = @{
+    val call = exportCall(conditions, false)
+    call.copy(url = call.url + (if (call.url.contains("?")) "&" else "?") + "format=jsonl")
+}
+
+@exportModal("exportFilteredJsonlModal", "Filtered JSONL Export", jsonlCall, jsonlBody)

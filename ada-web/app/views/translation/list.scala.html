@@ -36,9 +36,21 @@
             )
         </div>
         <div class="ml-auto d-flex align-items-center" style="gap: 6px; padding-top: 10px;">
-            <a class="btn btn-info btn-sm" id="add" href="@routes.TranslationController.create" title="Add New">
-                <span class="bi bi-plus-circle" aria-hidden="true"></span>
-            </a>
+            <div class="dropdown">
+                <button class="btn btn-info btn-sm dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" title="Add New">
+                    <span class="bi bi-plus-circle" aria-hidden="true"></span>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-right">
+                    <li>
+                        <a href="@routes.TranslationController.create">New</a>
+                    </li>
+                    <li>
+                        <a href="#" data-toggle="modal" data-target="#translationSaveJson">From JSON</a>
+                    </li>
+                </ul>
+            </div>
+            @views.html.jsonedit.saveJsonModal("translationSaveJson", "Translation", routes.TranslationController.save, withTrigger = false)
+            @views.html.jsonedit.jsonlExportLink(routes.TranslationController.find(0, "original", conditions))
         </div>
     </div>
 }

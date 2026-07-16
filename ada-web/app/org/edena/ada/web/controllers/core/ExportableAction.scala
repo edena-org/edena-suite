@@ -63,6 +63,10 @@ trait ExportableAction[E] {
   ) = Action.async { implicit request =>
     val projection = if (useProjection) fieldNames else Nil
 
+    // The `format=jsonl` query param switches the framing to newline-delimited JSON, so every
+    // existing JSON-export route is JSONL-capable without any route/controller changes.
+    val asJsonl = request.getQueryString("format").contains("jsonl")
+
     for {
       jsonStream <- getJsonStream(filter, extraCriterion, orderBy, projection)
     } yield {
@@ -72,7 +76,35 @@ trait ExportableAction[E] {
         else
           jsonStream
 
-      jsonStreamToJsonFile(finalJsonStream, filename)
+      if (asJsonl)
+        jsonStreamToJsonlFile(finalJsonStream, filename.stripSuffix(".json") + ".jsonl")
+      else
+        jsonStreamToJsonFile(finalJsonStream, filename)
+    }
+  }
+
+  protected def exportToJsonl(
+    filename: String)(
+    orderBy: Option[String],
+    filter: Seq[FilterCondition] = Nil,
+    extraCriterion: Option[Criterion] = None,
+    fieldNames: Traversable[String] = Nil,
+    useProjection: Boolean = true,
+    nameFieldTypeMap: Map[String, FieldType[_]] = Map())(
+    implicit ev: Format[E], actorSystem: ActorSystem, materializer: Materializer
+  ) = Action.async { implicit request =>
+    val projection = if (useProjection) fieldNames else Nil
+
+    for {
+      jsonStream <- getJsonStream(filter, extraCriterion, orderBy, projection)
+    } yield {
+      val finalJsonStream =
+        if (nameFieldTypeMap.nonEmpty)
+          toDisplayJsonsStream(jsonStream, nameFieldTypeMap)
+        else
+          jsonStream
+
+      jsonStreamToJsonlFile(finalJsonStream, filename)
     }
   }
 

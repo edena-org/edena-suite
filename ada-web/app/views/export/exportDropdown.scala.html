@@ -39,6 +39,15 @@
         Left((
             "exportFilteredTableJsonModal", "Export Filtered Table as JSON",
             exportFilteredTableJsonModal(exportJsonCall, conditions)
+        )),
+        Right(Html("<li role='separator' class='divider'></li>")),
+        Left((
+            "exportAllJsonlModal", "Export All as JSONL",
+            exportAllJsonlModal(exportJsonCall)
+        )),
+        Left((
+            "exportFilteredJsonlModal", "Export Filtered as JSONL",
+            exportFilteredJsonlModal(exportJsonCall, conditions)
         ))
     )
 )
