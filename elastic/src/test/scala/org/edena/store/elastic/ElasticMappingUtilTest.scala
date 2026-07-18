@@ -104,4 +104,31 @@ class ElasticMappingUtilTest extends FlatSpec with Matchers {
 
     extractDenseVectorDims(mapping) shouldBe Map("a" -> 768)
   }
+
+  private val mappingA: Map[String, Any] = Map("properties" -> Map("a" -> Map("type" -> "keyword")))
+  private val mappingB: Map[String, Any] = Map("properties" -> Map("b" -> Map("type" -> "keyword")))
+
+  "selectIndexMapping" should "prefer the exact index-name match even among multiple entries" in {
+    selectIndexMapping("index_a", Map("index_a" -> mappingA, "index_b" -> mappingB)) shouldBe
+      ("index_a", mappingA)
+  }
+
+  it should "accept a single entry under a different concrete name (alias to one index)" in {
+    selectIndexMapping("my_alias", Map("concrete_index_1" -> mappingA)) shouldBe
+      ("concrete_index_1", mappingA)
+  }
+
+  it should "fail on multiple entries without an exact match (multi-index alias)" in {
+    val thrown = intercept[org.edena.core.store.EdenaDataStoreException] {
+      selectIndexMapping("my_alias", Map("concrete_index_1" -> mappingA, "concrete_index_2" -> mappingB))
+    }
+    thrown.getMessage should include("my_alias")
+    thrown.getMessage should include("concrete_index_1")
+  }
+
+  it should "fail on an empty mappings result" in {
+    intercept[org.edena.core.store.EdenaDataStoreException] {
+      selectIndexMapping("missing_index", Map.empty)
+    }
+  }
 }

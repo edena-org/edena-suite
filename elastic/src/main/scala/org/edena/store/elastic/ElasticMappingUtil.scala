@@ -1,5 +1,7 @@
 package org.edena.store.elastic
 
+import org.edena.core.store.EdenaDataStoreException
+
 import scala.util.Try
 
 /**
@@ -89,6 +91,31 @@ object ElasticMappingUtil {
 
     collect(rootProperties(mapping), "")
   }
+
+  /**
+   * Selects the mapping for a requested index name from a `getMappings` result (concrete index
+   * name -> mapping). An exact name match wins (a concrete index); otherwise a single entry is
+   * accepted (an alias resolving to one index). Multiple entries — an alias spanning several
+   * concrete indices — fail, since picking one arbitrarily would silently build the store/schema
+   * from the wrong index's mapping.
+   */
+  def selectIndexMapping(
+    requestedIndexName: String,
+    indexMappings: Map[String, Map[String, Any]]
+  ): (String, Map[String, Any]) =
+    indexMappings.get(requestedIndexName).map((requestedIndexName, _)).getOrElse {
+      if (indexMappings.size > 1)
+        throw new EdenaDataStoreException(
+          s"The index name '$requestedIndexName' resolves to multiple indices (${indexMappings.keys.toSeq.sorted
+              .mkString(", ")}) — likely a multi-index alias, which is not supported for mapping-driven dynamic stores."
+        )
+
+      indexMappings.headOption.getOrElse(
+        throw new EdenaDataStoreException(
+          s"No mapping found for the index '$requestedIndexName'."
+        )
+      )
+    }
 
   // the mapping may come wrapped ({"properties" -> {...}}) or as the bare properties map
   private def rootProperties(mapping: Map[String, Any]): Map[String, Any] =

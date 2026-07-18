@@ -3,6 +3,7 @@ package org.edena.store.elastic.dynamic
 import com.sksamuel.elastic4s.requests.get.GetResponse
 import com.sksamuel.elastic4s.requests.searches.SearchHit
 import com.sksamuel.elastic4s.{ElasticClient, ElasticDsl}
+import org.edena.core.store.ValueMapAux.ValueMap
 import org.edena.store.elastic._
 
 import javax.inject.Inject
@@ -71,6 +72,13 @@ final class ElasticDynamicReadonlyStore private[dynamic] (
   ): Map[String, Any] =
     fieldsToValueMap(fieldMap)
 
+  // _source carries natural JSON shapes, so values pass through untouched — the single-element
+  // list unwrap below exists for the STORED-FIELDS path, where ES array-wraps every value; not
+  // unwrapping _source keeps single-element plain arrays intact WITHOUT declaring them in
+  // multiValuedPaths (which remains needed only for stored-fields projections)
+  override protected def serializeSourceSearchHitAsValueMap(searchHit: SearchHit): ValueMap =
+    searchHit.sourceAsMap.map { case (fieldName, value) => (fieldName, Option(value)) }
+
   // permissive: unwraps single-element lists (unless multi-valued), NEVER throws on unknown
   // fields — mirrors ElasticFormatSerializer.fieldsToValueMap
   override protected def fieldsToValueMap(fields: Map[String, Any]): Map[String, Any] =
@@ -113,7 +121,10 @@ class ElasticDynamicReadonlyStoreFactory @Inject() (client: ElasticClient)
       response.result.map(indexMappings => (indexMappings.index, indexMappings.mappings)).toMap
     }
 
-  /** Fetches the live mapping, infers the nested field paths, and constructs a store. */
+  /**
+   * Fetches the live mapping, infers the nested field paths, and constructs a store. Fails on a
+   * multi-index alias (see `ElasticMappingUtil.selectIndexMapping`).
+   */
   def apply(
     indexName: String,
     identityName: String = "_id",
@@ -121,11 +132,15 @@ class ElasticDynamicReadonlyStoreFactory @Inject() (client: ElasticClient)
     multiValuedPaths: Set[String] = Set.empty
   ): Future[ElasticDynamicExtraStore] =
     getMappings(indexName).map { indexMappings =>
-      val nestedPaths = indexMappings.values.headOption
-        .map(ElasticMappingUtil.extractNestedPaths)
-        .getOrElse(Set.empty[String])
+      val (_, mapping) = ElasticMappingUtil.selectIndexMapping(indexName, indexMappings)
 
-      fromNestedPaths(indexName, nestedPaths, identityName, setting, multiValuedPaths)
+      fromNestedPaths(
+        indexName,
+        ElasticMappingUtil.extractNestedPaths(mapping),
+        identityName,
+        setting,
+        multiValuedPaths
+      )
     }
 
   /** Synchronous construction when the nested field paths are already known. */
