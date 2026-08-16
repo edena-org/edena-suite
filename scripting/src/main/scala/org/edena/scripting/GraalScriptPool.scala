@@ -80,8 +80,19 @@ trait GraalScriptPool {
    *
    * Note: This is a blocking operation that temporarily reduces available contexts during
    * recreation. Concurrent script executions may block waiting for available contexts.
+   * PREFER [[scheduleContextsRecycle]] for routine native-memory reclaim — it has no global
+   * pause and cannot stall executions.
    */
   def recreateAllContexts(): Unit
+
+  /**
+   * Request a LAZY recycle of (up to) the whole pool: each of the next poolSize context returns
+   * swaps its context for a freshly created one (creation bounded and abandonable; the old
+   * context is closed only after the pool is whole again). Non-blocking, no exclusive phase —
+   * a hung close/create can never stall script executions. Best-effort: failed swaps keep the
+   * old context.
+   */
+  def scheduleContextsRecycle(): Unit
 
   /**
    * Close all contexts and the underlying engine; pool is no longer usable after this.
@@ -219,7 +230,7 @@ abstract class GraalScriptPoolImpl(
       if (resetAfterEachUse.getOrElse(true)) {
         try {
           resetContext(ctx)
-          pool.put((ctx, createInfo))
+          returnOrLazilyRecycle(ctx, createInfo)
         }
         catch {
           case ex: Throwable =>
@@ -242,8 +253,86 @@ abstract class GraalScriptPoolImpl(
         }
       } else {
         // just return to pool without reset
-        pool.put((ctx, createInfo))
+        returnOrLazilyRecycle(ctx, createInfo)
       }
+    }
+  }
+
+  // ---- LAZY context recycling (native-memory reclaim without a global pause) -----------------
+  // A stop-the-world recreateAllContexts under an exclusive lock WEDGED a production pipeline
+  // three times: context close AND fresh-context creation can hang indefinitely on poisoned
+  // native state, and any global exclusive phase turns that hang into a full stop. The lazy
+  // scheme has no exclusive phase at all: after scheduleContextsRecycle(), the next poolSize
+  // context RETURNS each swap their context one-by-one — replacement is created FIRST (bounded,
+  // abandonable), the pool is made whole, and only then is the old context closed (bounded).
+  // Failure/timeout of a replacement keeps the old context; the attempt is simply dropped
+  // (best-effort — the next scheduled recycle retries). The pool size is invariant on every path.
+
+  private val pendingContextRecycles = new java.util.concurrent.atomic.AtomicInteger(0)
+
+  /** How long a fresh replacement context (creation + warmup) may take before the swap is
+   *  abandoned and the old context is kept. */
+  protected val replacementCreateTimeoutMs: Long = 120000L
+
+  /** Request a lazy recycle of (up to) the whole pool: each of the next `poolSize` context
+   *  returns replaces its context. Non-blocking; safe to call at any time; repeated calls do
+   *  not stack beyond the pool size. */
+  def scheduleContextsRecycle(): Unit = {
+    pendingContextRecycles.set(actualPoolSize)
+    logger.info(
+      s"Lazy context recycle scheduled: the next $actualPoolSize context return(s) will swap their contexts."
+    )
+  }
+
+  private[scripting] def pendingRecyclesCount: Int = pendingContextRecycles.get()
+
+  private def returnOrLazilyRecycle(ctx: Context, createInfo: ContextCreateInfo): Unit =
+    if (pendingContextRecycles.getAndDecrement() > 0) {
+      createReplacementBounded(createInfo) match {
+        case Some(newCtx) =>
+          pool.put((newCtx, createInfo))
+          closeBounded(ctx) // old context closed only AFTER the pool is whole again
+          logger.info(s"Lazy context recycle: swapped one context (${pendingContextRecycles.get()} pending).")
+        case None =>
+          // best-effort: keep the old context, drop this attempt (next schedule retries)
+          logger.warn("Lazy context recycle: replacement creation failed/timed out — keeping the old context.")
+          pool.put((ctx, createInfo))
+      }
+    } else
+      pool.put((ctx, createInfo))
+
+  /** Create + warm up a replacement context on a daemon thread, waiting a bounded time. On
+   *  timeout the creation is abandoned (daemon thread; a late-completing context is closed by
+   *  the creator itself — never leaked, never double-used). */
+  private def createReplacementBounded(createInfo: ContextCreateInfo): Option[Context] = {
+    val abandoned = new java.util.concurrent.atomic.AtomicBoolean(false)
+    val resultRef = new java.util.concurrent.atomic.AtomicReference[Context](null)
+    val creator = new Thread(
+      () =>
+        try {
+          val c = createContext(createInfo)
+          warmupContext(c)
+          resultRef.set(c)
+          // the waiter may have given up between our set and its final check
+          if (abandoned.get() && resultRef.compareAndSet(c, null))
+            try c.close(true)
+            catch { case e: Throwable => logger.warn(s"Late replacement context close failed: ${e.getMessage}") }
+        } catch {
+          case e: Throwable => logger.warn(s"Replacement context creation failed: ${e.getMessage}")
+        },
+      "graal-context-replacer"
+    )
+    creator.setDaemon(true)
+    creator.start()
+    creator.join(replacementCreateTimeoutMs)
+    Option(resultRef.getAndSet(null)).orElse {
+      abandoned.set(true)
+      if (creator.isAlive)
+        logger.warn(
+          s"Replacement context creation still running after ${replacementCreateTimeoutMs} ms — abandoned on a daemon thread."
+        )
+      // second chance: the creator may have finished between the join timeout and the flag
+      Option(resultRef.getAndSet(null))
     }
   }
 
@@ -406,18 +495,25 @@ abstract class GraalScriptPoolImpl(
       entry = pool.poll()
     }
 
-    // Close old contexts and create new ones
+    // Swap each context with the same bounded, never-shrink ordering as the lazy path:
+    // replacement FIRST (bounded, abandonable), pool made whole, old context closed after
+    // (bounded). A hung close/create previously held this method — and any lock around it —
+    // forever (2026-08-16 prod wedge #3); a failed swap now keeps the old context instead.
+    var swapped = 0
     contextsToRecreate.foreach { case (ctx, createInfo) =>
-      try ctx.close()
-      catch { case NonFatal(e) => logger.warn(s"Error closing context during recreation: ${e.getMessage}") }
-
-      val newCtx = createContext(createInfo)
-      warmupContext(newCtx)
-      pool.put((newCtx, createInfo))
+      createReplacementBounded(createInfo) match {
+        case Some(newCtx) =>
+          pool.put((newCtx, createInfo))
+          closeBounded(ctx)
+          swapped += 1
+        case None =>
+          logger.warn("Context recreation: replacement creation failed/timed out — keeping the old context.")
+          pool.put((ctx, createInfo))
+      }
     }
 
     val elapsedMs = System.currentTimeMillis() - startTime
-    logger.info(s"Successfully recreated ${contextsToRecreate.size} contexts in ${elapsedMs} ms")
+    logger.info(s"Recreated $swapped of ${contextsToRecreate.size} contexts in ${elapsedMs} ms")
   }
 
   override def close(): Unit = {

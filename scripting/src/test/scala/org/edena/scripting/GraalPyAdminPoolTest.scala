@@ -1,13 +1,15 @@
 package org.edena.scripting
 
 import akka.stream.Materializer
-import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach, FlatSpec, Matchers}
+import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach}
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 import play.api.libs.json.{JsObject, Json}
 
 import scala.concurrent.ExecutionContext
 
 class GraalPyAdminPoolTest
-    extends FlatSpec
+    extends AnyFlatSpec
     with Matchers
     with BeforeAndAfterAll
     with BeforeAndAfterEach

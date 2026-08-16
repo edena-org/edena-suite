@@ -3,13 +3,15 @@ package org.edena.scripting
 import akka.stream.Materializer
 import net.codingwell.scalaguice.InjectorExtensions._
 import org.edena.core.util.parallelize
-import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach, FlatSpec, Matchers}
+import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach}
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 import play.api.libs.json.{JsObject, Json}
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContext, Future}
 
-class GraalJSPoolTest extends FlatSpec
+class GraalJSPoolTest extends AnyFlatSpec
   with Matchers
   with BeforeAndAfterAll
   with BeforeAndAfterEach

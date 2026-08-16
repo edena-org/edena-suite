@@ -1,10 +1,10 @@
 package org.edena.scripting
 
 import org.graalvm.polyglot.Engine
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 import scala.jdk.CollectionConverters._
 
-class GraalLangsTest extends FunSuite {
+class GraalLangsTest extends AnyFunSuite {
   test("list languages") {
     val engine = Engine.create()
     val languages = engine.getLanguages.keySet().asScala.mkString(", ")
