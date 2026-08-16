@@ -188,11 +188,30 @@ abstract class GraalScriptPoolImpl(
   protected def createContextBuilder(): Context#Builder =
     Context.newBuilder(language)
 
-  /** Borrow a context, run f, convert/return, then (optionally) reset & return to pool. */
+  /** How long a borrower waits for a free context before FAILING the eval (instead of parking
+   *  forever — an unbounded take() turned any lost context into permanently stuck threads). */
+  private val ContextAcquireTimeoutMins = 15L
+
+  /** Borrow a context, run f, convert/return, then (optionally) reset & return to pool.
+   *
+   *  HARDENED (2026-08-16, chandra-pipeline 11h deadlock post-mortem) — the pool must NEVER
+   *  shrink and cleanup must NEVER hang:
+   *  - acquisition is BOUNDED: a wedged/lost context fails the eval with a clear error instead
+   *    of parking the borrower forever;
+   *  - the discard/replace path catches Throwable (fatal errors must not shrink the pool
+   *    either), closes the broken context on a BOUNDED daemon thread (GraalPy context close can
+   *    hang on wedged native state — previously that hung this finally block forever), and as a
+   *    LAST resort returns the original unreset context: a broken context fails its next eval
+   *    fast and re-triggers replacement (self-healing retry) instead of silently shrinking the
+   *    pool into a starvation deadlock. */
   protected def withContext[A](f: Context => A): A = {
-    val (ctx, createInfo) = pool.take()
-//    if (ctx.getPolyglotBindings.getMember("fsBridge") == null) {
-//      println(">>> Adding bridges to context")
+    val taken = pool.poll(ContextAcquireTimeoutMins, java.util.concurrent.TimeUnit.MINUTES)
+    if (taken == null)
+      throw new IllegalStateException(
+        s"No script context became available within $ContextAcquireTimeoutMins min — " +
+          "pool exhausted or a previous eval is wedged."
+      )
+    val (ctx, createInfo) = taken
     extendContext.foreach(_(ctx))
 
     try f(ctx)
@@ -203,21 +222,46 @@ abstract class GraalScriptPoolImpl(
           pool.put((ctx, createInfo))
         }
         catch {
-          case NonFatal(ex) =>
+          case ex: Throwable =>
             logger.warn("Error resetting script context, discarding it", ex)
-            // discard context on error
-            ctx.close()
-            // replace with a new one
-            val newCtx = createContext(createInfo)
-            // Language-specific warmup
-            warmupContext(newCtx)
-            pool.put((newCtx, createInfo))
+            closeBounded(ctx)
+            try {
+              // replace with a new one (+ language-specific warmup)
+              val newCtx = createContext(createInfo)
+              warmupContext(newCtx)
+              pool.put((newCtx, createInfo))
+            } catch {
+              case replaceEx: Throwable =>
+                logger.error(
+                  "Failed to create a replacement script context — returning the DISCARDED original " +
+                    "to keep the pool size (its next eval fails fast and retries the replacement).",
+                  replaceEx
+                )
+                pool.put((ctx, createInfo))
+            }
         }
       } else {
         // just return to pool without reset
         pool.put((ctx, createInfo))
       }
     }
+  }
+
+  /** Close a (possibly wedged) context without ever hanging the caller: run the close on a
+   *  daemon thread and wait a bounded time — an unfinished close is abandoned (daemon thread,
+   *  logged) rather than blocking pool recovery. */
+  private def closeBounded(ctx: Context): Unit = {
+    val closer = new Thread(
+      () =>
+        try ctx.close(true)
+        catch { case e: Throwable => logger.warn(s"Script context close failed: ${e.getMessage}") },
+      "graal-context-closer"
+    )
+    closer.setDaemon(true)
+    closer.start()
+    closer.join(15000)
+    if (closer.isAlive)
+      logger.warn("Script context close did not finish within 15s — abandoned on a daemon thread.")
   }
 
   def evalToString(
