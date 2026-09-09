@@ -17,7 +17,7 @@ dist
 /**/.DS_Store
 dataImports
 /ignite/work/
-/TODO.md
+/project/TODO.md
 /kafka/src/main/resources/docker-compose.yml
 /.mcp.json
 # Extraneous per-module sbt project files (only the root project/ is used)
