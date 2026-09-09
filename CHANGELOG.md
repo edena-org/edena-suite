@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.1.1 (2026-09-09)
+
+- **Apache Spark 3.5.4 → 3.5.6**: patch release with CVE fixes; Spark 4.0 deferred because of its breaking changes.
+- **ScalaTest 3.0.8 → 3.2.19** and **ScalaTestPlus Play 4.0.3 → 6.0.2** (Play 2.9.x line): all test suites migrated to the 3.1+ style-trait packages (`org.scalatest.flatspec.*`, `org.scalatest.funsuite.*`, `org.scalatest.matchers.should.Matchers`); the `kafka` module now uses the shared ScalaTest version instead of its own pin.
+- **Reflections 0.9.10 → 0.10.2** (`ada-server`): the class finder builds its scanner from an explicit classpath configuration, since the no-arg constructor became protected; the old findbugs exclusion is no longer needed.
+
 ## 1.1.0 (2026-09-09)
 
 - **Platform upgrade**: Play 2.9.6, Akka 2.6.21, Play JSON 2.10, Jackson 2.14, Apache Spark 3.5.4, Apache Ignite 2.14, sbt 1.9.6, PAC4J 12 / OIDC 6.2, Deadbolt 2.9, ReactiveMongo for Play 2.9; dependency pins for known CVEs (Netty, commons-lang3, commons-io, jQuery UI 1.14, D3 v7).

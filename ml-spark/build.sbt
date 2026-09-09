@@ -26,7 +26,7 @@ libraryDependencies ++= Seq(
   "org.reactivemongo" %% "reactivemongo-bson-api" % Versions.reactivemongo,              // because of BSONObjectID - should be removed
 )
 
-// Resolve scala-parser-combinators version conflict between Spark 3.5.4 and ssl-config-core
+// Resolve scala-parser-combinators version conflict between Spark 3.5.6 and ssl-config-core
 libraryDependencySchemes += "org.scala-lang.modules" %% "scala-parser-combinators" % VersionScheme.Always
 
 // For licenses not automatically downloaded (need to list them manually)

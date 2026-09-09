@@ -1,4 +1,4 @@
-# Edena Suite [![version](https://img.shields.io/badge/version-1.1.0-green.svg)](https://peterbanda.net) [![License](https://img.shields.io/badge/License-Apache%202.0-lightgrey.svg)](https://www.apache.org/licenses/LICENSE-2.0)
+# Edena Suite [![version](https://img.shields.io/badge/version-1.1.1-green.svg)](https://peterbanda.net) [![License](https://img.shields.io/badge/License-Apache%202.0-lightgrey.svg)](https://www.apache.org/licenses/LICENSE-2.0)
 
 Edena Suite is a comprehensive data discovery and analytics platform built with Scala and Play Framework. It's designed for data exploration, statistical analysis, and machine learning workflows with support for multiple storage backends and ML frameworks.
 
@@ -19,7 +19,7 @@ Edena Suite is a comprehensive data discovery and analytics platform built with 
 Foundation utilities (reflection, akka, locking), calculators, repository interfaces, shared models
 - **Akka**: 2.6.21
 - **Guice**: 5.1.0
-- **ScalaTest**: 3.0.8
+- **ScalaTest**: 3.2.19
 - **Commons**: IO, Lang, Math3
 - **Logging**: Logback 1.4.14, SLF4J 1.7.26
 
@@ -74,7 +74,7 @@ GraalVM-based JavaScript and Python script execution
 
 ### - ml-spark
 Apache Spark ML integration and extensions
-- **Apache Spark**: 3.5.4 (core, sql, mllib)
+- **Apache Spark**: 3.5.6 (core, sql, mllib)
 - **Breeze**: 2.1.0
 - **Tablesaw**: 0.36.0
 - Depends on: core

@@ -28,7 +28,7 @@ Edena Suite is a comprehensive data discovery and analytics platform built with 
 ### Key Dependencies
 - **Scala**: 2.13.11
 - **Play Framework**: 2.9.6
-- **Apache Spark**: 3.5.4
+- **Apache Spark**: 3.5.6
 - **MongoDB**: ReactiveMongo 1.1.0-RC12
 - **Elasticsearch**: Elastic4S 8.19.1 (ES 8.x compatible, Akka 2.6.x, Play JSON 2.10.x, Jackson overridden to 2.14.x)
 - **Apache Ignite**: 2.14.0
@@ -100,8 +100,8 @@ The project follows a clear dependency hierarchy:
 
 ### Testing Strategy
 - Tests are located in `src/test/scala/` within each module
-- Uses ScalaTest 3.0.8 framework
-- ScalaTestPlus Play 4.0.3 for web application testing
+- Uses ScalaTest 3.2.19 framework (3.1+ style traits: `org.scalatest.flatspec.AnyFlatSpec`, `org.scalatest.matchers.should.Matchers`, etc.)
+- ScalaTestPlus Play 6.0.2 for web application testing
 - Test resources in `src/test/resources/`
 
 ### Data Storage
