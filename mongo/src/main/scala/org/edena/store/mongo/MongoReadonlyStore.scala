@@ -117,10 +117,11 @@ class MongoReadonlyStore[E: Format, ID: Format](
     sort: Seq[Sort],
     projection: Traversable[String],
     limit: Option[Int],
-    skip: Option[Int])(
+    skip: Option[Int],
+    batchSize: Option[Int])(
     implicit system: ActorSystem, materializer: Materializer
   ): Future[Source[E, _]] =
-    findAsCursor[E](criterion, sort, projection, limit, skip).map { cursor =>
+    findAsCursor[E](criterion, sort, projection, limit, skip, batchSize).map { cursor =>
       // handle the limit
       limit match {
         case Some(limit) => cursor.documentSource(limit)(materializer)
@@ -156,7 +157,8 @@ class MongoReadonlyStore[E: Format, ID: Format](
     sort: Seq[Sort],
     projection: Traversable[String],
     limit: Option[Int],
-    skip: Option[Int])(
+    skip: Option[Int],
+    batchSize: Option[Int] = None)(
     implicit reader: Reader[CC]
   ): Future[AkkaStreamCursor[CC]] = withCollection { collection =>
     val sortedProjection = projection.toSeq.sorted
@@ -207,17 +209,17 @@ class MongoReadonlyStore[E: Format, ID: Format](
 
     finalQueryBuilderFuture.map { finalQueryBuilder =>
       // handle pagination (if requested)
+      // batchSize (if given) is the cursor's fetch size per round trip; it never caps the result
       limit match {
         case Some(limit) =>
 //          finalQueryBuilder.options(QueryOpts(skip.getOrElse(0), limit)).cursor[CC]()
-          finalQueryBuilder.skip(skip.getOrElse(0)).batchSize(limit).cursor[CC]()
-
+          finalQueryBuilder.skip(skip.getOrElse(0)).batchSize(batchSize.getOrElse(limit)).cursor[CC]()
 
         case None =>
           if (skip.isDefined)
             throw new EdenaDataStoreException("Limit is expected when skip is provided.")
           else
-            finalQueryBuilder.cursor[CC]()
+            batchSize.fold(finalQueryBuilder)(finalQueryBuilder.batchSize(_)).cursor[CC]()
       }
     }
   }

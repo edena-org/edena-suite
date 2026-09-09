@@ -1,5 +1,6 @@
 package org.edena.ada.web.controllers.dataset
 
+import org.edena.core.store.ScrollBatchLevels
 import java.util.UUID
 import java.{util => ju}
 import akka.actor.ActorSystem
@@ -289,14 +290,15 @@ protected[controllers] class DataSetControllerImpl @Inject() (
     filter: Seq[FilterCondition],
     tableColumnsOnly: Boolean,
     useDisplayValues: Boolean,
-    escapeStringValues: Boolean
+    escapeStringValues: Boolean,
+    batchLevel: Option[String]
   ) = Action.async { implicit request =>
 
     for {
       tableFieldNames <- if (tableColumnsOnly) dataViewTableColumnNames(dataViewId) else Future(Nil)
 
       result <- exportTableRecordsAsCsvAux(
-        tableFieldNames, delimiter, replaceEolWithSpace, eol, filter, None, useDisplayValues, escapeStringValues
+        tableFieldNames, delimiter, replaceEolWithSpace, eol, filter, None, useDisplayValues, escapeStringValues, batchSizeForLevel(batchLevel)
       )
     } yield
       result
@@ -312,7 +314,8 @@ protected[controllers] class DataSetControllerImpl @Inject() (
     useDisplayValues: Boolean,
     escapeStringValues: Boolean,
     selectedOnly: Boolean,
-    selectedIds: Seq[BSONObjectID]
+    selectedIds: Seq[BSONObjectID],
+    batchLevel: Option[String]
   ) = Action.async { implicit request =>
 
     val exportFieldNames = if (tableColumnsOnly) tableColumnNames else Nil
@@ -323,9 +326,17 @@ protected[controllers] class DataSetControllerImpl @Inject() (
       None
 
     exportTableRecordsAsCsvAux(
-      exportFieldNames, delimiter, replaceEolWithSpace, eol, filter, extraCriterion, useDisplayValues, escapeStringValues
+      exportFieldNames, delimiter, replaceEolWithSpace, eol, filter, extraCriterion, useDisplayValues, escapeStringValues, batchSizeForLevel(batchLevel)
     )
   }
+
+  /**
+   * Export batch-size level (`low` / `medium` / `high`, see `ScrollBatchLevel`) -> store streaming page
+   * size, using the sizes configured under `elastic.scroll.batch.levels`. Absent/unknown -> None, i.e.
+   * the store's global default (`elastic.scroll.batch.size`) — exactly the pre-existing behaviour.
+   */
+  private def batchSizeForLevel(batchLevel: Option[String]): Option[Int] =
+    ScrollBatchLevels(configuration.underlying).resolve(batchLevel)
 
   private def exportTableRecordsAsCsvAux(
     tableFieldNames: Seq[String],
@@ -335,7 +346,8 @@ protected[controllers] class DataSetControllerImpl @Inject() (
     filter: Seq[FilterCondition],
     extraCriterion: Option[Criterion] = None,
     useDisplayValues: Boolean = false,
-    escapeStringValues: Boolean = false)(
+    escapeStringValues: Boolean = false,
+    batchSize: Option[Int] = None)(
     implicit request: Request[AnyContent]
     ): Future[Result] = {
     val eolToUse = eol match {
@@ -370,7 +382,8 @@ protected[controllers] class DataSetControllerImpl @Inject() (
           filter,
           extraCriterion,
           tableFieldNames.nonEmpty,
-          nameFieldTypeMap
+          nameFieldTypeMap,
+          batchSize
         ).apply(request)
       }
     } yield
@@ -386,13 +399,14 @@ protected[controllers] class DataSetControllerImpl @Inject() (
     dataViewId: BSONObjectID,
     filter: Seq[FilterCondition],
     tableColumnsOnly: Boolean,
-    useDisplayValues: Boolean
+    useDisplayValues: Boolean,
+    batchLevel: Option[String]
   ) = Action.async { implicit request =>
     for {
       tableFieldNames <- if (tableColumnsOnly) dataViewTableColumnNames(dataViewId) else Future(Nil)
 
       result <- exportTableRecordsAsJsonAux(
-        tableFieldNames, filter, None, useDisplayValues
+        tableFieldNames, filter, None, useDisplayValues, batchSizeForLevel(batchLevel)
       )
     } yield
       result
@@ -404,7 +418,8 @@ protected[controllers] class DataSetControllerImpl @Inject() (
     tableColumnsOnly: Boolean,
     useDisplayValues: Boolean,
     selectedOnly: Boolean,
-    selectedIds: Seq[BSONObjectID]
+    selectedIds: Seq[BSONObjectID],
+    batchLevel: Option[String]
   ) = Action.async { implicit request =>
 
     val extraCriterion = if (selectedOnly)
@@ -415,7 +430,7 @@ protected[controllers] class DataSetControllerImpl @Inject() (
     val exportFieldNames = if (tableColumnsOnly) tableColumnNames else Nil
 
     exportTableRecordsAsJsonAux(
-      exportFieldNames, filter, extraCriterion, useDisplayValues
+      exportFieldNames, filter, extraCriterion, useDisplayValues, batchSizeForLevel(batchLevel)
     )
   }
 
@@ -423,7 +438,8 @@ protected[controllers] class DataSetControllerImpl @Inject() (
     tableFieldNames: Seq[String],
     filter: Seq[FilterCondition],
     extraCriterion: Option[Criterion] = None,
-    useDisplayValues: Boolean = false
+    useDisplayValues: Boolean = false,
+    batchSize: Option[Int] = None
   )
     (
       implicit request: Request[AnyContent]
@@ -450,7 +466,8 @@ protected[controllers] class DataSetControllerImpl @Inject() (
           extraCriterion,
           headerFieldNames,
           tableFieldNames.nonEmpty,
-          nameFieldTypeMap
+          nameFieldTypeMap,
+          batchSize
         ).apply(request)
       }
     } yield

@@ -214,7 +214,8 @@ trait DataSetController extends ReadonlyController[BSONObjectID] {
     filter: Seq[FilterCondition],
     tableColumnsOnly: Boolean,
     useDisplayValues: Boolean,
-    escapeStringValues: Boolean
+    escapeStringValues: Boolean,
+    batchLevel: Option[String]
   ): Action[AnyContent]
 
   def exportTableRecordsAsCsv(
@@ -227,14 +228,16 @@ trait DataSetController extends ReadonlyController[BSONObjectID] {
     useDisplayValues: Boolean,
     escapeStringValues: Boolean,
     selectedOnly: Boolean,
-    selectedIds: Seq[BSONObjectID]
+    selectedIds: Seq[BSONObjectID],
+    batchLevel: Option[String]
   ): Action[AnyContent]
 
   def exportViewRecordsAsJson(
     dataViewId: BSONObjectID,
     filter: Seq[FilterCondition],
     tableColumnsOnly: Boolean,
-    useDisplayValues: Boolean
+    useDisplayValues: Boolean,
+    batchLevel: Option[String]
   ): Action[AnyContent]
 
   def exportTableRecordsAsJson(
@@ -243,7 +246,8 @@ trait DataSetController extends ReadonlyController[BSONObjectID] {
     tableColumnsOnly: Boolean,
     useDisplayValues: Boolean,
     selectedOnly: Boolean,
-    selectedIds: Seq[BSONObjectID]
+    selectedIds: Seq[BSONObjectID],
+    batchLevel: Option[String]
   ): Action[AnyContent]
 
   def exportTranSMARTDataFile(

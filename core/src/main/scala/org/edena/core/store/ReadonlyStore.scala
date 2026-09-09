@@ -72,13 +72,22 @@ trait ReadonlyStore[+E, ID] {
     skip: Option[Int] = None
   ): Future[Traversable[ValueMap]]
 
-  // default/dummy implementation of streaming... if supported should be overridden
+  /**
+   * Streams the found items. Default/dummy implementation materializes `find` first; stores that
+   * support real streaming (Mongo cursor, Elastic scroll) override it.
+   *
+   * @param batchSize Optional page/fetch size hint for the underlying stream (Elastic scroll `size`,
+   *                  Mongo cursor batch size): how many items are pulled from the store per round trip.
+   *                  Does NOT cap the total number of items (unlike `limit`). Lower it for large documents
+   *                  to bound the per-page memory; None uses the store's configured default.
+   */
   def findAsStream(
     criterion: Criterion = NoCriterion,
     sort: Seq[Sort] = Nil,
     projection: Traversable[String] = Nil,
     limit: Option[Int] = None,
-    skip: Option[Int] = None)(
+    skip: Option[Int] = None,
+    batchSize: Option[Int] = None)(
     implicit system: ActorSystem, materializer: Materializer
   ): Future[Source[E, _]] = for {
     items <- find(criterion, sort, projection, limit, skip)

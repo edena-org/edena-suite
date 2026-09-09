@@ -5,6 +5,7 @@
 @import views.html.export._
 @import org.edena.ada.server.models.FilterShowFieldStyle
 @import org.edena.core.FilterCondition
+@import org.edena.core.store.{ScrollBatchLevel, ScrollBatchLevels}
 @import scala.collection.immutable
 
 @(
@@ -40,12 +41,33 @@
     }
 }
 
+@* "Batch Size" = streaming page size of the export (Elastic scroll size / Mongo cursor batch), offered as
+   levels (low / medium / high, sizes from `elastic.scroll.batch.levels`) rather than raw numbers. The level
+   whose size equals the global `elastic.scroll.batch.size` is preselected so an untouched dialog exports
+   exactly as before; if none matches, a "Default" option (= the global size) is preselected instead. *@
+@batchLevels = @{ ScrollBatchLevels(context.configuration.underlying) }
+@defaultBatchLevel = @{ batchLevels.levelFor(ScrollBatchLevels.globalSize(context.configuration.underlying)) }
+
+@batchSizeElement = {
+    @labelValue("batchLevel", "Batch Size", helpText = Some("How many records are fetched from the store at a time while the export streams. Choose 'Low' for data sets with large documents (less server memory, slower export) and 'High' for small documents."), labelGridWidth = 3) {
+        <select id="batchLevel" name="batchLevel" class="form-control">
+            @if(defaultBatchLevel.isEmpty) {
+                <option value="" selected="selected">Default</option>
+            }
+            @ScrollBatchLevel.values.toSeq.map { level =>
+                <option value="@level" @if(defaultBatchLevel.contains(level)) {selected="selected"}>@level.toString.capitalize@if(defaultBatchLevel.contains(level)) { (default)}</option>
+            }
+        </select>
+    }
+}
+
 @extraCsvElements = {
     @displayChoiceElement
     @labelValue("escapeStringValues", "Escape Strings?", helpText = Some("Wrap string values with double quotes."), labelGridWidth = 3) {
         <input type="checkbox" class="escapeStringValuesCheckbox">
         <input type="hidden" id="escapeStringValues" name="escapeStringValues" value="false">
     }
+    @batchSizeElement
 }
 
 @extraCsvTableElements = {
@@ -53,8 +75,13 @@
     @extraTableModalElements.getOrElse(Html(""))
 }
 
-@extraJsonTableElements = {
+@extraJsonElements = {
     @displayChoiceElement
+    @batchSizeElement
+}
+
+@extraJsonTableElements = {
+    @extraJsonElements
     @extraTableModalElements.getOrElse(Html(""))
 }
 
@@ -76,11 +103,11 @@
         Right(Html("<div class='dropdown-divider'></div>")),
         Left((
             "exportAllJsonModal", "Export All as JSON",
-            exportAllJsonModal(exportJsonCall)
+            exportAllJsonModal(exportJsonCall, Some(batchSizeElement))
         )),
         Left((
             "exportFilteredJsonModal", "Export Filtered as JSON",
-            exportFilteredJsonModal(exportJsonCall, Nil, Some(displayChoiceElement))
+            exportFilteredJsonModal(exportJsonCall, Nil, Some(extraJsonElements))
         )),
         Left((
             "exportFilteredTableJsonModal", "Export Filtered Table as JSON",
@@ -89,11 +116,11 @@
         Right(Html("<div class='dropdown-divider'></div>")),
         Left((
             "exportAllJsonlModal", "Export All as JSONL",
-            exportAllJsonlModal(exportJsonCall)
+            exportAllJsonlModal(exportJsonCall, Some(batchSizeElement))
         )),
         Left((
             "exportFilteredJsonlModal", "Export Filtered as JSONL",
-            exportFilteredJsonlModal(exportJsonCall, Nil, Some(displayChoiceElement))
+            exportFilteredJsonlModal(exportJsonCall, Nil, Some(extraJsonElements))
         )),
         Right(Html("<div class='dropdown-divider'></div>")),
         Left((

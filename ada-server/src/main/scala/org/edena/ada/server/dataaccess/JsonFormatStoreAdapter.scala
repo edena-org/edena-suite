@@ -45,11 +45,12 @@ private[dataaccess] abstract class AbstractJsonFormatReadonlyStoreAdapter[E: For
     sort: Seq[Sort],
     projection: Traversable[String],
     limit: Option[Int],
-    skip: Option[Int])(
+    skip: Option[Int],
+    batchSize: Option[Int])(
     implicit actorSystem: ActorSystem, materializer: Materializer
   ): Future[Source[JsObject, _]] =
     for {
-      source <- repo.findAsStream(criterion, sort, projection, limit, skip)
+      source <- repo.findAsStream(criterion, sort, projection, limit, skip, batchSize)
     } yield
       source.map(asJson)
 

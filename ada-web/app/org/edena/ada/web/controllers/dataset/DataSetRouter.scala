@@ -38,14 +38,16 @@ class DataSetRouter(dataSetId: String) extends GenericRouter(routes.DataSetDispa
   val getFieldValue = routes.getFieldValue _ map route
 
   // scalaz package does work here (too many params probably) hence we need to name all params explicitly and forward
-  val exportViewAsCsv = (dataViewId:BSONObjectID, delimiter:String, replaceEolWithSpace:Boolean, eol:Option[String], filter:Seq[org.edena.core.FilterCondition], tableColumnsOnly: Boolean, useDisplayValues: Boolean, escapeStringValues: Boolean) =>
-    route(routes.exportViewRecordsAsCsv(dataViewId, delimiter, replaceEolWithSpace, eol, filter, tableColumnsOnly, useDisplayValues, escapeStringValues))
+  val exportViewAsCsv = (dataViewId:BSONObjectID, delimiter:String, replaceEolWithSpace:Boolean, eol:Option[String], filter:Seq[org.edena.core.FilterCondition], tableColumnsOnly: Boolean, useDisplayValues: Boolean, escapeStringValues: Boolean, batchLevel: Option[String]) =>
+    route(routes.exportViewRecordsAsCsv(dataViewId, delimiter, replaceEolWithSpace, eol, filter, tableColumnsOnly, useDisplayValues, escapeStringValues, batchLevel))
   // scalaz package does work here (too many params probably) hence we need to name all params explicitly and forward
-  val exportTableAsCsv  = (tableColumnNames: Seq[String], delimiter: String, replaceEolWithSpace: Boolean, eol: Option[String], filter: Seq[org.edena.core.FilterCondition], tableColumnsOnly: Boolean, useDisplayValues: Boolean, escapeStringValues: Boolean, selectedOnly: Boolean, selectedIds: Seq[BSONObjectID]) =>
-    route(routes.exportTableRecordsAsCsv(tableColumnNames, delimiter, replaceEolWithSpace, eol, filter, tableColumnsOnly, useDisplayValues, escapeStringValues, selectedOnly, selectedIds))
+  val exportTableAsCsv  = (tableColumnNames: Seq[String], delimiter: String, replaceEolWithSpace: Boolean, eol: Option[String], filter: Seq[org.edena.core.FilterCondition], tableColumnsOnly: Boolean, useDisplayValues: Boolean, escapeStringValues: Boolean, selectedOnly: Boolean, selectedIds: Seq[BSONObjectID], batchLevel: Option[String]) =>
+    route(routes.exportTableRecordsAsCsv(tableColumnNames, delimiter, replaceEolWithSpace, eol, filter, tableColumnsOnly, useDisplayValues, escapeStringValues, selectedOnly, selectedIds, batchLevel))
 
-  val exportViewAsJson  = routes.exportViewRecordsAsJson _ map route
-  val exportTableAsJson  = routes.exportTableRecordsAsJson _ map route
+  val exportViewAsJson = (dataViewId: BSONObjectID, filter: Seq[org.edena.core.FilterCondition], tableColumnsOnly: Boolean, useDisplayValues: Boolean, batchLevel: Option[String]) =>
+    route(routes.exportViewRecordsAsJson(dataViewId, filter, tableColumnsOnly, useDisplayValues, batchLevel))
+  val exportTableAsJson = (tableColumnNames: Seq[String], filter: Seq[org.edena.core.FilterCondition], tableColumnsOnly: Boolean, useDisplayValues: Boolean, selectedOnly: Boolean, selectedIds: Seq[BSONObjectID], batchLevel: Option[String]) =>
+    route(routes.exportTableRecordsAsJson(tableColumnNames, filter, tableColumnsOnly, useDisplayValues, selectedOnly, selectedIds, batchLevel))
 
   val exportTranSMARTData = routeFun(_.exportTranSMARTDataFile())
   val exportTranSMARTMapping = routeFun(_.exportTranSMARTMappingFile())

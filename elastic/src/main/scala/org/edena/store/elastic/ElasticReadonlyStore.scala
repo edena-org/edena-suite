@@ -299,14 +299,15 @@ abstract class ElasticReadonlyStore[E, ID](
     sort: Seq[Sort],
     projection: Traversable[String],
     limit: Option[Int],
-    skip: Option[Int]
+    skip: Option[Int],
+    batchSize: Option[Int]
   )(
     implicit system: ActorSystem,
     materializer: Materializer
   ): Future[Source[E, _]] = {
     val projectionSeq = projection.map(toDBFieldName).toSeq
 
-    val source = findAsStreamAux(criterion, sort, projection, limit, skip).map { searchHit =>
+    val source = findAsStreamAux(criterion, sort, projection, limit, skip, batchSize = batchSize).map { searchHit =>
       if (searchHit.exists) {
         val result = projection match {
           case Nil => serializeSearchHit(searchHit)
@@ -381,12 +382,15 @@ abstract class ElasticReadonlyStore[E, ID](
     projection: Traversable[String],
     limit: Option[Int],
     skip: Option[Int],
-    additionalQueryDef: Option[Query] = None
+    additionalQueryDef: Option[Query] = None,
+    batchSize: Option[Int] = None
   )(
     implicit system: ActorSystem,
     materializer: Materializer
   ): Source[SearchHit, NotUsed] = {
-    val scrollLimit = limit.getOrElse(setting.scrollBatchSize)
+    // Scroll page size: an explicit batchSize wins, else the (legacy) limit, else the configured
+    // `elastic.scroll.batch.size`. Note the scroll publisher is not capped by it — it is a page size only.
+    val scrollLimit = org.edena.core.store.ScrollBatchLevels.pageSize(batchSize, limit, setting.scrollBatchSize)
 
     val searchDefinition = createSearchDefinition(
       criterion,

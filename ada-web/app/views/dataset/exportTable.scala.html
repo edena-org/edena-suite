@@ -36,8 +36,8 @@
             <li class="list-inline-item">
                 @dataSetExportDropdown(
                     dataSetName,
-                    dataSetRouter.exportTableAsCsv(Nil, _, true, None, _, _, true, true, false, Nil),
-                    dataSetRouter.exportTableAsJson(Nil, _, _, false, false, Nil),
+                    dataSetRouter.exportTableAsCsv(Nil, _, true, None, _, _, true, true, false, Nil, None),
+                    dataSetRouter.exportTableAsJson(Nil, _, _, false, false, Nil, None),
                     setting.filterShowFieldStyle,
                     None,
                     Some(selectedOnlyElement)

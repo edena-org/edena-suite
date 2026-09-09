@@ -246,8 +246,9 @@ class DataSetDispatcher @Inject() (
     filter: Seq[FilterCondition],
     tableColumnsOnly: Boolean,
     useDisplayValues: Boolean,
-    escapeStringValues: Boolean
-  ) = dispatch(_.exportViewRecordsAsCsv(dataViewId, delimiter, replaceEolWithSpace, eol, filter, tableColumnsOnly, useDisplayValues, escapeStringValues))
+    escapeStringValues: Boolean,
+    batchLevel: Option[String]
+  ) = dispatch(_.exportViewRecordsAsCsv(dataViewId, delimiter, replaceEolWithSpace, eol, filter, tableColumnsOnly, useDisplayValues, escapeStringValues, batchLevel))
 
   override def exportTableRecordsAsCsv(
     tableColumnNames: Seq[String],
@@ -259,15 +260,17 @@ class DataSetDispatcher @Inject() (
     useDisplayValues: Boolean,
     escapeStringValues: Boolean,
     selectedOnly: Boolean,
-    selectedIds: Seq[BSONObjectID]
-  ) = dispatch(_.exportTableRecordsAsCsv(tableColumnNames, delimiter, replaceEolWithSpace, eol, filter, tableColumnsOnly, useDisplayValues, escapeStringValues, selectedOnly, selectedIds))
+    selectedIds: Seq[BSONObjectID],
+    batchLevel: Option[String]
+  ) = dispatch(_.exportTableRecordsAsCsv(tableColumnNames, delimiter, replaceEolWithSpace, eol, filter, tableColumnsOnly, useDisplayValues, escapeStringValues, selectedOnly, selectedIds, batchLevel))
 
   override def exportViewRecordsAsJson(
     dataViewId: BSONObjectID,
     filter: Seq[FilterCondition],
     tableColumnsOnly: Boolean,
-    useDisplayValues: Boolean
-  ) = dispatch(_.exportViewRecordsAsJson(dataViewId, filter, tableColumnsOnly, useDisplayValues))
+    useDisplayValues: Boolean,
+    batchLevel: Option[String]
+  ) = dispatch(_.exportViewRecordsAsJson(dataViewId, filter, tableColumnsOnly, useDisplayValues, batchLevel))
 
   override def exportTableRecordsAsJson(
     tableColumnNames: Seq[String],
@@ -275,8 +278,9 @@ class DataSetDispatcher @Inject() (
     tableColumnsOnly: Boolean,
     useDisplayValues: Boolean,
     selectedOnly: Boolean,
-    selectedIds: Seq[BSONObjectID]
-  ) = dispatch(_.exportTableRecordsAsJson(tableColumnNames, filter, tableColumnsOnly, useDisplayValues, selectedOnly, selectedIds))
+    selectedIds: Seq[BSONObjectID],
+    batchLevel: Option[String]
+  ) = dispatch(_.exportTableRecordsAsJson(tableColumnNames, filter, tableColumnsOnly, useDisplayValues, selectedOnly, selectedIds, batchLevel))
 
   override def exportTranSMARTDataFile(
     delimiter: String,

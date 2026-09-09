@@ -64,11 +64,12 @@ private class SubTypeBasedCrudStoreAdapter[SUB_E: Manifest, E >: SUB_E, ID](
     sort: Seq[Sort],
     projection: Traversable[String],
     limit: Option[Int],
-    skip: Option[Int])(
+    skip: Option[Int],
+    batchSize: Option[Int])(
     implicit actorySystem: ActorSystem, materializer: Materializer
   ): Future[Source[SUB_E, _]] =
     for {
-      items <- underlying.findAsStream(criterion AND targetClassCriterion, sort, projection, limit, skip)
+      items <- underlying.findAsStream(criterion AND targetClassCriterion, sort, projection, limit, skip, batchSize)
     } yield {
       items.map(_.asInstanceOf[SUB_E])
     }

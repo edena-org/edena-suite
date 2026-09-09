@@ -68,8 +68,8 @@
 
 @dataSetExportDropdown(
     dataSetName,
-    dataSetRouter.exportViewAsCsv(dataViewId, _, true, None, _, _, true, true),
-    dataSetRouter.exportViewAsJson(dataViewId, _, _, false),
+    dataSetRouter.exportViewAsCsv(dataViewId, _, true, None, _, _, true, true, None),
+    dataSetRouter.exportViewAsJson(dataViewId, _, _, false, None),
     showFieldStyle,
     Some(extraDropdownItems)
 )

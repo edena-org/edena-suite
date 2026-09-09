@@ -2,13 +2,19 @@
 @import views.html.export.exportModal
 
 @(
-    exportCall: (Seq[FilterCondition], Boolean) => Call
+    exportCall: (Seq[FilterCondition], Boolean) => Call,
+    elements: Option[Html] = None
 )(
     implicit request: RequestHeader
 )
 
 @modalBody = {
     <p>Are you sure you want to export the FULL data set (no filter applied) with ALL the fields as JSONL (one JSON per line)?</p>
+    @elements.map { e =>
+        <fieldset>
+            @e
+        </fieldset>
+    }
 }
 
 @jsonlCall = @{

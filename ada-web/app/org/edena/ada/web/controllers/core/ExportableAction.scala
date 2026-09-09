@@ -33,13 +33,14 @@ trait ExportableAction[E] {
     filter: Seq[FilterCondition] = Nil,
     extraCriterion: Option[Criterion] = None,
     useProjection: Boolean = true,
-    nameFieldTypeMap: Map[String, FieldType[_]] = Map())(
+    nameFieldTypeMap: Map[String, FieldType[_]] = Map(),
+    batchSize: Option[Int] = None)(
     implicit actorSystem: ActorSystem, materializer: Materializer
   ) = Action.async { implicit request =>
     val projection = if (useProjection) fieldNames else Nil
 
     for {
-      jsonStream <- getJsonStream(filter, extraCriterion, orderBy, projection)
+      jsonStream <- getJsonStream(filter, extraCriterion, orderBy, projection, batchSize)
     } yield {
       val finalJsonStream =
         if (nameFieldTypeMap.nonEmpty)
@@ -58,7 +59,8 @@ trait ExportableAction[E] {
     extraCriterion: Option[Criterion] = None,
     fieldNames: Traversable[String] = Nil,
     useProjection: Boolean = true,
-    nameFieldTypeMap: Map[String, FieldType[_]] = Map())(
+    nameFieldTypeMap: Map[String, FieldType[_]] = Map(),
+    batchSize: Option[Int] = None)(
     implicit ev: Format[E], actorSystem: ActorSystem, materializer: Materializer
   ) = Action.async { implicit request =>
     val projection = if (useProjection) fieldNames else Nil
@@ -68,7 +70,7 @@ trait ExportableAction[E] {
     val asJsonl = request.getQueryString("format").contains("jsonl")
 
     for {
-      jsonStream <- getJsonStream(filter, extraCriterion, orderBy, projection)
+      jsonStream <- getJsonStream(filter, extraCriterion, orderBy, projection, batchSize)
     } yield {
       val finalJsonStream =
         if (nameFieldTypeMap.nonEmpty)
@@ -90,13 +92,14 @@ trait ExportableAction[E] {
     extraCriterion: Option[Criterion] = None,
     fieldNames: Traversable[String] = Nil,
     useProjection: Boolean = true,
-    nameFieldTypeMap: Map[String, FieldType[_]] = Map())(
+    nameFieldTypeMap: Map[String, FieldType[_]] = Map(),
+    batchSize: Option[Int] = None)(
     implicit ev: Format[E], actorSystem: ActorSystem, materializer: Materializer
   ) = Action.async { implicit request =>
     val projection = if (useProjection) fieldNames else Nil
 
     for {
-      jsonStream <- getJsonStream(filter, extraCriterion, orderBy, projection)
+      jsonStream <- getJsonStream(filter, extraCriterion, orderBy, projection, batchSize)
     } yield {
       val finalJsonStream =
         if (nameFieldTypeMap.nonEmpty)
@@ -108,11 +111,16 @@ trait ExportableAction[E] {
     }
   }
 
+  /**
+   * @param batchSize store-level streaming page size (Elastic scroll size / Mongo cursor batch), see
+   *                  `ReadonlyStore.findAsStream`; None = the store's configured default.
+   */
   private def getJsonStream(
     filter: Seq[FilterCondition] = Nil,
     extraCriterion: Option[Criterion] = None,
     orderBy: Option[String] = None,
-    projection: Traversable[String] = Nil)(
+    projection: Traversable[String] = Nil,
+    batchSize: Option[Int] = None)(
     implicit actorSystem: ActorSystem, materializer: Materializer
   ): Future[Source[JsObject, _]] =
     for {
@@ -121,7 +129,8 @@ trait ExportableAction[E] {
       recordsSource <- store.findAsStream(
         criterion = criterion AND extraCriterion,
         sort = orderBy.fold(Seq[Sort]())(toSort),
-        projection = projection
+        projection = projection,
+        batchSize = batchSize.filter(_ > 0)
       )
     } yield
       recordsSource.map(item => toJson(item).as[JsObject])
