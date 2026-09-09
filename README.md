@@ -1,4 +1,4 @@
-# Edena Suite [![version](https://img.shields.io/badge/version-1.0.0-green.svg)](https://peterbanda.net) [![License](https://img.shields.io/badge/License-Apache%202.0-lightgrey.svg)](https://www.apache.org/licenses/LICENSE-2.0)
+# Edena Suite [![version](https://img.shields.io/badge/version-1.1.0-green.svg)](https://peterbanda.net) [![License](https://img.shields.io/badge/License-Apache%202.0-lightgrey.svg)](https://www.apache.org/licenses/LICENSE-2.0)
 
 Edena Suite is a comprehensive data discovery and analytics platform built with Scala and Play Framework. It's designed for data exploration, statistical analysis, and machine learning workflows with support for multiple storage backends and ML frameworks.
 
