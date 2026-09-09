@@ -1,9 +1,10 @@
 package org.edena.core.store
 
 import com.typesafe.config.ConfigFactory
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
-class ScrollBatchLevelSpec extends FlatSpec with Matchers {
+class ScrollBatchLevelSpec extends AnyFlatSpec with Matchers {
 
   behavior of "ScrollBatchLevel.parse"
 

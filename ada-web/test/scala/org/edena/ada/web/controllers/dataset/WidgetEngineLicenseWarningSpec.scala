@@ -1,12 +1,13 @@
 package org.edena.ada.web.controllers.dataset
 
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 /**
  * Renders the Highcharts licensing warning shown next to the widget-engine select in the data set
  * settings / import forms and checks it wires to the right select and is hidden by default.
  */
-class WidgetEngineLicenseWarningSpec extends FlatSpec with Matchers {
+class WidgetEngineLicenseWarningSpec extends AnyFlatSpec with Matchers {
 
   behavior of "widgetEngineLicenseWarning template"
 

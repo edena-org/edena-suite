@@ -4,6 +4,7 @@ import org.edena.core.Identity
 import org.edena.core.store.Criterion._
 import org.edena.store.json.BSONObjectIdentity
 import org.scalatest.{Filter => _, _}
+import org.scalatest.flatspec.AsyncFlatSpec
 import play.api.libs.json.{Format, Json}
 import reactivemongo.api.bson.BSONObjectID
 import org.edena.store.json.BSONObjectIDFormat

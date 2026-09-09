@@ -1,6 +1,7 @@
 package stats
 
 import org.scalatest._
+import org.scalatest.matchers.should.Matchers
 
 trait ExtraMatchers { _: Matchers =>
 

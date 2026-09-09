@@ -3,8 +3,10 @@ package field
 import org.edena.ada.server.field.FieldTypeHelper
 import org.edena.core.field.{FieldTypeId, FieldTypeSpec}
 import org.scalatest._
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
-class FieldTypeInferrerTest extends FlatSpec with Matchers {
+class FieldTypeInferrerTest extends AnyFlatSpec with Matchers {
 
   private val fti = FieldTypeHelper.fieldTypeInferrer
 

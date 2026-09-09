@@ -7,9 +7,11 @@ import org.edena.ada.server.dataaccess.AdaConversionException
 import org.edena.ada.server.field.{FieldType, FieldTypeHelper}
 import org.edena.core.field.{FieldTypeId, FieldTypeSpec}
 import org.scalatest._
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 import play.api.libs.json._
 
-class ArrayFieldTypeTest extends FlatSpec with Matchers {
+class ArrayFieldTypeTest extends AnyFlatSpec with Matchers {
 
   val ftf = FieldTypeHelper.fieldTypeFactory()
 

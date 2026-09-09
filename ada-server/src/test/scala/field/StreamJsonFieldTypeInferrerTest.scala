@@ -6,12 +6,14 @@ import akka.stream.scaladsl.Source
 import org.edena.ada.server.field.FieldTypeHelper
 import org.edena.core.field.{FieldTypeId, FieldTypeSpec}
 import org.scalatest.{Assertion, _}
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 import play.api.libs.json._
 import scala.concurrent.ExecutionContext.Implicits.global
 
 import scala.concurrent.Future
 
-class StreamJsonFieldTypeInferrerTest extends FlatSpec with Matchers {
+class StreamJsonFieldTypeInferrerTest extends AnyFlatSpec with Matchers {
 
   private val fti = FieldTypeHelper.jsonFieldTypeInferrer
 

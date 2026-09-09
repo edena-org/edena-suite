@@ -9,6 +9,8 @@ import org.edena.core.calc.impl.{GroupNumericDistributionCountsCalc, NumericDist
 import scala.concurrent.Future
 import scala.util.Random
 import org.scalatest._
+import org.scalatest.flatspec.AsyncFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 class GroupNumericDistributionTest extends AsyncFlatSpec with Matchers {
 

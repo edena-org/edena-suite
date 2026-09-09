@@ -1,6 +1,7 @@
 package org.edena.json.util
 
-import org.scalatest.{AsyncFlatSpec, Matchers}
+import org.scalatest.flatspec.AsyncFlatSpec
+import org.scalatest.matchers.should.Matchers
 import play.api.libs.json.{JsArray, JsBoolean, JsNull, JsNumber, JsObject, JsString, Json}
 
 class JsonHelperTest extends AsyncFlatSpec with Matchers with JsonHelper {

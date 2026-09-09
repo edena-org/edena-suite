@@ -6,6 +6,8 @@ import akka.stream.scaladsl.Source
 import org.edena.ada.server.field.FieldTypeHelper
 import org.edena.core.field.{FieldTypeId, FieldTypeSpec}
 import org.scalatest._
+import org.scalatest.flatspec.AsyncFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import scala.concurrent.Future
 

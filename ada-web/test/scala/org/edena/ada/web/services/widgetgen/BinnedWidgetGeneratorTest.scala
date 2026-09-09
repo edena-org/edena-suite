@@ -5,6 +5,8 @@ import org.edena.ada.web.models.{BoxWidget, HeatmapWidget, LineWidget, Widget}
 import org.edena.core.calc.impl.{DateBinsType, Quartiles}
 import org.edena.core.field.FieldTypeId
 import org.scalatest._
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 import play.api.libs.json.{JsNull, JsObject, Json}
 
 import org.edena.core.DefaultTypes.Seq
@@ -13,7 +15,7 @@ import org.edena.core.DefaultTypes.Seq
   * Exercises the full json -> calculator -> widget -> browser-json pipeline of the binned
   * box plot, binned aggregate line, and Spearman correlation widgets (in-memory generation path).
   */
-class BinnedWidgetGeneratorTest extends FlatSpec with Matchers {
+class BinnedWidgetGeneratorTest extends AnyFlatSpec with Matchers {
 
   private val xField = Field("x", Some("X Label"), FieldTypeId.Double)
   private val valueField = Field("y", Some("Y Label"), FieldTypeId.Double)

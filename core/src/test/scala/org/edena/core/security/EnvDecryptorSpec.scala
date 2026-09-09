@@ -1,8 +1,10 @@
 package org.edena.core.security
 
 import org.scalatest._
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
-class EnvDecryptorSpec extends FlatSpec with Matchers {
+class EnvDecryptorSpec extends AnyFlatSpec with Matchers {
 
   private val crypto = new SymmetricCrypto("env-decryptor-test-key")
 

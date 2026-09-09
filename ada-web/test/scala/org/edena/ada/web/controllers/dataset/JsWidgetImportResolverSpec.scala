@@ -1,14 +1,15 @@
 package org.edena.ada.web.controllers.dataset
 
 import org.edena.ada.server.AdaException
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 /**
  * Tests for [[DataSetWebContext.resolveJsImport]]: how a `widget_engine.providers[].jsImports`
  * entry (`path` / `webjar` / `url`) becomes a `<script>` tag, in particular the `url` failover used
  * when an optional webjar (e.g. Highcharts) is not on the classpath.
  */
-class JsWidgetImportResolverSpec extends FlatSpec with Matchers {
+class JsWidgetImportResolverSpec extends AnyFlatSpec with Matchers {
 
   private def local(path: String) = s"<local:$path>"
 

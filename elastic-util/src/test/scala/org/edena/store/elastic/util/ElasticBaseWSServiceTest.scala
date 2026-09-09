@@ -3,7 +3,9 @@ package org.edena.store.elastic.util
 import akka.actor.ActorSystem
 import akka.stream.Materializer
 import org.edena.ws.Timeouts
-import org.scalatest.{AsyncFlatSpec, BeforeAndAfterAll, Matchers}
+import org.scalatest.BeforeAndAfterAll
+import org.scalatest.flatspec.AsyncFlatSpec
+import org.scalatest.matchers.should.Matchers
 import play.api.libs.json.{JsObject, Json}
 
 import scala.concurrent.{Await, ExecutionContext}

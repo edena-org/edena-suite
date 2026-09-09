@@ -4,9 +4,11 @@ import org.edena.ada.server.models.DataSetFormattersAndIds.widgetSpecFormat
 import org.edena.ada.server.models.{DistributionWidgetSpec, MultiChartDisplayOptions, WidgetSpec}
 import org.edena.core.calc.impl.DateBinsType
 import org.scalatest._
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 import play.api.libs.json.Json
 
-class WidgetSpecDateBinsFormatTest extends FlatSpec with Matchers {
+class WidgetSpecDateBinsFormatTest extends AnyFlatSpec with Matchers {
 
   "Widget spec format" should "read legacy documents with a stale useDateMonthBins field" in {
     // shape of a pre-dateBinsType document stored in Mongo (useDateMonthBins was always written)

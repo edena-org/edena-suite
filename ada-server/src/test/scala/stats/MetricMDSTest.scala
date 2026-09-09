@@ -2,6 +2,8 @@ package stats
 
 import akka.stream.scaladsl.Source
 import org.scalatest._
+import org.scalatest.flatspec.AsyncFlatSpec
+import org.scalatest.matchers.should.Matchers
 import org.edena.ada.server.services.{AdaServerBaseContainer, StatsService}
 
 import scala.concurrent.{Await, Future}

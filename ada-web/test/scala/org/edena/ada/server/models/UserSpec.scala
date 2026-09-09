@@ -2,6 +2,7 @@ package scala.org.edena.ada.server.models
 
 import org.edena.ada.server.models.User
 import org.scalatest._
+import org.scalatest.flatspec.AsyncFlatSpec
 import play.api.libs.json.Json
 import reactivemongo.api.bson.BSONObjectID
 

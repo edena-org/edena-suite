@@ -8,6 +8,8 @@ import org.edena.core.calc.impl.{GroupTupleCalc, GroupTupleCalcTypePack}
 
 import scala.util.Random
 import org.scalatest._
+import org.scalatest.flatspec.AsyncFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 class GroupTupleTest extends AsyncFlatSpec with Matchers {
 

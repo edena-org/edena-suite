@@ -2,6 +2,7 @@ package org.edena.ada.server.util
 
 import java.lang.reflect.Modifier
 import org.reflections.Reflections
+import org.reflections.util.{ClasspathHelper, ConfigurationBuilder}
 
 import scala.reflect.ClassTag
 import scala.jdk.CollectionConverters._
@@ -13,7 +14,9 @@ object ClassFinderUtil {
     exactPackageMatch: Boolean = false)(
     implicit m: ClassTag[T]
   ): Traversable[Class[T]] = {
-    val reflections = packageName.map(new Reflections(_)).getOrElse(new Reflections())
+    val reflections = packageName.map(new Reflections(_)).getOrElse(
+      new Reflections(new ConfigurationBuilder().setUrls(ClasspathHelper.forClassLoader()))
+    )
     val clazz = m.runtimeClass
 
     val classes = reflections.getSubTypesOf(clazz).asScala.filter(currentClazz =>

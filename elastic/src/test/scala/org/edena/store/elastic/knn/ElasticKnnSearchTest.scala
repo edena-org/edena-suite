@@ -7,7 +7,9 @@ import net.codingwell.scalaguice.ScalaModule
 import org.edena.core.store.Criterion._
 import org.edena.core.store.ValueMapAux._
 import org.edena.store.elastic.{ElasticBaseTest, KnnSearchSettings}
-import org.scalatest.{AsyncFlatSpec, BeforeAndAfterAll, Matchers}
+import org.scalatest.BeforeAndAfterAll
+import org.scalatest.flatspec.AsyncFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import scala.concurrent.Await
 import scala.concurrent.duration._

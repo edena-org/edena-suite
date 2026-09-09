@@ -5,7 +5,7 @@ object Dependencies {
 
   object Versions {
     val akka = "2.6.21"
-    val scalaTest = "3.0.8" // originally "3.0.0"
+    val scalaTest = "3.2.19" // 3.1+ moved style traits to org.scalatest.flatspec/funsuite/matchers packages
     val playJson = "2.10.6" // Updated for Play 2.9.x compatibility
 
     // Guice 5.1.0 was specifically released to provide proper Java 17 support
@@ -50,7 +50,7 @@ object Dependencies {
     val akkaHttp = "10.2.10" // compatible with Akka 2.6.21
 
     // SPARK
-    val spark = "3.5.4"
+    val spark = "3.5.6" // patch bump with CVE fixes; 4.0 deferred (breaking changes)
     val bnd = "0.7.3"
 
     // IGNITE
@@ -77,7 +77,7 @@ object Dependencies {
     val pac4jOidc = "6.3.3" // 6.3.3 has CVE-2026-29000 fix for pac4j-jwt (not directly on classpath, hygiene bump)
 
     val scalazCore = "7.2.36"
-    val scalatestplusPlay = "4.0.3"
+    val scalatestplusPlay = "6.0.2" // Play 2.9.x + scalatest 3.2.x
 
     // GraalVM
     val graalvm = "24.2.0"   // JDK 17

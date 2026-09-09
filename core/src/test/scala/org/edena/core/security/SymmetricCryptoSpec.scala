@@ -2,12 +2,14 @@ package org.edena.core.security
 
 import com.typesafe.config.ConfigFactory
 import org.scalatest._
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.util.Base64
 
-class SymmetricCryptoSpec extends FlatSpec with Matchers {
+class SymmetricCryptoSpec extends AnyFlatSpec with Matchers {
 
   private val crypto = new SymmetricCrypto("unit-test-master-key")
 

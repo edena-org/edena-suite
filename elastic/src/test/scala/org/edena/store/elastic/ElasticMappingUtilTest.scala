@@ -1,8 +1,9 @@
 package org.edena.store.elastic
 
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
-class ElasticMappingUtilTest extends FlatSpec with Matchers {
+class ElasticMappingUtilTest extends AnyFlatSpec with Matchers {
 
   import ElasticMappingUtil._
 

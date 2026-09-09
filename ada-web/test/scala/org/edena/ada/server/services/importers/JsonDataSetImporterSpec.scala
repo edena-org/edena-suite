@@ -5,6 +5,7 @@ import org.edena.ada.server.models.dataimport.JsonDataSetImport
 import org.edena.ada.server.models.{DataSetSetting, StorageType}
 import org.edena.ada.server.services.ServiceTypes.DataSetCentralImporter
 import org.scalatest._
+import org.scalatest.flatspec.AsyncFlatSpec
 
 import scala.org.edena.ada.server.services.InjectorWrapper
 

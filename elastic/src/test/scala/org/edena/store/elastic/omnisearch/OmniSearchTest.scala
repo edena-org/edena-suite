@@ -7,7 +7,9 @@ import org.edena.core.store.Criterion._
 import org.edena.core.store.ValueMapAux._
 import org.edena.store.elastic.{ElasticBaseTest, FullTextSearchSettings, FullTextSearchType, KnnSearchSettings}
 import org.edena.store.elastic.knn.{Article, ArticleStoreModule, ArticleStoreTypes}
-import org.scalatest.{AsyncFlatSpec, BeforeAndAfterAll, Matchers}
+import org.scalatest.BeforeAndAfterAll
+import org.scalatest.flatspec.AsyncFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import scala.concurrent.{Await, Future}
 import scala.concurrent.duration._

@@ -1,6 +1,7 @@
 package org.edena.store.elastic
 
-import org.scalatest.{Assertion, Assertions, Matchers, Succeeded}
+import org.scalatest.{Assertion, Assertions, Succeeded}
+import org.scalatest.matchers.should.Matchers
 
 trait ExtraAssertions { _: Assertions with Matchers =>
 

@@ -19,7 +19,7 @@ libraryDependencies ++= Seq(
 
   "ch.qos.logback" % "logback-classic" % Versions.logback,                                          // to provide slf4j implementation % Runtime
 
-  "org.reflections" % "reflections" % "0.9.10" exclude("com.google.code.findbugs", "annotations"),  // class finder - TODO: upgrade to 0.9.12
+  "org.reflections" % "reflections" % "0.10.2",                                                     // class finder
   "com.unboundid" % "unboundid-ldapsdk" % "7.0.2",                                                  // LDAP — CVE-2018-1000134 empty-password bypass fixed in 4.0.5+
   // t-SNE: the Barnes-Hut implementation from T-SNE-Java v2.5.0 (BSD-3) is VENDORED under
   // src/main/java/com/jujutsu (see the README there) — jitpack no longer serves the jar. EJML is its only

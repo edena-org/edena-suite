@@ -2,10 +2,12 @@ package org.edena.core.security
 
 import com.typesafe.config.ConfigFactory
 import org.scalatest._
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import scala.jdk.CollectionConverters._
 
-class ConfigDecryptorSpec extends FlatSpec with Matchers {
+class ConfigDecryptorSpec extends AnyFlatSpec with Matchers {
 
   private val masterKey = "config-decryptor-test-key"
   private val crypto = new SymmetricCrypto(masterKey)

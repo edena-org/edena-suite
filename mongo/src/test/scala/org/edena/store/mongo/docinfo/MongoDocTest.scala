@@ -13,7 +13,9 @@ import DocInfo.docInfoFormat
 import StoreTypes.DocStore
 import akka.stream.scaladsl.Sink
 import org.edena.store.mongo.MongoBaseTest
-import org.scalatest.{AsyncFlatSpec, BeforeAndAfterAll, Matchers}
+import org.scalatest.BeforeAndAfterAll
+import org.scalatest.flatspec.AsyncFlatSpec
+import org.scalatest.matchers.should.Matchers
 import reactivemongo.api.bson.BSONObjectID
 
 import scala.concurrent.Await

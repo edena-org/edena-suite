@@ -3,6 +3,8 @@ package scala.org.edena.play.util
 import org.edena.ada.server.models.Translation
 import org.edena.play.util.JsonBodyUtil
 import org.scalatest._
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 import play.api.libs.json._
 import reactivemongo.api.bson.BSONObjectID
 
@@ -10,7 +12,7 @@ import reactivemongo.api.bson.BSONObjectID
  * Tests for the pure JSON/JSONL request-body parsing behind the generic CRUD controllers' JSON
  * save/update paths (lives in the `play` module, which has no test infra of its own).
  */
-class JsonBodyUtilSpec extends FlatSpec with Matchers {
+class JsonBodyUtilSpec extends AnyFlatSpec with Matchers {
 
   private val id = BSONObjectID.parse("5dc029c50c00000f059e1ccd").get
 

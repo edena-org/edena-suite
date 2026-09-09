@@ -6,6 +6,8 @@ import akka.stream.scaladsl.Source
 import org.edena.core.calc.CalculatorHelper.RunExt
 import org.edena.core.calc.impl.{AllDefinedSeqBinCountCalc, NumericDistributionFlowOptions, NumericDistributionOptions, SeqBinCountCalc}
 import org.scalatest._
+import org.scalatest.flatspec.AsyncFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import scala.concurrent.Future
 import scala.util.Random

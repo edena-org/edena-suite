@@ -4,9 +4,10 @@ import play.api.libs.json._
 
 import java.util.UUID
 import scala.reflect.runtime.universe._
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
-class JsonSchemaReflectionHelperSpec extends FlatSpec with Matchers with JsonSchemaReflectionHelper {
+class JsonSchemaReflectionHelperSpec extends AnyFlatSpec with Matchers with JsonSchemaReflectionHelper {
 
   // Implicit reads for nested structures
   implicit val anyReads: Reads[Any] = Reads {
