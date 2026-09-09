@@ -39,7 +39,15 @@ libraryDependencies ++= Seq(
 
   // charting
   "org.webjars.npm" % "plotly.js-dist" % "2.35.3",                  // plotly
-  "org.webjars" % "highcharts" % "11.1.0",                          // highcharts — proprietary license, commercial use requires paid Highsoft license
+  // Highcharts is deliberately NOT bundled. It is proprietary software (Highsoft), free only for
+  // personal / non-commercial use; commercial and governmental use requires a paid license, and
+  // redistributing it inside a product needs an OEM license (https://shop.highcharts.com/license).
+  // Shipping it here would put Highsoft's code into the Apache-2.0 web-assets jar (Play copies every
+  // webjar into public/lib/), misrepresenting its license to downstream users. The Highcharts widget
+  // engine therefore loads the library from code.highcharts.com by default (see the `url` failover in
+  // conf/core/widget-engine.conf). A deployer holding a Highsoft license may uncomment this line, or
+  // add the webjar to their own build, and the local copy will be served instead of the CDN.
+  // "org.webjars" % "highcharts" % "11.1.0",
   "org.webjars.npm" % "apexcharts" % "4.4.0",                       // apexcharts
   "org.webjars.npm" % "echarts" % "5.5.1",                          // echarts (Apache 2.0)
 

@@ -6,8 +6,6 @@ name := "ada-server"
 description := "Server side of Ada Discovery Analytics containing a persistence layer, stats and data import/transformation services, and util classes."
 
 resolvers ++= Seq(
-  "Sci Java" at "https://maven.scijava.org/content/repositories/public/", // for the T-SNE lib
-  "jitpack" at "https://jitpack.io",
   Resolver.mavenLocal
 )
 
@@ -23,8 +21,10 @@ libraryDependencies ++= Seq(
 
   "org.reflections" % "reflections" % "0.9.10" exclude("com.google.code.findbugs", "annotations"),  // class finder - TODO: upgrade to 0.9.12
   "com.unboundid" % "unboundid-ldapsdk" % "7.0.2",                                                  // LDAP — CVE-2018-1000134 empty-password bypass fixed in 4.0.5+
-  // t-SNE Java
-  "com.github.lejon.T-SNE-Java" % "tsne" % "v2.5.0",
+  // t-SNE: the Barnes-Hut implementation from T-SNE-Java v2.5.0 (BSD-3) is VENDORED under
+  // src/main/java/com/jujutsu (see the README there) — jitpack no longer serves the jar. EJML is its only
+  // external dependency, needed solely for the optional PCA pre-step (TSNESetting.pcaDims).
+  "com.googlecode.efficient-java-matrix-library" % "core" % "0.26",                                 // EJML (Apache 2.0) — vendored t-SNE PrincipalComponentAnalysis (SVD)
 
   "org.scalanlp" %% "breeze" % Versions.breeze,                                                     // linear algebra and stuff
   "org.scalanlp" %% "breeze-natives" % Versions.breeze,                                             // linear algebra and stuff (native)
@@ -75,7 +75,6 @@ licenseOverrides := {
     | DepModuleInfo("org.mortbay.jetty", "jetty-util", "6.1.26")
     | DepModuleInfo("org.objenesis", "objenesis", "2.1")
     | DepModuleInfo("com.carrotsearch", "hppc", "0.7.1")
-    | DepModuleInfo("com.github.lejon.T-SNE-Java", "tsne", "v2.5.0")
     | DepModuleInfo("oauth.signpost", "signpost-commonshttp4", "1.2.1.2")
     | DepModuleInfo("oauth.signpost", "signpost-core", "1.2.1.2")
     | DepModuleInfo("org.hibernate", "hibernate-validator", "5.2.4.Final")

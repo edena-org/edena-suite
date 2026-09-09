@@ -129,10 +129,12 @@ Play Framework web application (main UI)
 - **Scalaz**: 7.2.36
 - **Frontend Libraries**:
   - Bootstrap Select: 1.13.2
-  - Plotly.js: 1.54.1
-  - Highcharts: 6.2.0
-  - D3: 3.5.16
-  - jQuery UI: 1.11.1
+  - Plotly.js: 2.35.3 (MIT)
+  - ApexCharts: 4.4.0 (MIT)
+  - ECharts: 5.5.1 (Apache 2.0)
+  - Highcharts: 11.1.0 (proprietary, **not bundled** — see [Highcharts licensing](#highcharts-licensing))
+  - D3: 7.9.0 (ISC)
+  - jQuery UI: 1.14.2
 - Depends on: play, ada-server
 
 ## Key Features
@@ -193,3 +195,24 @@ sbt publishLocal      # Publish to local Maven repo
 ## License
 
 The project and all its source code is distributed under the terms of <a href="https://www.apache.org/licenses/LICENSE-2.0.txt">Apache 2.0 license</a>.
+
+### Third-party code included in the repository
+
+- **T-SNE-Java** (Barnes-Hut t-SNE, https://github.com/lejon/T-SNE-Java, v2.5.0) — BSD 3-Clause, Copyright (c) Leif
+  Jonsson 2014 / Laurens van der Maaten. A subset is vendored under `ada-server/src/main/java/com/jujutsu`; see the
+  `LICENSE.md` and `README.md` there.
+
+### Highcharts licensing
+
+Ada's charts are rendered by one of four pluggable widget engines: **Plotly** (default, MIT), **ApexCharts** (MIT),
+**ECharts** (Apache 2.0) and **Highcharts**. Unlike the other three, [Highcharts](https://www.highcharts.com) is
+**proprietary software by Highsoft**: it is free only for personal and non-commercial use, while commercial and
+governmental use requires a paid license, and redistributing it inside a product requires an OEM license. See
+[shop.highcharts.com/license](https://shop.highcharts.com/license).
+
+For that reason Highcharts is **not bundled** with Edena Suite and is not covered by the Apache 2.0 license above.
+The Highcharts widget engine (our own wrapper code, which is Apache 2.0) loads the library at runtime from Highsoft's
+CDN (`code.highcharts.com`). By selecting Highcharts as a data set's widget engine you accept Highsoft's terms and are
+responsible for holding an appropriate license. Deployers with a license may instead add the `org.webjars:highcharts`
+webjar to their build (see the commented-out dependency in `ada-web/build.sbt`), in which case the local copy is served
+and the CDN is not used.

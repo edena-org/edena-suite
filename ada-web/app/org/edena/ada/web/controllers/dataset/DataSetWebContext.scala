@@ -11,12 +11,14 @@ import play.api.Configuration
 import play.api.i18n.Messages
 import play.api.mvc.Flash
 
-import scala.collection.mutable
 import scala.jdk.CollectionConverters._
 import org.edena.play.routes.CustomDirAssets
 import play.twirl.api.Html
 import org.edena.core.DefaultTypes.Seq
 import org.edena.core.util.ConfigImplicits.ConfigExt
+import org.edena.core.util.LoggingSupport
+
+import java.util.concurrent.ConcurrentHashMap
 
 class DataSetWebContext(
   val dataSetId: String)(
@@ -45,7 +47,7 @@ class DataSetWebContext(
   val temporalRegressionRunJsRouter = new TemporalRegressionRunJsRouter(dataSetId)
 }
 
-object DataSetWebContext {
+object DataSetWebContext extends LoggingSupport {
   implicit def apply(
     dataSetId: String)(
     implicit context: WebContext
@@ -218,6 +220,10 @@ object DataSetWebContext {
 
   private val coreWidgetJsPath = "widget-engine.js"
 
+  // (webjar, path) pairs already warned about, so a missing webjar is logged once per JVM rather
+  // than on every page render.
+  private val warnedWebjarFallbacks = ConcurrentHashMap.newKeySet[String]()
+
   private def jsWidgetEngineImports(
     jsImportConfigs: Seq[ju.HashMap[String, String]],
     webJarAssets: WebJarsUtil
@@ -227,27 +233,83 @@ object DataSetWebContext {
       s"<script type='text/javascript' src='$src'></script>"
     }
 
+    // A webjar asset resolves only if the webjar is actually on the classpath. `WebJarAsset.script()`
+    // on a missing asset throws in dev / renders nothing (plus an error log) in prod, so probe
+    // `fullPath` first and only render when it resolved; the caller decides what to do otherwise.
+    def webjarScript(webjar: String, path: String): Option[String] = {
+      val asset = webJarAssets.fullPath(webjar, path)
+      if (asset.fullPath.isSuccess) Some(asset.script().body) else None
+    }
+
+    def missingWebjarScript(webjar: String, path: String): String =
+      webJarAssets.fullPath(webjar, path).script().body // legacy behaviour: throw (dev) / empty (prod)
+
     val importsString = jsImportConfigs.map { jsImportConfigJavaMap =>
-      val jsImportConfigMap: mutable.Map[String, String] = jsImportConfigJavaMap.asScala
-
-      // path
-      val path = jsImportConfigMap.getOrElse(
-        "path",
-        throw new AdaException("The widget engine config. entry 'path' not defined.")
-      )
-
-      // check if it's a webjar or a local js
-      jsImportConfigMap.get("webjar") match {
-        case Some(webjar) =>
-          webJarAssets.fullPath(webjar, path).script()
-//          val src = controllers.routes.WebJarAssets.at(webJarAssets.fullPath(webjar, path))
-//          s"<script src='$src'></script>"
-        case None =>
-          localScript(path)
-      }
+      resolveJsImport(jsImportConfigJavaMap.asScala, localScript, webjarScript, missingWebjarScript)
     }
 
     Html((Seq(localScript(coreWidgetJsPath)) ++ importsString).mkString("\n"))
+  }
+
+  /**
+   * Resolve one `widget_engine.providers[].jsImports` entry to a `<script>` tag. Keys:
+   *
+   *   - `path`   the JS file: under `public/javascripts` for a local import, or inside the webjar
+   *   - `webjar` (optional) webjar artifact name; the local webjar copy is used when it is on the
+   *              classpath
+   *   - `url`    (optional) absolute URL. Without `webjar` it is used as-is (a plain CDN import).
+   *              With `webjar` it is the FAILOVER used when the webjar is NOT on the classpath —
+   *              so an optional / separately licensed library (e.g. Highcharts) need not be bundled
+   *              with the app: a deployer who has it drops the webjar on the classpath and it is
+   *              served locally, everyone else gets it from the URL.
+   *
+   * Precedence: local webjar > `url` > plain local file. A webjar entry with neither a resolvable
+   * webjar nor a `url` keeps the legacy behaviour (`missingWebjarScript`).
+   *
+   * @param localScript         renders a `<script>` for a local `public/javascripts` file
+   * @param webjarScript        renders a `<script>` for a webjar asset, or None if the webjar (or
+   *                            the asset inside it) is not on the classpath
+   * @param missingWebjarScript legacy handling of a missing webjar without a fallback url
+   */
+  private[dataset] def resolveJsImport(
+    config: collection.Map[String, String],
+    localScript: String => String,
+    webjarScript: (String, String) => Option[String],
+    missingWebjarScript: (String, String) => String
+  ): String = {
+    val pathOption = config.get("path").map(_.trim).filter(_.nonEmpty)
+    val urlOption = config.get("url").map(_.trim).filter(_.nonEmpty)
+    val webjarOption = config.get("webjar").map(_.trim).filter(_.nonEmpty)
+
+    def urlScript(url: String) = s"<script type='text/javascript' src='$url'></script>"
+
+    def path = pathOption.getOrElse(
+      throw new AdaException("The widget engine config. entry 'path' not defined.")
+    )
+
+    webjarOption match {
+      case Some(webjar) =>
+        webjarScript(webjar, path).getOrElse {
+          urlOption match {
+            case Some(url) =>
+              if (warnedWebjarFallbacks.add(s"$webjar:$path"))
+                logger.warn(
+                  s"Webjar '$webjar' asset '$path' is not on the classpath; " +
+                    s"falling back to the URL '$url' for the widget engine import."
+                )
+              urlScript(url)
+
+            case None =>
+              missingWebjarScript(webjar, path)
+          }
+        }
+
+      case None =>
+        urlOption match {
+          case Some(url) => urlScript(url)
+          case None => localScript(path)
+        }
+    }
   }
 
   private def getEntrySafe[T](

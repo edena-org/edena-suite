@@ -38,6 +38,7 @@
                 @textarea("dataSetImport", "setting.description", form, Seq('cols -> 20, 'rows -> 5))
                 @inputText("dataSetImport", "setting.customControllerClassName", form),
                 @select("dataSetImport", "setting.widgetEngineClassName", form, widgetEngineNames(configuration), true)
+                @views.html.datasetsetting.widgetEngineLicenseWarning("setting.widgetEngineClassName")
                 @inputText("dataSetSetting", "setting.customStorageCollectionName", form)
             </div>
         </div>
