@@ -5,8 +5,6 @@ name := "edena-dl4j"
 
 description := "Convenient wrapper of Deeplearning4J library especially for temporal classification."
 
-isSnapshot := false
-
 // scalaVersion := "2.12.15" // "2.11.12"
 
 val dl4jVersion = "1.0.0-M2.1"

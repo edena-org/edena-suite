@@ -5,8 +5,6 @@ name := "edena-spark_ml"
 
 description := "Spark ML library extension primarily for the temporal domain with a lot of handy transformers, classification and regression models, and a convenient customizable pipeline execution."
 
-isSnapshot := false
-
 // scalaVersion := "2.12.15" // "2.11.12"
 
 resolvers ++= Seq(
