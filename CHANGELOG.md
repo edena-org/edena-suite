@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- **Scripting isolation fix (security)**: pooled GraalVM contexts leaked data between callers. Injected JSON inputs (`<name>_string_<n>` bindings) and the parsed variables stayed in Python `globals()` and piled up; a reset bug left user globals and its own loop variables behind; builtins, pre-imported modules and JavaScript prototypes/built-ins were never restored; and the JavaScript reset deleted `globalThis`, `Reflect` and `Intl` after a context's first use. After every eval the pool now always removes the injected bindings and restores the context to a snapshot taken right after warmup, through a restore function held only on the host side. A context whose cleanup fails is replaced; if no replacement can be created it is quarantined and never serves another eval dirty. JavaScript no longer re-runs a failing script at top level on the error path.
+- **Isolated script evaluation**: `evalToString` / `evalToJson(code, bindings, isolated = true)` run a script in a fresh context that is created for the call and closed afterwards; `GraalPoolConfig(freshContextPerUse = true)` or `graalvm.<js|python>.fresh_context_per_use = true` does the same for a whole pool. Pooled mode stops accidental carry-over but is documented as not being a security boundary; use isolated mode for untrusted scripts. Source-compatible for callers; `GraalPoolConfig` gained a field and `GraalScriptPool` two methods, so dependants must recompile.
+
 ## 1.1.1 (2026-09-09)
 
 - **Apache Spark 3.5.4 → 3.5.6**: patch release with CVE fixes; Spark 4.0 deferred because of its breaking changes.

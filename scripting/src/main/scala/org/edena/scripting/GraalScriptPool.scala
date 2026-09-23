@@ -16,6 +16,22 @@ import scala.util.{Random, Try}
 import scala.util.control.NonFatal
 import scala.jdk.CollectionConverters._
 
+/**
+ * A pool of reusable GraalVM polyglot contexts for one language.
+ *
+ * ISOLATION — read before running untrusted or multi-tenant scripts:
+ *  - POOLED mode (the default) reuses a context across callers. After every use the pool removes
+ *    the injected bindings and restores the context's global state to a snapshot taken right after
+ *    warmup: Python `__main__` globals, `builtins` and the pre-imported modules (`sys`, `json`,
+ *    `datetime`); JavaScript `globalThis` and the core built-in objects/prototypes. This stops
+ *    accidental carry-over, but it is NOT a security boundary: state reachable elsewhere survives
+ *    (Python: modules imported by the script and their attributes, contents of mutable objects such as
+ *    `sys.path`; JavaScript: top-level `let`/`const` created via indirect eval, other intrinsics).
+ *  - ISOLATED mode runs the script in a brand-new context created for that call and closed afterwards
+ *    (same engine and options as the pooled contexts), so nothing can carry over. Use it for untrusted
+ *    input, per call via `isolated = true` or for a whole pool via [[GraalPoolConfig.freshContextPerUse]].
+ *    It costs a context creation per eval (see the scripting tests for measured numbers).
+ */
 trait GraalScriptPool {
 
   /**
@@ -50,6 +66,25 @@ trait GraalScriptPool {
   def evalToJson(
     code: String,
     bindings: Map[String, Any] = Map.empty
+  ): Either[String, JsValue]
+
+  /**
+   * [[evalToString]] with an explicit isolation choice. With `isolated = true` the script runs in a
+   * fresh context that is created for this call and closed afterwards, so it can neither see nor leave
+   * behind any state (see the trait docs). `isolated = false` uses the pool's configured mode, i.e. it
+   * cannot opt out of a pool configured with `freshContextPerUse`.
+   */
+  def evalToString(
+    code: String,
+    bindings: Map[String, Any],
+    isolated: Boolean
+  ): Either[String, String]
+
+  /** [[evalToJson]] with an explicit isolation choice, see the isolated [[evalToString]]. */
+  def evalToJson(
+    code: String,
+    bindings: Map[String, Any],
+    isolated: Boolean
   ): Either[String, JsValue]
 
   /**
@@ -121,6 +156,52 @@ abstract class GraalScriptPoolImpl(
   protected def resetContext(ctx: Context): Unit
   protected def warmupContext(ctx: Context): Unit
 
+  /**
+   * Snapshot the context's pristine global state (called once per pooled context, right after
+   * warmup) and return a zero-argument guest function that restores it. The function is held only
+   * on the host side, so guest code can neither reach nor replace it; see [[runRestorer]].
+   */
+  protected def createRestorer(ctx: Context): Value
+
+  // host-held restore function per pooled context (fresh per-use contexts have none)
+  private val restorers = new ConcurrentHashMap[Context, Value]()
+
+  // contexts whose cleanup failed and could not be replaced: never serve an eval until replaced
+  private val tainted = java.util.Collections.newSetFromMap(new ConcurrentHashMap[Context, java.lang.Boolean]())
+
+  // observability (also used by the isolation tests)
+  private val cleanupFailures = new java.util.concurrent.atomic.AtomicInteger(0)
+  private val cleanupReplacements = new java.util.concurrent.atomic.AtomicInteger(0)
+  private val taintedReturns = new java.util.concurrent.atomic.AtomicInteger(0)
+  private[scripting] def cleanupFailuresCount: Int = cleanupFailures.get()
+  private[scripting] def cleanupReplacementsCount: Int = cleanupReplacements.get()
+  private[scripting] def taintedReturnsCount: Int = taintedReturns.get()
+  private[scripting] def taintedCount: Int = tainted.size()
+
+  // test-only fault injection (the failure paths cannot be triggered deterministically otherwise)
+  @volatile private[scripting] var failCleanupForTesting: Boolean = false
+  @volatile private[scripting] var failReplacementForTesting: Boolean = false
+
+  /** Restore the context's global state to its post-warmup snapshot. */
+  protected final def runRestorer(ctx: Context): Unit = {
+    val restore = restorers.get(ctx)
+    if (restore == null)
+      throw new IllegalStateException("No state restorer registered for this script context.")
+    restore.executeVoid()
+  }
+
+  /** Names bound on every eval besides the user's bindings (e.g. the JS code holder). */
+  protected def internalBindingNames: Set[String] = Set.empty
+
+  /** Remove everything an eval injected into the context's bindings (always runs after an eval). */
+  protected def removeInjected(ctx: Context, names: Set[String]): Unit =
+    if (names.nonEmpty) {
+      val languageBindings = ctx.getBindings(language)
+      names.foreach { name =>
+        if (languageBindings.hasMember(name)) languageBindings.removeMember(name)
+      }
+    }
+
   private lazy val engines: Seq[Engine] = createEngines()
 
   protected def createEngines(): Seq[Engine] = {
@@ -168,12 +249,32 @@ abstract class GraalScriptPoolImpl(
 
       enginesToUse.zipWithIndex.foreach { case (engine, index) =>
         val createInfo = ContextCreateInfo(engine, index, Some(outOs), Some(errOs))
-        val ctx = createContext(createInfo)
-        // Language-specific warmup
-        warmupContext(ctx)
-        pool.put((ctx, createInfo))
+        pool.put((createAndWarm(createInfo, pooled = true), createInfo))
       }
     }
+  }
+
+  /** Create a context and run the language-specific warmup; pooled contexts additionally get their
+   *  state restorer (snapshot of the warmed-up state). A context failing half-way is closed. */
+  private def createAndWarm(info: ContextCreateInfo, pooled: Boolean): Context = {
+    val ctx = createContext(info)
+    try {
+      warmupContext(ctx)
+      if (pooled) restorers.put(ctx, createRestorer(ctx))
+      ctx
+    } catch {
+      case e: Throwable =>
+        forget(ctx)
+        try ctx.close(true)
+        catch { case _: Throwable => () }
+        throw e
+    }
+  }
+
+  /** Drop the pool's bookkeeping for a context that is being closed. */
+  private def forget(ctx: Context): Unit = {
+    restorers.remove(ctx)
+    tainted.remove(ctx)
   }
 
   private def createContext(
@@ -203,59 +304,150 @@ abstract class GraalScriptPoolImpl(
    *  forever — an unbounded take() turned any lost context into permanently stuck threads). */
   private val ContextAcquireTimeoutMins = 15L
 
-  /** Borrow a context, run f, convert/return, then (optionally) reset & return to pool.
+  /** Borrow a pool slot, run f on a context, then clean up and return the slot.
    *
-   *  HARDENED (2026-08-16, chandra-pipeline 11h deadlock post-mortem) — the pool must NEVER
+   *  HARDENED (2026-08-16, after an 11h pipeline deadlock) — the pool must NEVER
    *  shrink and cleanup must NEVER hang:
    *  - acquisition is BOUNDED: a wedged/lost context fails the eval with a clear error instead
    *    of parking the borrower forever;
-   *  - the discard/replace path catches Throwable (fatal errors must not shrink the pool
-   *    either), closes the broken context on a BOUNDED daemon thread (GraalPy context close can
-   *    hang on wedged native state — previously that hung this finally block forever), and as a
-   *    LAST resort returns the original unreset context: a broken context fails its next eval
-   *    fast and re-triggers replacement (self-healing retry) instead of silently shrinking the
-   *    pool into a starvation deadlock. */
-  protected def withContext[A](f: Context => A): A = {
+   *  - the replace path catches Throwable (fatal errors must not shrink the pool either), creates
+   *    the replacement with a bound, and closes the broken context on a daemon thread (GraalPy
+   *    context close can hang on wedged native state).
+   *
+   *  ISOLATION (2026-09-23, cross-caller leak fix):
+   *  - `injectedNames` (the eval's bindings) are ALWAYS removed after use, whether or not the pool
+   *    resets after each use;
+   *  - a context whose cleanup failed and could not be replaced goes back only to keep the pool
+   *    size, marked TAINTED: its next borrow must replace it first and fails fast if that fails
+   *    again, so a dirty context never serves another caller;
+   *  - `isolated` (or [[GraalPoolConfig.freshContextPerUse]]) runs f on a brand-new context created
+   *    for this call and closed afterwards; the slot is still borrowed so concurrency stays bounded
+   *    by the pool size, and its pooled context is not touched. */
+  protected def withContext[A](
+    isolated: Boolean = false,
+    injectedNames: Set[String] = Set.empty
+  )(
+    f: Context => A
+  ): A = {
     val taken = pool.poll(ContextAcquireTimeoutMins, java.util.concurrent.TimeUnit.MINUTES)
     if (taken == null)
       throw new IllegalStateException(
         s"No script context became available within $ContextAcquireTimeoutMins min — " +
           "pool exhausted or a previous eval is wedged."
       )
-    val (ctx, createInfo) = taken
+    val (borrowed, createInfo) = taken
+    val ctx = if (tainted.contains(borrowed)) replaceTainted(borrowed, createInfo) else borrowed
+
+    if (isolated || freshContextPerUse)
+      runOnFreshContext(ctx, createInfo, f)
+    else
+      runOnPooledContext(ctx, createInfo, injectedNames, f)
+  }
+
+  private def runOnPooledContext[A](
+    ctx: Context,
+    createInfo: ContextCreateInfo,
+    injectedNames: Set[String],
+    f: Context => A
+  ): A = {
     extendContext.foreach(_(ctx))
 
     try f(ctx)
     finally {
-      if (resetAfterEachUse.getOrElse(true)) {
+      val cleaned =
         try {
-          resetContext(ctx)
-          returnOrLazilyRecycle(ctx, createInfo)
-        }
-        catch {
+          if (failCleanupForTesting) throw new IllegalStateException("cleanup failure injected for testing")
+          removeInjected(ctx, injectedNames)
+          if (resetAfterEachUse.getOrElse(true)) resetContext(ctx)
+          true
+        } catch {
           case ex: Throwable =>
-            logger.warn("Error resetting script context, discarding it", ex)
-            closeBounded(ctx)
-            try {
-              // replace with a new one (+ language-specific warmup)
-              val newCtx = createContext(createInfo)
-              warmupContext(newCtx)
-              pool.put((newCtx, createInfo))
-            } catch {
-              case replaceEx: Throwable =>
-                logger.error(
-                  "Failed to create a replacement script context — returning the DISCARDED original " +
-                    "to keep the pool size (its next eval fails fast and retries the replacement).",
-                  replaceEx
-                )
-                pool.put((ctx, createInfo))
-            }
+            cleanupFailures.incrementAndGet()
+            logger.warn("Error cleaning up script context after use, replacing it", ex)
+            false
         }
-      } else {
-        // just return to pool without reset
+
+      if (cleaned)
         returnOrLazilyRecycle(ctx, createInfo)
-      }
+      else
+        createReplacementBounded(createInfo) match {
+          case Some(newCtx) =>
+            cleanupReplacements.incrementAndGet()
+            pool.put((newCtx, createInfo)) // pool whole again first ...
+            closeInBackground(ctx) // ... then drop the dirty one
+          case None =>
+            taintedReturns.incrementAndGet()
+            logger.error(
+              "Failed to create a replacement script context — returning the dirty original TAINTED to keep " +
+                "the pool size: it serves no eval until replaced (its next borrow retries the replacement " +
+                "and fails fast if that fails again)."
+            )
+            try removeInjected(ctx, injectedNames)
+            catch { case e: Throwable => logger.warn(s"Removing injected bindings from a tainted context failed: ${e.getMessage}") }
+            tainted.add(ctx)
+            pool.put((ctx, createInfo))
+        }
     }
+  }
+
+  private def runOnFreshContext[A](
+    slotCtx: Context,
+    createInfo: ContextCreateInfo,
+    f: Context => A
+  ): A = {
+    val fresh =
+      try createFreshBounded(createInfo)
+      catch {
+        case e: Throwable =>
+          returnOrLazilyRecycle(slotCtx, createInfo)
+          throw e
+      }
+
+    fresh match {
+      case None =>
+        returnOrLazilyRecycle(slotCtx, createInfo)
+        throw new IllegalStateException(
+          s"Could not create a fresh isolated script context (language $language) within $replacementCreateTimeoutMs ms."
+        )
+
+      case Some(ctx) =>
+        try {
+          extendContext.foreach(_(ctx))
+          f(ctx)
+        } finally {
+          returnOrLazilyRecycle(slotCtx, createInfo) // untouched pooled context goes straight back
+          closeInBackground(ctx)
+        }
+    }
+  }
+
+  /** A tainted context (dirty, unreplaced) must be replaced before it may serve an eval. */
+  private def replaceTainted(ctx: Context, createInfo: ContextCreateInfo): Context =
+    createReplacementBounded(createInfo) match {
+      case Some(newCtx) =>
+        cleanupReplacements.incrementAndGet()
+        closeInBackground(ctx)
+        logger.info("Replaced a tainted script context.")
+        newCtx
+      case None =>
+        pool.put((ctx, createInfo))
+        throw new IllegalStateException(
+          s"The script context (language $language) is tainted — its cleanup failed and no replacement " +
+            "could be created — so it will not run this eval. Retry later."
+        )
+    }
+
+  /** Close a context that is out of the pool for good, without making the caller wait. */
+  private def closeInBackground(ctx: Context): Unit = {
+    forget(ctx)
+    val closer = new Thread(
+      () =>
+        try ctx.close(true)
+        catch { case e: Throwable => logger.warn(s"Script context close failed: ${e.getMessage}") },
+      "graal-context-closer"
+    )
+    closer.setDaemon(true)
+    closer.start()
   }
 
   // ---- LAZY context recycling (native-memory reclaim without a global pause) -----------------
@@ -304,19 +496,28 @@ abstract class GraalScriptPoolImpl(
   /** Create + warm up a replacement context on a daemon thread, waiting a bounded time. On
    *  timeout the creation is abandoned (daemon thread; a late-completing context is closed by
    *  the creator itself — never leaked, never double-used). */
-  private def createReplacementBounded(createInfo: ContextCreateInfo): Option[Context] = {
+  private def createReplacementBounded(createInfo: ContextCreateInfo): Option[Context] =
+    if (failReplacementForTesting) None
+    else createBounded(createInfo, pooled = true)
+
+  /** A per-use context for isolated evals: same engine/options/warmup, no state snapshot. */
+  private def createFreshBounded(createInfo: ContextCreateInfo): Option[Context] =
+    createBounded(createInfo, pooled = false)
+
+  private def createBounded(createInfo: ContextCreateInfo, pooled: Boolean): Option[Context] = {
     val abandoned = new java.util.concurrent.atomic.AtomicBoolean(false)
     val resultRef = new java.util.concurrent.atomic.AtomicReference[Context](null)
     val creator = new Thread(
       () =>
         try {
-          val c = createContext(createInfo)
-          warmupContext(c)
+          val c = createAndWarm(createInfo, pooled)
           resultRef.set(c)
           // the waiter may have given up between our set and its final check
-          if (abandoned.get() && resultRef.compareAndSet(c, null))
+          if (abandoned.get() && resultRef.compareAndSet(c, null)) {
+            forget(c)
             try c.close(true)
             catch { case e: Throwable => logger.warn(s"Late replacement context close failed: ${e.getMessage}") }
+          }
         } catch {
           case e: Throwable => logger.warn(s"Replacement context creation failed: ${e.getMessage}")
         },
@@ -340,6 +541,7 @@ abstract class GraalScriptPoolImpl(
    *  daemon thread and wait a bounded time — an unfinished close is abandoned (daemon thread,
    *  logged) rather than blocking pool recovery. */
   private def closeBounded(ctx: Context): Unit = {
+    forget(ctx)
     val closer = new Thread(
       () =>
         try ctx.close(true)
@@ -357,9 +559,17 @@ abstract class GraalScriptPoolImpl(
     code: String,
     bindings: Map[String, Any] = Map.empty
   ): Either[String, String] =
-    withContext { ctx =>
+    evalToString(code, bindings, isolated = false)
+
+  def evalToString(
+    code: String,
+    bindings: Map[String, Any],
+    isolated: Boolean
+  ): Either[String, String] = {
+    val prepared = prepare(code, bindings)
+    withContext(isolated, prepared.injectedNames) { ctx =>
       Try {
-        evalCore(code, bindings, ctx)
+        evalCore(prepared, ctx)
       }.fold(
         {
           case pe: PolyglotException =>
@@ -375,40 +585,66 @@ abstract class GraalScriptPoolImpl(
         result => Right(result)
       )
     }
-
-  protected def evalCore(
-    code: String,
-    bindings: Map[String, Any] = Map.empty,
-    ctx: Context
-  ): String = {
-    val finalCode = substituteBindings(code, bindings, ctx)
-    val v = ctx.eval(language, finalCode)
-    if (v.isString) v.asString() else v.toString
-  }
-
-  protected def substituteBindings(
-    code: String,
-    bindings: Map[String, Any],
-    ctx: Context
-  ) = {
-    val languageBindings = ctx.getBindings(language)
-
-    val (processedBindings, codePrefix) = processJsonInputs(bindings)
-    processedBindings.foreach { case (k, v) => languageBindings.putMember(k, v) }
-    if (codePrefix.nonEmpty) codePrefix + "\n" + code else code
   }
 
   /** Evaluate script that returns JSON string; parse into JsValue. */
   def evalToJson(
     code: String,
     bindings: Map[String, Any] = Map.empty
-  ): Either[String, JsValue] = {
-    evalToString(code, bindings).flatMap { s =>
+  ): Either[String, JsValue] =
+    evalToJson(code, bindings, isolated = false)
+
+  def evalToJson(
+    code: String,
+    bindings: Map[String, Any],
+    isolated: Boolean
+  ): Either[String, JsValue] =
+    evalToString(code, bindings, isolated).flatMap { s =>
       Try(Json.parse(s)).fold(
         ex => Left(s"JSON parsing error: ${ex.getMessage}"),
         json => Right(json)
       )
     }
+
+  /**
+   * An eval ready to run: the final code (JSON-parsing prefix lines + user code), the bindings to
+   * inject, and every name the eval may leave in the context's bindings — the injected bindings,
+   * the variables the prefix lines define, and [[internalBindingNames]] — all removed after use.
+   */
+  protected case class PreparedEval(
+    code: String,
+    bindings: Map[String, Any],
+    injectedNames: Set[String]
+  )
+
+  protected def prepare(
+    code: String,
+    bindings: Map[String, Any]
+  ): PreparedEval = {
+    val (processedBindings, codePrefix) = processJsonInputs(bindings)
+    val parsedVariables = bindings.keySet.filterNot(processedBindings.contains)
+    PreparedEval(
+      if (codePrefix.nonEmpty) codePrefix + "\n" + code else code,
+      processedBindings,
+      processedBindings.keySet ++ parsedVariables ++ internalBindingNames
+    )
+  }
+
+  protected def putBindings(
+    prepared: PreparedEval,
+    ctx: Context
+  ): Unit = {
+    val languageBindings = ctx.getBindings(language)
+    prepared.bindings.foreach { case (k, v) => languageBindings.putMember(k, v) }
+  }
+
+  protected def evalCore(
+    prepared: PreparedEval,
+    ctx: Context
+  ): String = {
+    putBindings(prepared, ctx)
+    val v = ctx.eval(language, prepared.code)
+    if (v.isString) v.asString() else v.toString
   }
 
   /**
@@ -519,6 +755,7 @@ abstract class GraalScriptPoolImpl(
   override def close(): Unit = {
     var c = pool.poll()
     while (c != null) {
+      forget(c._1)
       try c._1.close()
       finally c = pool.poll()
     }

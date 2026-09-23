@@ -33,4 +33,19 @@ class GraalPyAdminPoolForModuleInstallTest
         fail(s"Custom Python module import should work: $error")
     }
   }
+
+  it should "import venv packages in an isolated (fresh-context) eval too" in {
+    val code = """
+      |import sys
+      |from pydub import AudioSegment
+      |sys.prefix
+      |""".stripMargin
+
+    graalPyPool.evalToString(code, Map.empty, isolated = true) match {
+      case Right(prefix) =>
+        prefix should startWith("/opt/graalpy-venvs/ctx-") // the slot's venv, like a pooled context
+      case Left(error) =>
+        fail(s"Custom Python module import should work in an isolated eval: $error")
+    }
+  }
 }

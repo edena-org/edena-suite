@@ -28,7 +28,9 @@ final private class GraalPyPoolFactoryImpl @Inject() (
       ),
       resetAfterEachUse = config.resetAfterEachUse.orElse(
         appConfig.optionalBoolean("graalvm.python.reset_after_each_use")
-      )
+      ),
+      freshContextPerUse = config.freshContextPerUse ||
+        appConfig.optionalBoolean("graalvm.python.fresh_context_per_use").getOrElse(false)
     )
 
     val useNewReset = appConfig.optionalBoolean("graalvm.python.use_new_reset").getOrElse(true)
@@ -82,29 +84,54 @@ final private class GraalPyPool(
   // Implement abstract methods from GraalScriptPool
   protected def resetContext(ctx: Context): Unit = {
     if (useNewReset) {
-      resetContextNew(ctx)
+      runRestorer(ctx)
     } else {
       resetContextOld(ctx)
     }
   }
 
-  // New implementation: Python-only cleanup (safer, avoids context corruption)
-  private def resetContextNew(ctx: Context): Unit = {
-    val preservedModules = preImport.map(s => s"'$s'").mkString(", ")
-    val reset =
-      s"""g = globals()
-         |preserved = {'__name__', '__doc__', '__package__', '__loader__', '__spec__', '__builtins__', $preservedModules}
-         |for k in list(g.keys()):
-         |    if k not in preserved:
-         |        try:
-         |            del g[k]
-         |        except:
-         |            pass
+  /**
+   * Snapshot `builtins`, `__main__` globals and the pre-imported modules right after warmup, and
+   * return a guest function restoring them (each dict is reset to exactly its snapshot).
+   * It captures everything it needs at creation time, so a script that sabotages builtins (e.g.
+   * `builtins.list = None`, `builtins.globals = ...`) cannot break or subvert the reset. Module
+   * CONTENTS (e.g. `sys.path` items) and modules the script imports itself are not restored.
+   */
+  override protected def createRestorer(ctx: Context): Value = {
+    val moduleNames = preImport.map(s => s"'$s'").mkString(", ")
+    ctx.eval(
+      language,
+      s"""def __edena_make_restorer():
+         |    import builtins, sys
+         |    _list, _get_module = list, sys.modules.get
+         |    targets = [builtins.__dict__, sys.modules['__main__'].__dict__]
+         |    for name in ($moduleNames,):
+         |        module = _get_module(name)
+         |        if module is not None:
+         |            targets.append(module.__dict__)
+         |    snapshots = []
+         |    for d in targets:
+         |        snapshot = dict(d)
+         |        snapshot.pop('__edena_make_restorer', None)
+         |        snapshots.append(snapshot)
+         |    pairs = _list(zip(targets, snapshots))
+         |    def restore():
+         |        # clear + update leaves each dict exactly equal to its snapshot, in native code (a
+         |        # per-key Python loop costs ~10 ms per eval when GraalPy runs without a JIT)
+         |        for d, snapshot in pairs:
+         |            d.clear()
+         |            d.update(snapshot)
+         |    return restore
          |""".stripMargin
-    ctx.eval(language, reset)
+    )
+    val restorer = ctx.eval(language, "__edena_make_restorer()")
+    ctx.eval(language, "del __edena_make_restorer")
+    restorer
   }
 
-  // Old implementation: Two-phase cleanup (may cause context corruption)
+  // Old implementation (graalvm.python.use_new_reset = false): removes bindings, then deletes the
+  // non-preserved globals. Runs inside a function so it leaves no loop variables behind (at module
+  // level, deleting its own `g`/`preserved` aborted the loop half-way and let data survive).
   private def resetContextOld(ctx: Context): Unit = {
     // Clean up old bindings, but skip Python built-in functions
     val bindings = ctx.getBindings(language)
@@ -129,11 +156,13 @@ final private class GraalPyPool(
 
     val preservedModules = preImport.map(s => s"'$s'").mkString(", ")
     val reset =
-      s"""g = globals()
-         |preserved = {'__name__', '__doc__', '__package__', '__loader__', '__spec__', '__builtins__', $preservedModules}
-         |for k in list(g.keys()):
-         |    if k not in preserved:
-         |        del g[k]
+      s"""def __edena_reset():
+         |    g = globals()
+         |    preserved = {'__name__', '__doc__', '__package__', '__loader__', '__spec__', '__builtins__', $preservedModules}
+         |    for k in list(g.keys()):
+         |        if k not in preserved:
+         |            del g[k]
+         |__edena_reset()
          |""".stripMargin
     ctx.eval(language, reset)
   }
