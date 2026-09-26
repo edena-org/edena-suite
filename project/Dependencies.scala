@@ -14,8 +14,9 @@ object Dependencies {
     val googleGuice = "5.1.0" // compatible with play-mailer 9.0.1
     val guiceAssistedinject = "5.1.0"
 
-    // JSON
-    val jackson = "2.14.3"
+    // JSON — 2.18.x is what Spark 4.0 is built against (it needs >= 2.18); one version suite-wide since
+    // ada-server/ada-web put Spark, Play, Akka and elastic4s on a single classpath
+    val jackson = "2.18.6"
 
     // Netty (transitive via Akka HTTP, Spark, Ignite, etc.) — pinned to fix CVE-2025-58056/58057/55163
     val netty = "4.1.127.Final"
@@ -35,7 +36,7 @@ object Dependencies {
     val commonsIo = "2.18.0"
 
     // ES
-    val elastic4s = "8.19.1" // Latest 8.x - compatible with Akka 2.6.x, Play JSON 2.10.x, Jackson overridden to 2.14.x
+    val elastic4s = "8.19.1" // Latest 8.x - compatible with Akka 2.6.x, Play JSON 2.10.x, Jackson overridden to 2.18.x
 
     // MONGO
     // reactivemongo-akkastream uses akka-stream 2.5.23
@@ -50,7 +51,9 @@ object Dependencies {
     val akkaHttp = "10.2.10" // compatible with Akka 2.6.21
 
     // SPARK
-    val spark = "3.5.6" // patch bump with CVE fixes; 4.0 deferred (breaking changes)
+    // 4.0.x: official JDK 17/21 support; stays on Netty 4.1 and Jackson 2.18 (4.1+ moves to Netty 4.2 / Jackson 2.21,
+    // which Play 2.9 / Akka HTTP / AHC are not built for). Requires Scala >= 2.13.16.
+    val spark = "4.0.4"
     val bnd = "0.7.3"
 
     // IGNITE

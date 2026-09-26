@@ -1,7 +1,7 @@
 name := "edena-suite"
 
 organization in ThisBuild := "org.edena"
-scalaVersion in ThisBuild := "2.13.11" // "2.12.15"
+scalaVersion in ThisBuild := "2.13.16" // Spark 4.0 is built with 2.13.16 (needs a scala-library at least that new)
 version in ThisBuild := "1.1.2-SNAPSHOT"
 isSnapshot in ThisBuild := true
 

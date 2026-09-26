@@ -202,7 +202,7 @@ object SparkUtil {
   }
 
   private def csvSourceToDf(src: BufferedSource, header: Boolean = true)(session: SparkSession) = {
-    import session.sqlContext.implicits._
+    import session.implicits._
 
     val lines = src.mkString.stripMargin.lines.collect(toList())
     val csvData: Dataset[String] = session.sparkContext.parallelize(lines.asScala.toSeq).toDS()

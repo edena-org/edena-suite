@@ -26,11 +26,11 @@ Edena Suite is a comprehensive data discovery and analytics platform built with 
 - **elastic-util**: Additional Elasticsearch utilities
 
 ### Key Dependencies
-- **Scala**: 2.13.11
+- **Scala**: 2.13.16
 - **Play Framework**: 2.9.6
-- **Apache Spark**: 3.5.6
+- **Apache Spark**: 4.0.4 (runs on JDK 17 and 21; needs Spark's `--add-opens` JVM options, see CHANGELOG)
 - **MongoDB**: ReactiveMongo 1.1.0-RC12
-- **Elasticsearch**: Elastic4S 8.19.1 (ES 8.x compatible, Akka 2.6.x, Play JSON 2.10.x, Jackson overridden to 2.14.x)
+- **Elasticsearch**: Elastic4S 8.19.1 (ES 8.x compatible, Akka 2.6.x, Play JSON 2.10.x, Jackson overridden to 2.18.x)
 - **Apache Ignite**: 2.14.0
 - **GraalVM**: For polyglot scripting (JavaScript, Python)
 - **Akka**: 2.6.21
@@ -182,7 +182,7 @@ The project follows a clear dependency hierarchy:
 - **Apache Spark**: ML processing (local mode by default)
 
 ### Development Environment
-- **JDK**: Java 11 or higher
+- **JDK**: Java 17 or 21 (Spark 4 requires 17+)
 - **SBT**: 1.9.6 or higher
 - **Node.js**: For frontend asset compilation
 - **Git**: Version control

@@ -188,7 +188,7 @@ object ForwardChainingCrossValidator extends MLReadable[ForwardChainingCrossVali
     ValidatorParams.validateParams(instance)
 
     override protected def saveImpl(path: String): Unit =
-      ValidatorParams.saveImpl(path, instance, sc)
+      ValidatorParams.saveImpl(path, instance, sparkSession)
   }
 
   private class ForwardChainingCrossValidatorReader extends MLReader[ForwardChainingCrossValidator] {
@@ -200,7 +200,7 @@ object ForwardChainingCrossValidator extends MLReadable[ForwardChainingCrossVali
       implicit val format = DefaultFormats
 
       val (metadata, estimator, evaluator, estimatorParamMaps) =
-        ValidatorParams.loadImpl(path, sc, className)
+        ValidatorParams.loadImpl(path, sparkSession, className)
       val numFolds = (metadata.params \ "numFolds").extract[Int]
       val seed = (metadata.params \ "seed").extract[Long]
       val orderCol = (metadata.params \ "orderCol").extract[String]
@@ -274,7 +274,7 @@ object ForwardChainingCrossValidatorModel extends MLReadable[ForwardChainingCros
     override protected def saveImpl(path: String): Unit = {
       import org.json4s.JsonDSL._
       val extraMetadata = "avgMetrics" -> instance.avgMetrics.toSeq
-      ValidatorParams.saveImpl(path, instance, sc, Some(extraMetadata))
+      ValidatorParams.saveImpl(path, instance, sparkSession, Some(extraMetadata))
       val bestModelPath = new Path(path, "bestModel").toString
       instance.bestModel.asInstanceOf[MLWritable].save(bestModelPath)
     }
@@ -289,14 +289,14 @@ object ForwardChainingCrossValidatorModel extends MLReadable[ForwardChainingCros
       implicit val format = DefaultFormats
 
       val (metadata, estimator, evaluator, estimatorParamMaps) =
-        ValidatorParams.loadImpl(path, sc, className)
+        ValidatorParams.loadImpl(path, sparkSession, className)
       val numFolds = (metadata.params \ "numFolds").extract[Int]
       val seed = (metadata.params \ "seed").extract[Long]
       val orderCol = (metadata.params \ "orderCol").extract[String]
       val minTrainingSize = (metadata.params \ "minTrainingSize").extract[Double]
 
       val bestModelPath = new Path(path, "bestModel").toString
-      val bestModel = DefaultParamsReader.loadParamsInstance[Model[_]](bestModelPath, sc)
+      val bestModel = DefaultParamsReader.loadParamsInstance[Model[_]](bestModelPath, sparkSession)
       val avgMetrics = (metadata.metadata \ "avgMetrics").extract[Seq[Double]].toArray
 
       val model = new ForwardChainingCrossValidatorModel(metadata.uid, bestModel, avgMetrics)

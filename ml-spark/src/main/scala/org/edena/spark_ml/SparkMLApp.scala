@@ -23,6 +23,7 @@ class SparkMLApp(execute: (SparkSession, SparkMLService) => Future[Unit]) extend
     .set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
     .set("spark.worker.cleanup.enabled", "true")
     .set("spark.worker.cleanup.interval", "900")
+    .set("spark.sql.ansi.enabled", "false") // Spark 4 defaults to ANSI mode; keep the Spark 3.x semantics
 
   private def createSession = SparkSession.builder().config(conf).getOrCreate()
 

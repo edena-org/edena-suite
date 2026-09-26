@@ -187,7 +187,7 @@ Consumers process partitions independently for horizontal scalability.
 
 ## Development Notes
 
-- **Scala Version**: 2.13.11 (compatible with Edena Suite)
+- **Scala Version**: 2.13.16 (compatible with Edena Suite)
 - **Akka Streams**: Production-grade stream processing
 - **Play JSON**: Type-safe JSON serialization
 - **Confluent Schema Registry**: JSON Schema management

@@ -39,6 +39,9 @@ private[services] class SparkAppImpl @Inject() (
     .set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
     .set("spark.worker.cleanup.enabled", "true")
     .set("spark.worker.cleanup.interval", "900")
+    // Spark 4 turned ANSI SQL mode on by default (invalid casts, overflows, etc. throw instead of yielding null);
+    // keep the Spark 3.x semantics unless overridden via `spark.sql.ansi.enabled` in the config (applied below)
+    .set("spark.sql.ansi.enabled", "false")
     .setJars(jars)
     .setAll(settings)
     .registerKryoClasses(Array(

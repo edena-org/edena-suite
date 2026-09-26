@@ -45,7 +45,7 @@ object FilterOrderedGroupsWithCountTest extends App {
   val conf = new SparkConf().setAppName("FilterOrderedGroupsWithCountTest").setMaster("local[*]")
   val session = SparkSession.builder().config(conf).getOrCreate()
 
-  import session.sqlContext.implicits._
+  import session.implicits._
 
   val df = Seq(
     ("Peter", 0, 1000),

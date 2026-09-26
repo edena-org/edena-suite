@@ -5,10 +5,10 @@ Edena Suite is a comprehensive data discovery and analytics platform built with 
 ## Architecture Overview
 
 ### Global Configuration
-- **Scala**: 2.13.11
+- **Scala**: 2.13.16
 - **SBT**: 1.9.6
 - **Akka**: 2.6.21 (unified across all modules)
-- **Jackson**: 2.14.3 (unified JSON processing)
+- **Jackson**: 2.18.6 (unified JSON processing)
 - **Play JSON**: 2.10.6 (unified Play JSON)
 
 ## Module Structure
@@ -74,7 +74,7 @@ GraalVM-based JavaScript and Python script execution
 
 ### - ml-spark
 Apache Spark ML integration and extensions
-- **Apache Spark**: 3.5.6 (core, sql, mllib)
+- **Apache Spark**: 4.0.4 (core, sql, mllib)
 - **Breeze**: 2.1.0
 - **Tablesaw**: 0.36.0
 - Depends on: core
