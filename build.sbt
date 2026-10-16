@@ -5,6 +5,10 @@ scalaVersion in ThisBuild := "2.13.16" // Spark 4.0 is built with 2.13.16 (needs
 version in ThisBuild := "1.1.2-SNAPSHOT"
 isSnapshot in ThisBuild := true
 
+// Java sources (ada-server, scripting, ignite) compile to Java 17 bytecode whatever JDK runs the build, so the
+// published jars keep working on JDK 17 and older bytecode readers (e.g. ASM inside libraries) can parse them
+javacOptions in ThisBuild ++= Seq("--release", "17")
+
 // Dependency override groups
 val akkaLibs = Seq(
   "com.typesafe.akka" %% "akka-actor"                 % Dependencies.Versions.akka,

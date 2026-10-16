@@ -34,7 +34,7 @@ libraryDependencies ++= Seq(
 ) map { _.exclude("org.slf4j","slf4j-log4j12").exclude("com.google.inject", "guice").exclude("com.google.inject.extensions", "guice-assistedinject") }
 
 libraryDependencies ++= Seq(
-  "net.codingwell" %% "scala-guice" % Versions.scalaGuice,   // uses guice 4.2.3 (bellow)
+  "net.codingwell" %% "scala-guice" % Versions.scalaGuice,
   "com.google.inject" % "guice" % Versions.googleGuice,  // no_aop is set due to https://github.com/google/guice/issues/1133 // 4.0.1
   "com.google.inject.extensions" % "guice-assistedinject" % Versions.guiceAssistedinject
 )

@@ -6,5 +6,5 @@ description := "Elastic store JSON stuff"
 
 libraryDependencies ++= Seq(
   "org.scalatest" %% "scalatest" % Versions.scalaTest % "test",
-  "net.codingwell" %% "scala-guice" % "4.2.11" % "test"
+  "net.codingwell" %% "scala-guice" % Versions.scalaGuice % "test"
 )

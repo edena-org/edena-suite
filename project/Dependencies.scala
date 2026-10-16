@@ -8,11 +8,11 @@ object Dependencies {
     val scalaTest = "3.2.19" // 3.1+ moved style traits to org.scalatest.flatspec/funsuite/matchers packages
     val playJson = "2.10.6" // Updated for Play 2.9.x compatibility
 
-    // Guice 5.1.0 was specifically released to provide proper Java 17 support
-    // Guice 6.0+ supports Java 21
-    val scalaGuice = "5.1.0" // compatible with Guice 5.1.0
-    val googleGuice = "5.1.0" // compatible with play-mailer 9.0.1
-    val guiceAssistedinject = "5.1.0"
+    // Guice 6.0.0: bundles ASM 9.5, which reads Java 21 class files (5.1.0's ASM 9.2 fails on them when building
+    // error messages); same line Play 2.9 / play-mailer 9 bring in. Not 7.x: jakarta.inject only, Play 2.9 uses javax.
+    val scalaGuice = "6.0.0" // built against Guice 6.0.0
+    val googleGuice = "6.0.0"
+    val guiceAssistedinject = "6.0.0"
 
     // JSON — 2.18.x is what Spark 4.0 is built against (it needs >= 2.18); one version suite-wide since
     // ada-server/ada-web put Spark, Play, Akka and elastic4s on a single classpath

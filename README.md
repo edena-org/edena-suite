@@ -18,20 +18,20 @@ Edena Suite is a comprehensive data discovery and analytics platform built with 
 ### - core
 Foundation utilities (reflection, akka, locking), calculators, repository interfaces, shared models
 - **Akka**: 2.6.21
-- **Guice**: 5.1.0
+- **Guice**: 6.0.0
 - **ScalaTest**: 3.2.19
 - **Commons**: IO, Lang, Math3
 - **Logging**: Logback 1.4.14, SLF4J 1.7.26
 
 ### - json
 JSON processing utilities
-- **Jackson**: 2.14.3
+- **Jackson**: 2.18.6
 - **Play JSON**: 2.10.6
 - Depends on: core
 
 ### - store-json
 Unified JSON storage abstraction
-- **Jackson**: 2.14.3
+- **Jackson**: 2.18.6
 - **Play JSON**: 2.10.6
 - Depends on: json
 
@@ -53,7 +53,7 @@ Elasticsearch integration
 ### - elastic-json
 Elasticsearch JSON storage implementation
 - **Elastic4S**: 8.11.0
-- **Jackson**: 2.14.3
+- **Jackson**: 2.18.6
 - Depends on: store-json, elastic
 
 ### - ignite
@@ -82,7 +82,7 @@ Apache Spark ML integration and extensions
 ### - ml-dl4j
 Deep learning with DL4J
 - **Akka**: 2.6.21
-- **Jackson**: 2.14.3
+- **Jackson**: 2.18.6
 - Depends on: core
 
 ### Web & Communication Modules
@@ -91,13 +91,13 @@ Deep learning with DL4J
 Web service client utilities
 - **Akka HTTP**: 10.2.10
 - **Play WS**: 2.1.11
-- **Jackson**: 2.14.3
+- **Jackson**: 2.18.6
 - Depends on: core
 
 ### - play
 Play Framework extensions
 - **Play Framework**: 2.9.6
-- **Jackson**: 2.14.3
+- **Jackson**: 2.18.6
 - **Play JSON**: 2.10.6
 - Depends on: json
 
@@ -115,7 +115,7 @@ Core business logic and services
 - **Breeze**: 2.1.0 (linear algebra)
 - **T-SNE Java**: v2.5.0
 - **LDAP SDK**: 2.3.8
-- **Guice**: 5.1.0
+- **Guice**: 6.0.0
 - Depends on: elastic-json, mongo, ignite, ml-spark
 
 ### - ada-web
