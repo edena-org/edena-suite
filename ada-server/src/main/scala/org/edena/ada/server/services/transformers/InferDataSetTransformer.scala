@@ -95,7 +95,8 @@ private class InferDataSetTransformer extends AbstractDataSetTransformer[InferDa
       FieldTypeHelper.fieldTypeFactory(booleanIncludeNumbers = spec.booleanIncludeNumbers),
       spec.maxEnumValuesCount.getOrElse(FieldTypeHelper.maxEnumValuesCount),
       spec.minAvgValuesPerEnum.getOrElse(FieldTypeHelper.minAvgValuesPerEnum),
-      FieldTypeHelper.arrayDelimiter
+      FieldTypeHelper.arrayDelimiter,
+      spec.minTextLength.getOrElse(FieldTypeHelper.minTextLength)
     )
 
     val jfti = fieldTypeInferrerFactory.ofJson

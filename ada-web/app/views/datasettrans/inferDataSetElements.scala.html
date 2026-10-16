@@ -18,6 +18,7 @@
 
 @inputText("inferDataSetTransformation", "maxEnumValuesCount", form)
 @inputText("inferDataSetTransformation", "minAvgValuesPerEnum", form)
+@inputText("inferDataSetTransformation", "minTextLength", form, Seq('_helpModal -> "<p>A string field whose longest value has at least this many characters is inferred as <b>Text</b> (full-text search) instead of String. Default: 50.</p>"))
 @checkbox("inferDataSetTransformation", "booleanIncludeNumbers", form)
 
 @inputText("inferDataSetTransformation", "inferenceGroupSize", form)

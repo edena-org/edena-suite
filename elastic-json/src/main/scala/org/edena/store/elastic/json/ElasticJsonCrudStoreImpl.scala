@@ -12,6 +12,9 @@ import com.sksamuel.elastic4s.requests.get.GetResponse
 import com.sksamuel.elastic4s.{ElasticClient, ElasticDsl}
 import com.sksamuel.elastic4s.fields.ElasticField
 import com.sksamuel.elastic4s.requests.searches.{SearchHit, SearchResponse}
+import com.sksamuel.elastic4s.requests.searches.queries.ExistsQuery
+import com.sksamuel.elastic4s.requests.searches.queries.matches.MatchQuery
+import org.edena.core.DefaultTypes.Seq
 import com.typesafe.config.Config
 import org.edena.core.util.ConfigImplicits._
 import org.edena.store.json.JsObjectIdentity
@@ -48,8 +51,11 @@ private[elastic] final class ElasticJsonCrudStoreImpl @Inject()(
     if (excludeIdMapping) Nil else Seq((storedIdName, FieldTypeSpec(FieldTypeId.String)))
   )
   private val fieldNameTypeMap = fieldNamesAndTypeWithId.toMap
-  private val keywordIgnoreAboveCharCount = 30000
+  private val keywordIgnoreAboveCharCount = ElasticJsonMapping.DefaultKeywordIgnoreAbove
+  // legacy: if set, String fields are mapped as analyzed text (no exact matching); it's also the analyzer of Text fields
   private val textAnalyzerName = configuration.optionalString("elastic.text.analyzer")
+  private val textKeywordIgnoreAboveCharCount =
+    configuration.optionalInt("elastic.text.keyword_ignore_above").getOrElse(ElasticJsonMapping.DefaultTextKeywordIgnoreAbove)
 
   override protected lazy val fieldDefs: Iterable[ElasticField] =
     fieldNamesAndTypeWithId.map { case (fieldName, fieldTypeSpec) =>
@@ -88,6 +94,15 @@ private[elastic] final class ElasticJsonCrudStoreImpl @Inject()(
         else
           keywordField(fieldName) store true ignoreAbove keywordIgnoreAboveCharCount
 
+      case FieldTypeId.Text =>
+        // keyword for exact values (filters, sorting, distinct values) of shorter texts + an analyzed sub-field
+        // (<field>.text) for full-text search
+        (keywordField(fieldName) store true ignoreAbove textKeywordIgnoreAboveCharCount).copy(
+          fields = List(
+            textField(ElasticJsonMapping.TextSubFieldName) analyzer textAnalyzerName.getOrElse(ElasticJsonMapping.DefaultTextAnalyzer)
+          )
+        )
+
       case FieldTypeId.Enum => longField(fieldName) store true
       case FieldTypeId.Boolean => booleanField(fieldName) store true
       case FieldTypeId.Integer => longField(fieldName) store true
@@ -105,6 +120,26 @@ private[elastic] final class ElasticJsonCrudStoreImpl @Inject()(
 
   override protected def toDBFieldName(fieldName: String) =
     rename(fieldName)
+
+  // Text fields are searched by (analyzed) words through their full-text sub-field
+  override protected def toContainsWordsQuery(
+    fieldName: String,
+    dbFieldName: String,
+    words: Seq[String]
+  ) =
+    fieldNameTypeMap.get(fieldName) match {
+      case Some(fieldTypeSpec) if fieldTypeSpec.fieldType == FieldTypeId.Text =>
+        val textFieldName = s"$dbFieldName.${ElasticJsonMapping.TextSubFieldName}"
+
+        if (words.isEmpty)
+          // no words: any value - checked on the sub-field since the keyword skips values longer than its ignore_above
+          ExistsQuery(textFieldName)
+        else
+          MatchQuery(textFieldName, words.mkString(" ")).withAndOperator()
+
+      case _ =>
+        super.toContainsWordsQuery(fieldName, dbFieldName, words)
+    }
 
   ///////////////////
   // Serialization //

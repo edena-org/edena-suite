@@ -3,6 +3,7 @@ package org.edena.store.elastic.knn
 import akka.actor.ActorSystem
 import akka.stream.Materializer
 import akka.stream.scaladsl.Sink
+import com.google.inject.name.Names
 import net.codingwell.scalaguice.ScalaModule
 import org.edena.core.store.Criterion._
 import org.edena.core.store.ValueMapAux._
@@ -355,8 +356,16 @@ class ElasticKnnSearchTest extends AsyncFlatSpec
   }
 }
 
-class ArticleStoreModule extends ScalaModule {
+// each suite should use its own index, otherwise suites running in parallel delete/recreate each other's index
+class ArticleStoreModule(indexName: String = ArticleStoreModule.KnnIndexName) extends ScalaModule {
   override def configure(): Unit = {
+    bind[String].annotatedWith(Names.named(ArticleStoreModule.IndexNameKey)).toInstance(indexName)
     bind[ArticleStoreTypes.ArticleStore].to(classOf[ElasticArticleStore]).asEagerSingleton()
   }
+}
+
+object ArticleStoreModule {
+  final val IndexNameKey = "articleIndexName" // a constant, used in an annotation
+  val KnnIndexName = "test_articles_knn"
+  val OmniIndexName = "test_articles_omni"
 }

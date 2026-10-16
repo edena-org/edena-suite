@@ -30,9 +30,9 @@ class ReplaceString extends DsaInputFutureRunnable[ReplaceStringSpec] {
 
       // replace for String or Enum
       _ <- field.fieldType match {
-        case FieldTypeId.String => replaceForString(dsa.dataSetStore, field.toNamedType[String], spec)
+        case FieldTypeId.String | FieldTypeId.Text => replaceForString(dsa.dataSetStore, field.toNamedType[String], spec)
         case FieldTypeId.Enum => replaceForEnum(dsa.fieldStore, field, spec)
-        case _ => throw new AdaException(s"String replacement is possible only for String and Enum types but got ${field.fieldTypeSpec}.")
+        case _ => throw new AdaException(s"String replacement is possible only for String, Text, and Enum types but got ${field.fieldTypeSpec}.")
       }
     } yield
       ()

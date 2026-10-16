@@ -547,6 +547,9 @@ abstract class ElasticReadonlyStore[E, ID](
       case c: RegexNotEqualsCriterion =>
         BoolQuery().not(RegexQuery(fieldName, toDBValue(c.value).toString))
 
+      case c: ContainsWordsCriterion =>
+        toContainsWordsQuery(criterion.fieldName, fieldName, c.words)
+
       case c: NotEqualsCriterion[T] =>
         BoolQuery().not(TermQuery(fieldName, toDBValue(c.value)))
 
@@ -615,6 +618,33 @@ abstract class ElasticReadonlyStore[E, ID](
         } else nq
     }
   }
+
+  /**
+    * Query for [[ContainsWordsCriterion]]. By default (no full-text sub-field known) each word has to occur in the
+    * field's value as a case-insensitive substring, i.e. match the regex `.*<word>.*` (with the word taken literally).
+    * No words: the field must have a value.
+    */
+  protected def toContainsWordsQuery(
+    fieldName: String,
+    dbFieldName: String,
+    words: Seq[String]
+  ): Query =
+    if (words.isEmpty)
+      ExistsQuery(dbFieldName)
+    else
+      ElasticDsl.must(
+        words.map(word =>
+          RegexQuery(dbFieldName, s".*${escapeLuceneRegex(word)}.*").caseInsensitive(true)
+        )
+      )
+
+  // Lucene regex reserved chars, incl. the optional operators (# @ & < > ~) enabled by Elasticsearch's default flags
+  private val luceneRegexSpecialChars = ".?+*|{}[]()\"\\#@&<>~".toSet
+
+  private def escapeLuceneRegex(text: String) =
+    text.flatMap { char =>
+      if (luceneRegexSpecialChars.contains(char)) s"\\$char" else char.toString
+    }
 
   protected def toDBValue(value: Any): Any =
     value match {

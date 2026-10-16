@@ -31,7 +31,7 @@ class OmniSearchTest extends AsyncFlatSpec
   with BeforeAndAfterAll
   with ElasticBaseTest {
 
-  override protected val modules = super.modules ++ Seq(new ArticleStoreModule())
+  override protected val modules = super.modules ++ Seq(new ArticleStoreModule(ArticleStoreModule.OmniIndexName))
 
   private lazy val store = instance[ArticleStoreTypes.ArticleStore]
   private implicit lazy val actorSystem: ActorSystem = instance[ActorSystem]

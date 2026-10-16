@@ -19,6 +19,9 @@ import org.edena.core.util.ConfigImplicits._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
+import org.edena.store.elastic.ElasticCrudStoreExtra
+import org.edena.store.json.StoreTypes.JsonCrudStore
+import org.slf4j.LoggerFactory
 import org.edena.core.DefaultTypes.Seq
 import scala.collection.parallel.CollectionConverters._
 
@@ -132,6 +135,9 @@ private class SynapseDataSetImporter @Inject() (
 
         // get the new data set repo
         dataRepo = dsa.dataSetStore
+
+        // map the new fields before saving (the existing index is updated in place, not re-created)
+        _ <- SynapseDataSetImporter.mapNewFields(dataRepo, fields, newFields)
 
         // transform jsons (if needed) and save (and update) the jsons
         _ <- {
@@ -328,5 +334,38 @@ private class SynapseDataSetImporter @Inject() (
         ftf(mergedFieldTypeSpec)
     } else
       oldType
+  }
+}
+
+private object SynapseDataSetImporter {
+
+  private val logger = LoggerFactory.getLogger(getClass.getName)
+
+  /**
+    * Elasticsearch: maps the fields that are new to the data set before any record is saved. A re-import upserts the
+    * records into the existing index (it's not re-created with the new mapping), so new fields would otherwise be
+    * mapped dynamically, e.g. a Text field as plain `text` without its full-text sub-field. Best-effort: if the mapping
+    * is rejected (e.g. the index still holds an earlier field of the same name with another type), the new fields are
+    * left to the dynamic mapping, as before.
+    */
+  def mapNewFields(
+    store: JsonCrudStore,
+    existingFields: Traversable[Field],
+    fields: Traversable[Field]
+  ): Future[Unit] = {
+    val existingFieldNames = existingFields.map(_.name).toSet
+    val newFieldNames = fields.map(_.name).filterNot(existingFieldNames.contains).toSeq
+
+    store match {
+      case elasticStore: ElasticCrudStoreExtra[_, _] if newFieldNames.nonEmpty =>
+        elasticStore.putFieldMappings(newFieldNames).recover { case e: Exception =>
+          logger.warn(
+            s"Mapping of the new field(s) ${newFieldNames.mkString(", ")} failed, they will be mapped dynamically. Cause: ${e.getMessage}"
+          )
+        }
+
+      case _ =>
+        Future(())
+    }
   }
 }

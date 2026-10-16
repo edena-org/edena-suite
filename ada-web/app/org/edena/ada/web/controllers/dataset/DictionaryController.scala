@@ -23,4 +23,7 @@ trait DictionaryController extends CrudController[String] {
   def setDefaultLabels: Action[AnyContent]
 
   def convertLabelsToCamelCase: Action[AnyContent]
+
+  // String fields to Text (full-text search) or Text back to String, in place
+  def convertStringAndTextFields(fieldNames: Seq[String], toText: Boolean): Action[AnyContent]
 }

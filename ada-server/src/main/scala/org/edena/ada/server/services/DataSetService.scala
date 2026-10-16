@@ -34,6 +34,8 @@ import org.edena.ada.server.models.datatrans._
 import org.edena.ada.server.services.ml.{IOSeriesUtil, SparkApp}
 import org.edena.core.Identity
 import org.edena.core.field.{FieldTypeId, FieldTypeSpec}
+import org.edena.store.elastic.ElasticCrudStoreExtra
+import scala.util.Failure
 import org.edena.store.json.JsObjectIdentity
 import org.edena.store.json.StoreTypes.JsonCrudStore
 import org.slf4j.LoggerFactory
@@ -64,6 +66,21 @@ trait DataSetService {
     deleteAndSave: Boolean,
     deleteNonReferenced: Boolean
   ): Future[Unit]
+
+  /**
+    * Converts String fields to Text (full-text search) or Text fields back to String in place, i.e. without copying
+    * the data (the values are plain strings either way). The dictionary is updated and the data set store refreshed;
+    * for an Elasticsearch-stored data set the full-text sub-fields of all the given String/Text fields are (re)added
+    * and populated (re-indexing), so a call with `toText` can be repeated to finish an interrupted re-indexing.
+    * Other storages (Mongo, cache) keep the data as it is. Fields of other types are ignored.
+    *
+    * @return Names of the fields whose type was changed.
+    */
+  def convertStringAndTextFields(
+    dataSetId: String,
+    fieldNames: Traversable[String],
+    toText: Boolean
+  ): Future[Traversable[String]]
 
   def updateCategories(
     categoryStore: CategoryStore,
@@ -795,6 +812,121 @@ private[services] class DataSetServiceImpl @Inject()(
       val jsons = project(items, fieldName)
       (fieldName, jsonFieldTypeInferrer(jsons))
     }
+
+  // data sets with a String/Text conversion in progress (so the same data doesn't get re-indexed concurrently)
+  private val stringTextConversionsInProgress = java.util.concurrent.ConcurrentHashMap.newKeySet[String]()
+
+  override def convertStringAndTextFields(
+    dataSetId: String,
+    fieldNames: Traversable[String],
+    toText: Boolean
+  ): Future[Traversable[String]] =
+    if (!stringTextConversionsInProgress.add(dataSetId))
+      Future.failed(
+        new AdaException(s"A String/Text field conversion of the data set '$dataSetId' is already in progress.")
+      )
+    else
+      Future.unit.flatMap(_ =>
+        convertStringAndTextFieldsAux(dataSetId, fieldNames, toText)
+      ).andThen { case _ =>
+        stringTextConversionsInProgress.remove(dataSetId)
+      }
+
+  private def convertStringAndTextFieldsAux(
+    dataSetId: String,
+    fieldNames: Traversable[String],
+    toText: Boolean
+  ): Future[Traversable[String]] = {
+    val (sourceType, targetType) =
+      if (toText) (FieldTypeId.String, FieldTypeId.Text) else (FieldTypeId.Text, FieldTypeId.String)
+
+    for {
+      dsa <- dsaf.getOrError(dataSetId)
+
+      fields <- dsa.fieldStore.find(FieldIdentity.name #-> fieldNames.toSeq)
+
+      stringOrTextFields = fields.filter(field => field.fieldType == FieldTypeId.String || field.fieldType == FieldTypeId.Text)
+      fieldsToConvert = stringOrTextFields.filter(_.fieldType == sourceType)
+
+      _ <- if (stringOrTextFields.nonEmpty)
+        convertStringAndTextFieldsWithRollback(dsa, stringOrTextFields, fieldsToConvert, targetType)
+      else
+        Future(())
+    } yield {
+      val convertedFieldNames = fieldsToConvert.map(_.name)
+      messageLogger.info(s"${convertedFieldNames.size} field(s) of the data set '$dataSetId' converted to $targetType.")
+      convertedFieldNames
+    }
+  }
+
+  // Updates the dictionary, re-creates the data set store, and (for Text) re-indexes the fields in Elasticsearch. If any
+  // step fails, the dictionary change is rolled back, so no field ends up as Text without its (populated) full-text
+  // sub-field, and the failure is reported (with its cause) as an AdaException.
+  private def convertStringAndTextFieldsWithRollback(
+    dsa: DataSetAccessor,
+    stringOrTextFields: Traversable[Field],
+    fieldsToConvert: Traversable[Field],
+    targetType: FieldTypeId.Value
+  ): Future[Unit] = {
+    val dataSetId = dsa.dataSetId
+
+    val conversionFuture =
+      for {
+        // update the dictionary
+        _ <- if (fieldsToConvert.nonEmpty)
+          dsa.fieldStore.update(fieldsToConvert.map(_.copy(fieldType = targetType)))
+        else
+          Future(())
+
+        // re-create the data set store with the current field types (also if no type changed, so it's not stale)
+        _ <- dsa.updateDataSetStore
+
+        // Elasticsearch: add and populate the full-text sub-fields; nothing to do for other storages
+        _ <- if (targetType == FieldTypeId.Text)
+          dsa.dataSetStore match {
+            case elasticStore: ElasticCrudStoreExtra[_, _] =>
+              logger.info(s"Re-indexing ${stringOrTextFields.size} Text field(s) of the data set '$dataSetId' in place.")
+              elasticStore.updateFieldMappingsInPlace(stringOrTextFields.map(_.name))
+
+            case _ =>
+              Future(())
+          }
+        else
+          Future(())
+      } yield
+        ()
+
+    conversionFuture.recoverWith { case error =>
+      val fieldNamesString = stringOrTextFields.map(_.name).mkString(", ")
+      logger.error(s"Conversion of the field(s) $fieldNamesString of the data set '$dataSetId' to $targetType failed.", error)
+
+      // restore the original field types (and the store)
+      val rollbackFuture =
+        if (fieldsToConvert.nonEmpty)
+          for {
+            _ <- dsa.fieldStore.update(fieldsToConvert)
+            _ <- dsa.updateDataSetStore
+          } yield
+            ()
+        else
+          Future(())
+
+      rollbackFuture.transform { rollbackResult =>
+        rollbackResult.failed.foreach(rollbackError =>
+          logger.error(s"Rollback of the field type conversion of the data set '$dataSetId' failed.", rollbackError)
+        )
+
+        val typesState =
+          if (fieldsToConvert.isEmpty) ""
+          else if (rollbackResult.isSuccess) " The field types were left unchanged."
+          else " WARNING: Restoring the original field types failed too."
+
+        Failure(new AdaException(
+          s"Conversion of the field(s) $fieldNamesString to $targetType failed: ${error.getMessage}.$typesState", error
+        ))
+      }
+    }
+  }
 
   override def updateFieldSpecs(
     dataSetId: String,

@@ -168,7 +168,7 @@ class IncalStoreSequenceRecordReader[ID](
         case Enum =>
           arrayToMatrix[jl.Integer](new IntWritable(_))
 
-        case String =>
+        case String | FieldTypeId.Text =>
           arrayToMatrix[String](new Text(_))
 
         case Json =>

@@ -31,8 +31,8 @@ class DropExtraMiliSecsPoints extends DsaInputFutureRunnable[DropExtraMiliSecsPo
 
       // replace for String or Enum
       _ <- field.fieldType match {
-        case FieldTypeId.String => replaceForString(dsa.dataSetStore, field.toNamedType[String], spec)
-        case _ => throw new AdaException(s"DropExtraMiliSecsPoints is possible only for String type but got ${field.fieldTypeSpec}.")
+        case FieldTypeId.String | FieldTypeId.Text => replaceForString(dsa.dataSetStore, field.toNamedType[String], spec)
+        case _ => throw new AdaException(s"DropExtraMiliSecsPoints is possible only for String or Text type but got ${field.fieldTypeSpec}.")
       }
     } yield
       ()

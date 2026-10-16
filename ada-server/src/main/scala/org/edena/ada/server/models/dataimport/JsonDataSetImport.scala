@@ -19,6 +19,7 @@ case class JsonDataSetImport(
   inferFieldTypes: Boolean,
   inferenceMaxEnumValuesCount: Option[Int] = None,
   inferenceMinAvgValuesPerEnum: Option[Double] = None,
+  inferenceMinTextLength: Option[Int] = None,
   booleanIncludeNumbers: Boolean = false,
   explicitNullAliases: Seq[String] = Nil,
   saveBatchSize: Option[Int] = None,

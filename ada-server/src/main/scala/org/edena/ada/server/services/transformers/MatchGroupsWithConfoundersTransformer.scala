@@ -199,7 +199,7 @@ private class MatchGroupsWithConfoundersTransformer extends AbstractDataSetTrans
   ): Seq[(BSONObjectID, Seq[Option[Any]])] = {
     val matchedIdSamples = confoundingIdSamples.filter { case (_, confoundingSample) =>
       (matchingConfoundingSample, confoundingSample, confoundingFields).zipped.forall { case (matchingValue, value, field) =>
-        (matchingValue.isEmpty && value.isEmpty) || field.isNumeric || (field.isCategorical && matchingValue.nonEmpty && value.nonEmpty && matchingValue.get == value.get)
+        (matchingValue.isEmpty && value.isEmpty) || field.isNumeric || ((field.isCategorical || field.isText) && matchingValue.nonEmpty && value.nonEmpty && matchingValue.get == value.get)
       }
     }
 

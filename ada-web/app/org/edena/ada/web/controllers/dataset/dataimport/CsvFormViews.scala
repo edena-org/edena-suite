@@ -24,6 +24,7 @@ object CsvFormViews extends DataSetImportFormViews[CsvDataSetImport] {
       "delimiter" -> default(nonEmptyText, ","),
       "inferenceMaxEnumValuesCount" -> optional(number(min = 1)),
       "inferenceMinAvgValuesPerEnum" -> optional(of[Double]).verifying("Must be positive", _.map(_ > 0).getOrElse(true)),
+      "inferenceMinTextLength" -> optional(number(min = 1)),
       "saveBatchSize" -> optional(number(min = 1)),
       "explicitNullAliases" -> of[Seq[String]]
     )

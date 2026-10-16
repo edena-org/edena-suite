@@ -189,7 +189,7 @@ class IncalStoreRecordReader[ID](
             case Date => new IntWritable(value.asInstanceOf[jl.Integer])
             case Boolean => new BooleanWritable(value.asInstanceOf[jl.Boolean])
             case Enum => new IntWritable(value.asInstanceOf[jl.Integer])
-            case String => new Text(value.asInstanceOf[String])
+            case String | FieldTypeId.Text => new Text(value.asInstanceOf[String])
             case Json => new Text(value.toString)
             case Null => new NullWritable
           }
@@ -215,7 +215,7 @@ class IncalStoreRecordReader[ID](
               val array = Nd4j.createFromArray(value.asInstanceOf[Seq[jl.Integer]].toArray)
               new NDArrayWritable(array)
 
-            case String =>
+            case String | FieldTypeId.Text =>
               new Text(value.toString)
 
             case Json =>

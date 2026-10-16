@@ -534,6 +534,11 @@ function updateFilterValueElement(filterElement, data) {
   filterElement.find("#fieldInfo").html("Field type: " + fieldType)
   var conditionTypeElement = filterElement.find("#conditionType")
 
+  // Text (free-form) fields are searched by words rather than compared as a whole
+  if (data.fieldType == "Text" && conditionTypeElement.val() == "=") {
+    conditionTypeElement.val("contains");
+  }
+
   var conditionType = conditionTypeElement.val();
   var isInNinType = (conditionType == "in" || conditionType == "nin") ? "multiple" : ""
 

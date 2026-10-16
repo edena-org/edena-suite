@@ -353,6 +353,16 @@ abstract class AbstractCacheWrappingCrudStore[ID: ClassTag, E, CACHE_ID, CACHE_E
       case RegexNotEqualsCriterion(_, regexString) =>
         (s"$fieldName not like ?", Seq(s"%$regexString%"))
 
+      // each word must occur as a (case-insensitive) substring; no words: the field must have a value
+      case c: ContainsWordsCriterion =>
+        if (c.words.isEmpty)
+          (s"$fieldName is not null", Nil)
+        else
+          (
+            c.words.map(_ => s"lower($fieldName) like ?").mkString("(", " and ", ")"),
+            c.words.map(word => s"%${escapeSqlLike(word.toLowerCase)}%")
+          )
+
       case NotEqualsCriterion(_, None) =>
         (s"$fieldName is not null", Nil)
 
@@ -417,6 +427,12 @@ abstract class AbstractCacheWrappingCrudStore[ID: ClassTag, E, CACHE_ID, CACHE_E
         (s"$fieldName <= ?", Seq(actualValue))
     }
   }
+
+  // H2's LIKE uses a backslash as the default escape character
+  private def escapeSqlLike(text: String): String =
+    text.flatMap { char =>
+      if (char == '%' || char == '_' || char == '\\') s"\\$char" else char.toString
+    }
 
   private def isJavaObjectType(value: Any): Boolean =
     DataType.getTypeFromClass(value.getClass) == Value.JAVA_OBJECT

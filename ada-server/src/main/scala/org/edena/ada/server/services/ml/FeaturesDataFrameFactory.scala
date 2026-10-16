@@ -29,7 +29,7 @@ object FeaturesDataFrameFactory {
   ): DataFrame = {
     // convert jsons to a data frame
     val fieldNameAndTypes = fields.map { case (name, fieldTypeSpec) => (name, ftf(fieldTypeSpec))}
-    val stringFieldNames = fields.filter {_._2.fieldType == FieldTypeId.String }.map(_._1)
+    val stringFieldNames = fields.filter { case (_, spec) => spec.fieldType == FieldTypeId.String || spec.fieldType == FieldTypeId.Text }.map(_._1)
     val stringFieldsNotToIndex = stringFieldNames.diff(featureFieldNames).toSet
     val df = jsonsToDataFrame(session)(jsons, fieldNameAndTypes, stringFieldsNotToIndex)
 
@@ -197,7 +197,7 @@ object FeaturesDataFrameFactory {
         case FieldTypeId.Double => DoubleType
         case FieldTypeId.Boolean => BooleanType
         case FieldTypeId.Enum => StringType
-        case FieldTypeId.String => StringType
+        case FieldTypeId.String | FieldTypeId.Text => StringType
         case FieldTypeId.Date => DateType
         case FieldTypeId.Json => NullType // TODO
         case FieldTypeId.Null => NullType

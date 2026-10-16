@@ -166,6 +166,14 @@ private class TransientLocalFieldStore(fields: Seq[Field]) extends FieldStore {
 
       case c: RegexEqualsCriterion => value.equals(c.value) // TODO
 
+      case c: ContainsWordsCriterion =>
+        val text = value match {
+          case null | None => None
+          case Some(x) => Some(x.toString.toLowerCase)
+          case x => Some(x.toString.toLowerCase)
+        }
+        text.exists(text => c.words.forall(word => text.contains(word.toLowerCase)))
+
       case c: NotEqualsCriterion[T] => !c.value.equals(value)
 
       case c: NotEqualsNullCriterion => value != null && value != None

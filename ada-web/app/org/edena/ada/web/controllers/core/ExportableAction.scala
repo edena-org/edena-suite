@@ -142,7 +142,7 @@ trait ExportableAction[E] {
   ): Source[JsObject, _] = {
     val nameIsCategoricalMap = nameFieldTypeMap.map { case (fieldName, fieldType) =>
       val fieldTypeId = fieldType.spec.fieldType
-      (fieldName, fieldTypeId == FieldTypeId.String || fieldTypeId == FieldTypeId.Enum || fieldTypeId == FieldTypeId.Boolean)
+      (fieldName, fieldTypeId == FieldTypeId.String || fieldTypeId == FieldTypeId.Text || fieldTypeId == FieldTypeId.Enum || fieldTypeId == FieldTypeId.Boolean)
     }
 
     val toDisplayJson = toDisplayJsonAux(nameFieldTypeMap, nameIsCategoricalMap, escapeStringValues)(_)

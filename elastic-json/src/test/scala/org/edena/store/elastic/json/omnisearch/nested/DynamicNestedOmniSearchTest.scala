@@ -27,12 +27,12 @@ class DynamicNestedOmniSearchTest extends AsyncFlatSpec
   with BeforeAndAfterAll
   with ElasticBaseTest {
 
-  override protected val modules = super.modules ++ Seq(new NestedArticleStoreModule())
+  override protected val modules = super.modules ++ Seq(new NestedArticleStoreModule(NestedArticleStoreModule.DynamicIndexName))
 
   private lazy val typedStore = instance[NestedArticleStoreTypes.NestedArticleStore]
   private lazy val factory = new ElasticDynamicReadonlyStoreFactory(instance[ElasticClient])
   private lazy val dynamicStoreFuture: Future[ElasticDynamicExtraStore] =
-    factory("test_articles_nested_omni")
+    factory(NestedArticleStoreModule.DynamicIndexName)
 
   private implicit lazy val actorSystem: ActorSystem = instance[ActorSystem]
   private implicit lazy val materializer: Materializer = instance[Materializer]

@@ -25,4 +25,5 @@ class DictionaryRouter(dataSetId: String) extends GenericRouter(routes.Dictionar
 
 final class DictionaryJsRouter(dataSetId: String) extends GenericJsRouter(routes.javascript.DictionaryDispatcher, "dataSet", dataSetId) {
   val updateLabel = routeFun(_.updateLabel)
+  val convertStringAndTextFields = routeFun(_.convertStringAndTextFields)
 }

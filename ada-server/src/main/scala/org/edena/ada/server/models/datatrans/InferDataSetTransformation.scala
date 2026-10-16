@@ -18,6 +18,7 @@ case class InferDataSetTransformation(
 
   maxEnumValuesCount: Option[Int] = None,
   minAvgValuesPerEnum: Option[Double]  = None,
+  minTextLength: Option[Int] = None,
   booleanIncludeNumbers: Boolean = false,
   inferenceGroupSize: Option[Int] = None,
   inferenceGroupsInParallel: Option[Int]  = None,

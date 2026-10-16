@@ -137,6 +137,17 @@
                     Category
                 </a>
             </li>
+            <div class="dropdown-divider"></div>
+            <li>
+                <a href="#" onclick="convertStringAndTextFields(true);return false" data-toggle="tooltip" title="Convert the selected String fields to Text (full-text search)">
+                    Text Type
+                </a>
+            </li>
+            <li>
+                <a href="#" onclick="convertStringAndTextFields(false);return false" data-toggle="tooltip" title="Convert the selected Text fields back to String">
+                    String Type
+                </a>
+            </li>
         </ul>
     </div>
     @paginatedTable(
@@ -184,7 +195,8 @@
 )
 
 @helper.javascriptRouter("dictionaryJsRoutes")(
-    dictionaryJsRouter.updateLabel
+    dictionaryJsRouter.updateLabel,
+    dictionaryJsRouter.convertStringAndTextFields
 )
 
 @helper.javascriptRouter("categoryJsRoutes")(
@@ -216,6 +228,36 @@
 
         $("#categorySelectionModal #submitButton").on("click", addFieldsToCategory)
     })
+
+    // one conversion at a time (re-indexing a large data set can take a while)
+    var stringTextConversionInProgress = false;
+
+    function convertStringAndTextFields(toText) {
+        if (stringTextConversionInProgress) {
+            showError("A field conversion is already in progress, please wait until it finishes.");
+            return;
+        }
+        var fieldNames = getCheckedTableIds("dictionaryTable", "id")
+        if (fieldNames.length == 0) {
+            showError("No fields selected.");
+            return;
+        }
+        stringTextConversionInProgress = true;
+        showMessage("Converting " + fieldNames.length + " field(s) to " + (toText ? "Text" : "String") + "... (re-indexing might take a while)");
+
+        dictionaryJsRoutes.org.edena.ada.web.controllers.dataset.DictionaryDispatcher.convertStringAndTextFields(fieldNames, toText).ajax( {
+            success: function(message) {
+                showMessage(message);
+                setTimeout(function() { location.reload(); }, 1500);
+            },
+            error: function(data) {
+                showErrorResponse(data);
+            },
+            complete: function() {
+                stringTextConversionInProgress = false;
+            }
+        });
+    }
 
     function addFieldDistributions() {
         var handler = function(e) {

@@ -138,7 +138,8 @@ private class TranSmartDataSetImporter extends AbstractDataSetImporter[TranSmart
       FieldTypeHelper.fieldTypeInferrerFactory(
         nullAliases = nullAliases,
         maxEnumValuesCount = importInfo.inferenceMaxEnumValuesCount.getOrElse(FieldTypeHelper.maxEnumValuesCount),
-        minAvgValuesPerEnum = importInfo.inferenceMinAvgValuesPerEnum.getOrElse(FieldTypeHelper.minAvgValuesPerEnum)
+        minAvgValuesPerEnum = importInfo.inferenceMinAvgValuesPerEnum.getOrElse(FieldTypeHelper.minAvgValuesPerEnum),
+        minTextLength = importInfo.inferenceMinTextLength.getOrElse(FieldTypeHelper.minTextLength)
       ).ofString
 
     val (jsons, fields) = createJsonsWithFields(columnNamesAndLabels, values.toSeq, fti)

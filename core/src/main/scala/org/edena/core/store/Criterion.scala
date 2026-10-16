@@ -22,6 +22,34 @@ case class EqualsNullCriterion(fieldName: String) extends ValueCriterion[Unit] {
 }
 
 case class RegexEqualsCriterion(fieldName: String, value: String) extends ValueCriterion[String]
+
+/**
+  * All the (whitespace-separated) words of `value` must occur in the field's value, case-insensitively. Stores with
+  * full-text indexing (Elasticsearch Text fields) match whole analyzed words, the other stores plain substrings.
+  */
+case class ContainsWordsCriterion(fieldName: String, value: String) extends ValueCriterion[String] {
+  def words: Seq[String] = ContainsWordsCriterion.words(value)
+}
+
+object ContainsWordsCriterion {
+
+  def words(text: String): Seq[String] =
+    text.trim.split("\\s+").toList.filter(_.nonEmpty)
+
+  /**
+    * Regex (to be applied case-insensitively) matching a text that contains all the given words as substrings (in any
+    * order), e.g. `^(?=[\s\S]*foo)(?=[\s\S]*bar)`. Works for both PCRE (Mongo) and Java regexes.
+    */
+  def toRegex(words: Seq[String]): String =
+    words.map(word => s"(?=[\\s\\S]*${escapeRegex(word)})").mkString("^", "", "")
+
+  def escapeRegex(text: String): String =
+    text.flatMap { char =>
+      if (regexSpecialChars.contains(char)) s"\\$char" else char.toString
+    }
+
+  private val regexSpecialChars = "\\^$.|?*+()[]{}".toSet
+}
 case class RegexNotEqualsCriterion(fieldName: String, value: String) extends ValueCriterion[String]
 case class NotEqualsCriterion[T](fieldName: String, value: T) extends ValueCriterion[T]
 case class NotEqualsNullCriterion(fieldName: String) extends ValueCriterion[Unit] {

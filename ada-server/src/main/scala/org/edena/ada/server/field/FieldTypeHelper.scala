@@ -29,6 +29,8 @@ object FieldTypeHelper {
   val displayDateFormat = "yyyy-MM-dd HH:mm:ss"
   val maxEnumValuesCount = 20
   val minAvgValuesPerEnum = 1.5
+  // a string field whose longest value has at least this many characters is inferred as Text (full-text search)
+  val minTextLength = 50
 
   val arrayDelimiter = ","
 
@@ -53,7 +55,8 @@ object FieldTypeHelper {
     booleanIncludeNumbers: Boolean = true,
     maxEnumValuesCount: Int = maxEnumValuesCount,
     minAvgValuesPerEnum: Double = minAvgValuesPerEnum,
-    arrayDelimiter: String = arrayDelimiter
+    arrayDelimiter: String = arrayDelimiter,
+    minTextLength: Int = minTextLength
   ) = {
     val ftf = fieldTypeFactory(
       nullAliases,
@@ -67,7 +70,8 @@ object FieldTypeHelper {
       ftf,
       maxEnumValuesCount,
       minAvgValuesPerEnum,
-      arrayDelimiter
+      arrayDelimiter,
+      minTextLength
     )
   }
 

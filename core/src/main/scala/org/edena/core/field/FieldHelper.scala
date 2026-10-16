@@ -149,7 +149,7 @@ trait FieldHelper {
       Some(implicitly[Ordering[T]].asInstanceOf[Ordering[Any]])
 
     fieldTypeId match {
-      case FieldTypeId.String => aux[String]
+      case FieldTypeId.String | FieldTypeId.Text => aux[String]
       case FieldTypeId.Enum => aux[Int]
       case FieldTypeId.Boolean => aux[Boolean]
       case FieldTypeId.Double => aux[Double]

@@ -13,6 +13,7 @@
 @checkbox("tranSmartDataSetImport", "inferFieldTypes", form, Seq('_helpModal -> "<p>Whether fields types (String, Double, Boolean, etc.) should be inferred based on given data. By default / normally it should be selected, otherwise <b>ALL</b> the fields will be treated and stored as Strings.</p>"))
 @inputText("tranSmartDataSetImport", "inferenceMaxEnumValuesCount", form)
 @inputText("tranSmartDataSetImport", "inferenceMinAvgValuesPerEnum", form)
+@inputText("tranSmartDataSetImport", "inferenceMinTextLength", form, Seq('_helpModal -> "<p>A string field whose longest value has at least this many characters is inferred as <b>Text</b> (full-text search) instead of String. Default: 50.</p>"))
 @inputText("tranSmartDataSetImport", "saveBatchSize", form)
 @inputText("tranSmartDataSetImport", "explicitNullAliases", form, Seq('_helpModal -> "<p>Comma-separated list of values that should be treated as <i>nulls</i>.</p><p>If not specified the default ones: \"\", \"na\", \"n/a\", \"null\" will be used.</p>"))
 

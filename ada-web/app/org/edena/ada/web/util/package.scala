@@ -41,6 +41,7 @@ package object util {
       case ConditionType.NotIn => "not in"
       case ConditionType.RegexEquals => "like"
       case ConditionType.RegexNotEquals => "not like"
+      case ConditionType.ContainsWords => "contains"
     }
 
   val operators = Vector(
@@ -53,7 +54,8 @@ package object util {
     ConditionType.In  -> 7,
     ConditionType.NotIn -> 8,
     ConditionType.RegexEquals -> 9,
-    ConditionType.RegexNotEquals -> 10
+    ConditionType.RegexNotEquals -> 10,
+    ConditionType.ContainsWords -> 11
   ).sortBy(_._2).map(x => x._1 -> conditionTypeToReadableOperator(x._1))
 
   def valueOrUndefined(condition: FilterCondition, trim: Boolean = false) = {

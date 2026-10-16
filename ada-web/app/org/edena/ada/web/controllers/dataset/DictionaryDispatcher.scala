@@ -51,4 +51,7 @@ class DictionaryDispatcher @Inject() (
   override def setDefaultLabels = dispatch(_.setDefaultLabels)
 
   override def convertLabelsToCamelCase = dispatch(_.convertLabelsToCamelCase)
+
+  override def convertStringAndTextFields(fieldNames: Seq[String], toText: Boolean) =
+    dispatchAjax(_.convertStringAndTextFields(fieldNames, toText))
 }

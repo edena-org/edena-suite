@@ -26,6 +26,8 @@ object ConditionType extends Enumeration {
   val NotEquals = Value("!=")
   val RegexEquals = Value("like")
   val RegexNotEquals = Value("not like")
+  // all the given words occur (full-text search for Text fields)
+  val ContainsWords = Value("contains")
   val In = Value("in")
   val NotIn = Value("nin")
   val Greater = Value(">")
@@ -78,6 +80,8 @@ object FilterCondition {
       case RegexEquals => Some(RegexEqualsCriterion(fieldName, value.getOrElse("")))            // string expected
 
       case RegexNotEquals => Some(RegexNotEqualsCriterion(fieldName, value.getOrElse("")))            // string expected
+
+      case ContainsWords => value.map(_.trim).filter(_.nonEmpty).map(ContainsWordsCriterion(fieldName, _)) // no words, no condition
 
       case NotEquals => Some(
         convertedValue.map(

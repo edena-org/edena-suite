@@ -25,7 +25,8 @@ import org.edena.play.controllers.{CrudControllerImpl, HasFormShowEqualEditView,
 import org.edena.play.formatters.{EnumFormatter, MapJsonFormatter}
 import play.api.data.Form
 import play.api.data.Forms.{optional, _}
-import play.api.mvc.{Action, ControllerComponents, Request}
+import play.api.mvc.{Action, AnyContent, ControllerComponents, Request}
+import be.objectify.deadbolt.scala.AuthenticatedRequest
 import reactivemongo.api.bson.BSONObjectID
 import org.edena.ada.server.services._
 import org.edena.ada.server.services.StatsService
@@ -330,6 +331,50 @@ protected[controllers] class DictionaryControllerImpl @Inject() (
       _ <- store.update(fieldsWithNewLabel)
     } yield
       goHome.flashing("success" -> s"Camel-case labels successfully set for ${fieldsWithNewLabel.size} fields.")
+  }
+
+  override def convertStringAndTextFields(
+    fieldNames: Seq[String],
+    toText: Boolean
+  ) = AuthAction { implicit request =>
+    val targetType = if (toText) FieldTypeId.Text else FieldTypeId.String
+
+    dataSetService.convertStringAndTextFields(dataSetId, fieldNames, toText).map { convertedFieldNames =>
+      Ok(s"${convertedFieldNames.size} field(s) converted to $targetType" + (
+        if (convertedFieldNames.nonEmpty) s": ${convertedFieldNames.mkString(", ")}." else "."
+      ))
+    }.recover {
+      case e: Exception =>
+        logger.error(s"Conversion of the fields ${fieldNames.mkString(", ")} to $targetType failed.", e)
+        InternalServerError(s"Conversion to $targetType failed: ${e.getMessage}")
+    }
+  }
+
+  // A type change between String and Text (in the edit form) also has to (re-)index the field in the storage. The
+  // conversion runs first: if it fails, it keeps the field's type and the whole update fails (with the cause shown).
+  override protected def updateCall(
+    field: Field)(
+    implicit request: AuthenticatedRequest[AnyContent]
+  ): Future[String] = {
+    def isStringOrText(fieldType: FieldTypeId.Value) =
+      fieldType == FieldTypeId.String || fieldType == FieldTypeId.Text
+
+    for {
+      existingField <- store.get(field.name)
+
+      _ <- existingField match {
+        case Some(existing) if existing.fieldType != field.fieldType &&
+          isStringOrText(existing.fieldType) && isStringOrText(field.fieldType) =>
+          dataSetService.convertStringAndTextFields(dataSetId, Seq(field.name), field.fieldType == FieldTypeId.Text)
+
+        case _ =>
+          Future(())
+      }
+
+      // save the rest of the edit
+      id <- super.updateCall(field)
+    } yield
+      id
   }
 
   protected def allCategoriesFuture =

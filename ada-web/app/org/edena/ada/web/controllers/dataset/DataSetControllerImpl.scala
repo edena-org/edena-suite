@@ -1083,7 +1083,7 @@ protected[controllers] class DataSetControllerImpl @Inject() (
               }
 
             val genMethod =
-              if (field.isString || groupField.map(_.isString).getOrElse(false))
+              if (field.isStringOrText || groupField.map(_.isStringOrText).getOrElse(false))
                 WidgetGenerationMethod.FullData
               else
                 distributionGenMethod
@@ -1158,7 +1158,7 @@ protected[controllers] class DataSetControllerImpl @Inject() (
             )
 
             val genMethod =
-              if (groupField.map(_.isString).getOrElse(false))
+              if (groupField.map(_.isStringOrText).getOrElse(false))
                 WidgetGenerationMethod.FullData
               else
                 cumulativeCountGenMethod
@@ -1682,7 +1682,7 @@ protected[controllers] class DataSetControllerImpl @Inject() (
     )
 
     val widgetSpecs = Seq(distributionSpec)
-    val genMethod = if (field.isString) WidgetGenerationMethod.FullData else comparisonGenMethod
+    val genMethod = if (field.isStringOrText) WidgetGenerationMethod.FullData else comparisonGenMethod
 
     // aux function to generate widgets for a given filter
     def widgetsAux(filter: Filter, criterion: Criterion): Future[Seq[Option[Widget]]] =

@@ -106,6 +106,11 @@ object FieldUtil extends FieldHelper {
 
     def isString = field.fieldType == FieldTypeId.String
 
+    def isText = field.fieldType == FieldTypeId.Text
+
+    // string-valued (plain strings both, Text only indexed differently)
+    def isStringOrText = isString || isText
+
     def isEnum = field.fieldType == FieldTypeId.Enum
 
     def isBoolean = field.fieldType == FieldTypeId.Boolean

@@ -16,8 +16,11 @@ private trait FieldTypeInferrerImpl[T] extends FieldTypeInferrer[T] {
 
   protected val stringType = ftf.stringScalar
   protected val stringArrayType = ftf.stringArray
+  protected val textType = ftf.textScalar
+  protected val textArrayType = ftf.textArray
 
-  private val staticFieldTypes = ftf.allStaticTypes
+  // Text is static for the factory but inferred dynamically (by the longest value), see `dynamicFieldInferrers`
+  private val staticFieldTypes = ftf.allStaticTypes.filterNot(_.spec.fieldType == FieldTypeId.Text)
 
   // these are the types that are not static but don't require any special inference
   private val semiStaticFieldTypeSpecs = Seq(
@@ -44,6 +47,8 @@ private trait FieldTypeInferrerImpl[T] extends FieldTypeInferrer[T] {
     (FieldTypeId.Json, true),
     (FieldTypeId.Enum, false),
     (FieldTypeId.Enum, true),
+    (FieldTypeId.Text, false),
+    (FieldTypeId.Text, true),
     (FieldTypeId.String, false),
     (FieldTypeId.String, true)
   )
@@ -111,7 +116,8 @@ private final class DisplayStringFieldTypeInferrerImpl(
   val ftf: FieldTypeFactory,
   val maxEnumValuesCount: Int,
   val minAvgValuesPerEnum: Double,
-  val arrayDelimiter: String
+  val arrayDelimiter: String,
+  val minTextLength: Int
 ) extends FieldTypeInferrerImpl[String] {
 
   override protected val dynamicFieldInferrers: Seq[((FieldTypeId.Value, Boolean), SingleFieldTypeInferrer.of[String])] = Seq(
@@ -122,6 +128,14 @@ private final class DisplayStringFieldTypeInferrerImpl(
     (
       (FieldTypeId.Enum, true),
       EnumFieldTypeInferrer.ofStringArray(stringArrayType, maxEnumValuesCount, minAvgValuesPerEnum, arrayDelimiter)
+    ),
+    (
+      (FieldTypeId.Text, false),
+      TextFieldTypeInferrer.ofString(stringType, textType, minTextLength)
+    ),
+    (
+      (FieldTypeId.Text, true),
+      TextFieldTypeInferrer.ofStringArray(stringArrayType, textArrayType, minTextLength)
     )
   )
 
@@ -133,7 +147,8 @@ private final class DisplayJsonFieldTypeInferrerImpl(
   val ftf: FieldTypeFactory,
   val maxEnumValuesCount: Int,
   val minAvgValuesPerEnum: Double,
-  val arrayDelimiter: String
+  val arrayDelimiter: String,
+  val minTextLength: Int
 ) extends FieldTypeInferrerImpl[JsReadable] {
 
   override protected val dynamicFieldInferrers: Seq[((FieldTypeId.Value, Boolean), SingleFieldTypeInferrer.of[JsReadable])] = Seq(
@@ -144,6 +159,14 @@ private final class DisplayJsonFieldTypeInferrerImpl(
     (
       (FieldTypeId.Enum, true),
       EnumFieldTypeInferrer.ofJsonArray(stringArrayType, maxEnumValuesCount, minAvgValuesPerEnum, arrayDelimiter)
+    ),
+    (
+      (FieldTypeId.Text, false),
+      TextFieldTypeInferrer.ofJson(stringType, textType, minTextLength)
+    ),
+    (
+      (FieldTypeId.Text, true),
+      TextFieldTypeInferrer.ofJsonArray(stringArrayType, textArrayType, minTextLength)
     )
   )
 

@@ -95,11 +95,15 @@ protected class DataSetAccessorImpl(
     for {
       // acquire lock/semaphore in a new future to have a creation of the entire 'updateDateSet' future non-blocking
       _ <- Future(dataSetUpdateSemaphore.acquire())
-      newDataSetStore <- createDataSetStore(setting)
-    } yield {
-      _dataSetStore = Some(newDataSetStore)
-      dataSetUpdateSemaphore.release()
-    }
+
+      // set the new store and release the lock also if the creation fails (otherwise all later updates would block)
+      _ <- Future.unit.flatMap(_ => createDataSetStore(setting)).transform { result =>
+        result.foreach(newDataSetStore => _dataSetStore = Some(newDataSetStore))
+        dataSetUpdateSemaphore.release()
+        result.map(_ => ())
+      }
+    } yield
+      ()
 
   override def setting =
     for {

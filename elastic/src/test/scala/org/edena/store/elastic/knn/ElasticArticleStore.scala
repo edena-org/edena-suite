@@ -3,7 +3,7 @@ package org.edena.store.elastic.knn
 import com.sksamuel.elastic4s.ElasticClient
 import com.sksamuel.elastic4s.fields._
 import java.util.UUID
-import javax.inject.Inject
+import javax.inject.{Inject, Named}
 import org.edena.store.elastic._
 import org.edena.store.elastic.caseclass.ElasticCaseClassCrudStore
 import org.edena.store.elastic.ElasticFieldMappingExtra._
@@ -18,9 +18,10 @@ import org.edena.store.elastic.ElasticFieldMappingExtra._
  * - rating: double for numeric filtering
  */
 protected[knn] class ElasticArticleStore @Inject()(
-  val client: ElasticClient
+  val client: ElasticClient,
+  @Named(ArticleStoreModule.IndexNameKey) indexName: String
 ) extends ElasticCaseClassCrudStore[Article, UUID](
-  "test_articles_knn",
+  indexName,
   ElasticSetting(
     shards = 1,
     replicas = 0

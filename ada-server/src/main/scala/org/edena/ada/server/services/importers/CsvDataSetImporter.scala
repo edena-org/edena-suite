@@ -63,6 +63,7 @@ private class CsvDataSetImporter extends AbstractDataSetImporter[CsvDataSetImpor
     val arrayDelimiter = importInfo.arrayDelimiter.getOrElse(FieldTypeHelper.arrayDelimiter)
     val maxEnumValuesCount = importInfo.inferenceMaxEnumValuesCount.getOrElse(FieldTypeHelper.maxEnumValuesCount)
     val minAvgValuesPerEnum = importInfo.inferenceMinAvgValuesPerEnum.getOrElse(FieldTypeHelper.minAvgValuesPerEnum)
+    val minTextLength = importInfo.inferenceMinTextLength.getOrElse(FieldTypeHelper.minTextLength)
     val nullAliases = FieldTypeHelper.nullAliasesOrDefault(importInfo.explicitNullAliases)
 
     val fti = FieldTypeHelper.fieldTypeInferrerFactory(
@@ -70,7 +71,8 @@ private class CsvDataSetImporter extends AbstractDataSetImporter[CsvDataSetImpor
       booleanIncludeNumbers = importInfo.booleanIncludeNumbers,
       maxEnumValuesCount = maxEnumValuesCount,
       minAvgValuesPerEnum = minAvgValuesPerEnum,
-      arrayDelimiter = arrayDelimiter
+      arrayDelimiter = arrayDelimiter,
+      minTextLength = minTextLength
     ).ofString
 
     saveStringsAndDictionaryWithTypeInference(dsa, columnNamesAndLabels, values, importInfo.saveBatchSize, fti)

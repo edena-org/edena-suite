@@ -29,6 +29,8 @@ trait FieldTypeFactory {
 
   def stringScalar = apply(FieldTypeId.String).asValueOf[String]
   def stringArray = apply(FieldTypeId.String, true).asValueOf[Array[Option[String]]]
+  def textScalar = apply(FieldTypeId.Text).asValueOf[String]
+  def textArray = apply(FieldTypeId.Text, true).asValueOf[Array[Option[String]]]
 }
 
 // Enum
@@ -162,6 +164,33 @@ private case class BooleanFieldType(
     json match {
       case JsBoolean(boolean) => boolean
       case  _ => throw new AdaConversionException(s"Json $json is not boolean.")
+    }
+}
+
+// String and Text: plain string values, Text differs only in how stores index it (full-text search)
+private case class StringFieldType(
+    fieldTypeId: FieldTypeId.Value,
+    nullAliases: Set[String]
+  ) extends FormatFieldType[String] {
+
+  val spec = FieldTypeSpec(fieldTypeId, false)
+
+  override val valueTypeTag = typeTag[String]
+
+  override protected def displayStringToValueWoNull(text: String) =
+    text
+
+  override protected def displayJsonToValueWoString(json: JsReadable) =
+    json match {
+      case JsNumber(number) => number.toString
+      case JsBoolean(value) => value.toString
+      case  _ => throw new AdaConversionException(s"Json $json is not String.")
+    }
+
+  override protected def jsonToValueWoNull(json: JsReadable) =
+    json match {
+      case JsString(text) => text
+      case  _ => throw new AdaConversionException(s"Json $json is not a String.")
     }
 }
 
@@ -325,29 +354,10 @@ private class FieldTypeFactoryImpl(
     },
 
     // String
-    new FormatFieldType[String] {
-      val spec = FieldTypeSpec(FieldTypeId.String, false)
+    StringFieldType(FieldTypeId.String, nullValues),
 
-      override val valueTypeTag = typeTag[String]
-
-      override protected[field] val nullAliases = nullValues
-
-      override protected def displayStringToValueWoNull(text: String) =
-        text
-
-      override protected def displayJsonToValueWoString(json: JsReadable) =
-        json match {
-          case JsNumber(number) => number.toString
-          case JsBoolean(value) => value.toString
-          case  _ => throw new AdaConversionException(s"Json $json is not String.")
-        }
-
-      override protected def jsonToValueWoNull(json: JsReadable) =
-        json match {
-          case JsString(text) => text
-          case  _ => throw new AdaConversionException(s"Json $json is not a String.")
-        }
-    },
+    // Text (same values as String, indexed for full-text search)
+    StringFieldType(FieldTypeId.Text, nullValues),
 
     // Json
     new FormatFieldType[JsObject] {

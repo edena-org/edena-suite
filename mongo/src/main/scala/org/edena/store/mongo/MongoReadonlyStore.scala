@@ -272,7 +272,14 @@ class MongoReadonlyStore[E: Format, ID: Format](
         Json.obj("$regex" -> value, "$options" -> "i")
 
       case RegexNotEqualsCriterion(_, value) =>
-        Json.obj("$regex" -> s"^(?!${value})", "$options" -> "i")
+        Json.obj("$regex" -> MongoReadonlyStore.notMatchingRegex(value), "$options" -> "i")
+
+      // each word must occur as a (case-insensitive) substring; no words: the field must have a value
+      case c: ContainsWordsCriterion =>
+        if (c.words.isEmpty)
+          Json.obj("$ne" -> JsNull)
+        else
+          Json.obj("$regex" -> ContainsWordsCriterion.toRegex(c.words), "$options" -> "i")
 
       case c: NotEqualsCriterion[_] =>
         Json.obj("$ne" -> toJson(c.value))
@@ -331,4 +338,14 @@ class MongoReadonlyStore[E: Format, ID: Format](
       logger.error(message, e)
       throw new EdenaDataStoreException(message, e)
   }
+}
+
+object MongoReadonlyStore {
+
+  /**
+    * Regex matching a value in which the given regex matches nowhere, i.e. the negation of an (unanchored) `$regex`
+    * search as used for "like". The value must still be a string (a missing/null field doesn't match), as for "like".
+    */
+  def notMatchingRegex(regex: String): String =
+    s"^(?![\\s\\S]*(?:$regex))"
 }

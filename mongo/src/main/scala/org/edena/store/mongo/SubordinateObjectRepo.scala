@@ -329,6 +329,7 @@ abstract class SubordinateObjectMongoCrudStore[E: Format, ID: Format, ROOT_E: Fo
         case x: EqualsNullCriterion => x.copy(fieldName = newFieldName(x))
         case x: RegexEqualsCriterion => x.copy(fieldName = newFieldName(x))
         case x: RegexNotEqualsCriterion => x.copy(fieldName = newFieldName(x))
+        case x: ContainsWordsCriterion => x.copy(fieldName = newFieldName(x))
         case x: NotEqualsCriterion[T] => x.copy(fieldName = newFieldName(x))
         case x: NotEqualsNullCriterion => x.copy(fieldName = newFieldName(x))
         case x: InCriterion[_] => x.copy(fieldName = newFieldName(x))

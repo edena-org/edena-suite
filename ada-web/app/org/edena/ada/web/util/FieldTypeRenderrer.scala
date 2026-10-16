@@ -86,7 +86,7 @@ object FieldTypeFullRenderer {
         case FieldTypeId.Json =>
           jsonRender(field.labelOrElseName)
 
-        case FieldTypeId.String if field.displayAsURLType.nonEmpty =>
+        case FieldTypeId.String | FieldTypeId.Text if field.displayAsURLType.nonEmpty =>
           input => rendererView.urlLink(
             input._1,
             field.displayAsURLType.getOrElse(URLType.GET)

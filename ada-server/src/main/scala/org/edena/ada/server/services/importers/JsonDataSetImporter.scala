@@ -32,12 +32,14 @@ private class JsonDataSetImporter extends AbstractDataSetImporter[JsonDataSetImp
       val nullAliases = FieldTypeHelper.nullAliasesOrDefault(importInfo.explicitNullAliases)
       val maxEnumValuesCount = importInfo.inferenceMaxEnumValuesCount.getOrElse(FieldTypeHelper.maxEnumValuesCount)
       val minAvgValuesPerEnum = importInfo.inferenceMinAvgValuesPerEnum.getOrElse(FieldTypeHelper.minAvgValuesPerEnum)
+      val minTextLength = importInfo.inferenceMinTextLength.getOrElse(FieldTypeHelper.minTextLength)
 
       val jsonFti = FieldTypeHelper.fieldTypeInferrerFactory(
         nullAliases = nullAliases,
         booleanIncludeNumbers = importInfo.booleanIncludeNumbers,
         maxEnumValuesCount = maxEnumValuesCount,
-        minAvgValuesPerEnum = minAvgValuesPerEnum
+        minAvgValuesPerEnum = minAvgValuesPerEnum,
+        minTextLength = minTextLength
       ).ofJson
 
       Json.parse(fileContent) match {

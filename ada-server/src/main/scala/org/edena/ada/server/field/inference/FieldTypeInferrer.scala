@@ -29,16 +29,20 @@ trait FieldTypeInferrer[T] extends Calculator[FieldTypeInferrerTypePack[T]] {
   ) = this.runFlow_(source)
 }
 
+/**
+  * @param minTextLength a (string) field whose longest value has at least this many characters is inferred as Text
+  */
 class FieldTypeInferrerFactory(
   ftf: FieldTypeFactory,
   maxEnumValuesCount: Int,
   minAvgValuesPerEnum: Double,
-  arrayDelimiter: String
+  arrayDelimiter: String,
+  minTextLength: Int = FieldTypeHelper.minTextLength
 ) {
 
   def ofString: FieldTypeInferrer[String] =
-    new DisplayStringFieldTypeInferrerImpl(ftf, maxEnumValuesCount, minAvgValuesPerEnum, arrayDelimiter)
+    new DisplayStringFieldTypeInferrerImpl(ftf, maxEnumValuesCount, minAvgValuesPerEnum, arrayDelimiter, minTextLength)
 
   def ofJson: FieldTypeInferrer[JsReadable] =
-    new DisplayJsonFieldTypeInferrerImpl(ftf, maxEnumValuesCount, minAvgValuesPerEnum, arrayDelimiter)
+    new DisplayJsonFieldTypeInferrerImpl(ftf, maxEnumValuesCount, minAvgValuesPerEnum, arrayDelimiter, minTextLength)
 }
