@@ -3,6 +3,7 @@ package org.edena.store.elastic.omnisearch
 import akka.actor.ActorSystem
 import akka.stream.Materializer
 import akka.stream.scaladsl.Sink
+import org.edena.core.store.{DescSort, NoCriterion}
 import org.edena.core.store.Criterion._
 import org.edena.core.store.ValueMapAux._
 import org.edena.store.elastic.{ElasticBaseTest, FullTextSearchSettings, FullTextSearchType, KnnSearchSettings}
@@ -16,7 +17,7 @@ import scala.concurrent.duration._
 
 /**
  * Comprehensive tests for OmniSearch functionality combining:
- * 1. Traditional query (criterion-based filtering)
+ * 1. Traditional query (criterion-based score boost)
  * 2. Full-text search (text matching with fuzziness)
  * 3. kNN vector search (semantic similarity)
  *
@@ -470,6 +471,587 @@ class OmniSearchTest extends AsyncFlatSpec
       val nonStreamTitles = nonStreamResults.map(_.valueMap.getOrElse("title", "")).toSet
       val streamTitles = streamResults.map(_.valueMap.getOrElse("title", "")).toSet
       streamTitles shouldBe nonStreamTitles
+    }
+  }
+
+  // ==================== Required criterion Tests ====================
+
+  private def titles(results: Traversable[org.edena.store.elastic.KnnResult]) =
+    results.map(_.valueMap.getAs[String]("title").getOrElse("N/A")).toSeq
+
+  private val multiMatch = FullTextSearchSettings(searchType = FullTextSearchType.MultiMatch)
+
+  it should "narrow full-text results with a required criterion" in {
+    println("\nF1. Test - required criterion + full-text")
+
+    for {
+      // 'research' occurs in science articles only (Genetics content, Climate title is a keyword => no match)
+      scienceResearch <- store.findAsValueMapOmni(
+        fullTextQuery = Some("research"),
+        fullTextFields = Seq("content"),
+        fullTextSettings = multiMatch,
+        projection = Seq("title", "category"),
+        requiredCriterion = "category" #== "science"
+      )
+      // 'data' occurs in tech articles only => requiring science must leave nothing
+      scienceData <- store.findAsValueMapOmni(
+        fullTextQuery = Some("data"),
+        fullTextFields = Seq("content"),
+        fullTextSettings = multiMatch,
+        projection = Seq("title", "category"),
+        requiredCriterion = "category" #== "science"
+      )
+      // sanity check: without the required criterion 'data' does match (tech) articles
+      unrestrictedData <- store.findAsValueMapOmni(
+        fullTextQuery = Some("data"),
+        fullTextFields = Seq("content"),
+        fullTextSettings = multiMatch,
+        projection = Seq("title", "category")
+      )
+    } yield {
+      println(s"science+research: ${titles(scienceResearch)}")
+      println(s"science+data: ${titles(scienceData)}, unrestricted data: ${titles(unrestrictedData)}")
+
+      // only the text-matching science doc ('Quantum Physics' and 'Climate Change Research' are science but don't match the text)
+      titles(scienceResearch) shouldBe Seq("Genetics and DNA")
+      scienceData shouldBe empty
+      titles(unrestrictedData).toSet shouldBe Set("Python Programming", "Database Design")
+    }
+  }
+
+  it should "narrow kNN results with a required criterion" in {
+    println("\nF2. Test - required criterion + kNN")
+
+    store.findAsValueMapOmni(
+      vectorField = Some("embedding"),
+      knnQueryVector = Some(queryVector),
+      knnSettings = KnnSearchSettings(k = 5),
+      projection = Seq("title", "category"),
+      requiredCriterion = "category" #== "sports"
+    ).map { results =>
+      println(s"Found ${results.size} results: ${titles(results)}")
+
+      // the query vector is close to tech articles, the required criterion must still keep only sports
+      results should have size 2
+      all(results.map(_.valueMap.getAs[String]("category"))) shouldBe Some("sports")
+    }
+  }
+
+  it should "narrow kNN + full-text results with a required criterion" in {
+    println("\nF2b. Test - required criterion + kNN + full-text")
+
+    store.findAsValueMapOmni(
+      fullTextQuery = Some("learning"),
+      fullTextFields = Seq("content"),
+      fullTextSettings = multiMatch,
+      vectorField = Some("embedding"),
+      knnQueryVector = Some(queryVector),
+      knnSettings = KnnSearchSettings(k = 10),
+      projection = Seq("title", "category"),
+      requiredCriterion = "category" #== "science"
+    ).map { results =>
+      println(s"Found ${results.size} results: ${titles(results)}")
+
+      // 'learning' matches a tech article only - neither it nor the tech kNN hits may come back
+      results.nonEmpty shouldBe true
+      all(results.map(_.valueMap.getAs[String]("category"))) shouldBe Some("science")
+    }
+  }
+
+  it should "keep the criterion boost but not widen the results with a required criterion" in {
+    println("\nF3. Test - required criterion + criterion + full-text")
+
+    def search(boostedTitle: String) = store.findAsValueMapOmni(
+      criterion = "title" #== boostedTitle,
+      queryBoost = Some(10),
+      fullTextQuery = Some("data"),
+      fullTextFields = Seq("content"),
+      fullTextSettings = multiMatch,
+      projection = Seq("title", "category"),
+      requiredCriterion = "category" #== "tech"
+    )
+
+    for {
+      databaseBoosted <- search("Database Design")
+      pythonBoosted <- search("Python Programming")
+      // a boosted doc not matching the required criterion => must not come back
+      notRequiredBoosted <- search("Quantum Physics")
+      // a boosted doc matching the required criterion but not the text => comes back (criterion and text are should alternatives)
+      nonMatchingBoosted <- search("Cloud Computing Guide")
+    } yield {
+      println(s"Database boosted: ${titles(databaseBoosted)}")
+      println(s"Python boosted: ${titles(pythonBoosted)}")
+      println(s"Quantum (not matching required) boosted: ${titles(notRequiredBoosted)}")
+      println(s"Cloud boosted: ${titles(nonMatchingBoosted)}")
+
+      titles(databaseBoosted) shouldBe Seq("Database Design", "Python Programming")
+      titles(pythonBoosted) shouldBe Seq("Python Programming", "Database Design")
+      titles(notRequiredBoosted).toSet shouldBe Set("Python Programming", "Database Design")
+      titles(nonMatchingBoosted) shouldBe Seq("Cloud Computing Guide", "Database Design", "Python Programming")
+    }
+  }
+
+  it should "return exactly the matching docs with a required criterion only" in {
+    println("\nF4. Test - required criterion only")
+
+    for {
+      results <- store.findAsValueMapOmni(
+        projection = Seq("title", "category"),
+        requiredCriterion = "category" #== "science"
+      )
+      source <- store.findAsValueMapOmniStream(
+        projection = Seq("title", "category"),
+        requiredCriterion = "category" #== "science"
+      )
+      streamed <- source.runWith(Sink.seq)
+    } yield {
+      println(s"Found ${results.size} results: ${titles(results)}, streamed: ${titles(streamed)}")
+
+      titles(results).toSet shouldBe Set("Quantum Physics", "Climate Change Research", "Genetics and DNA")
+      titles(streamed).toSet shouldBe titles(results).toSet
+    }
+  }
+
+  it should "stream full-text and kNN results narrowed by a required criterion" in {
+    println("\nF5. Test - stream with a required criterion (full-text, kNN)")
+
+    for {
+      textSource <- store.findAsValueMapOmniStream(
+        fullTextQuery = Some("research"),
+        fullTextFields = Seq("content"),
+        fullTextSettings = multiMatch,
+        projection = Seq("title", "category"),
+        requiredCriterion = "category" #== "science"
+      )
+      textResults <- textSource.runWith(Sink.seq)
+      knnSource <- store.findAsValueMapOmniStream(
+        vectorField = Some("embedding"),
+        knnQueryVector = Some(queryVector),
+        knnSettings = KnnSearchSettings(k = 5),
+        projection = Seq("title", "category"),
+        requiredCriterion = "category" #== "sports"
+      )
+      knnResults <- knnSource.runWith(Sink.seq)
+    } yield {
+      println(s"text: ${titles(textResults)}, kNN: ${titles(knnResults)}")
+
+      titles(textResults) shouldBe Seq("Genetics and DNA")
+      knnResults should have size 2
+      all(knnResults.map(_.valueMap.getAs[String]("category"))) shouldBe Some("sports")
+    }
+  }
+
+  it should "count consistently with find when a required criterion is given" in {
+    println("\nF6. Test - countOmni with a required criterion")
+
+    def check(
+      requiredCriterion: org.edena.core.store.Criterion,
+      fullTextQuery: Option[String] = None,
+      withKnn: Boolean = false,
+      expected: Int
+    ) = {
+      val vectorField = if (withKnn) Some("embedding") else None
+      val knnQueryVector = if (withKnn) Some(queryVector) else None
+      val knnSettings = KnnSearchSettings(k = 5)
+      for {
+        count <- store.countOmni(
+          fullTextFields = Seq("content"),
+          fullTextQuery = fullTextQuery,
+          fullTextSettings = multiMatch,
+          vectorField = vectorField,
+          knnQueryVector = knnQueryVector,
+          knnSettings = knnSettings,
+          requiredCriterion = requiredCriterion
+        )
+        results <- store.findAsValueMapOmni(
+          fullTextFields = Seq("content"),
+          fullTextQuery = fullTextQuery,
+          fullTextSettings = multiMatch,
+          vectorField = vectorField,
+          knnQueryVector = knnQueryVector,
+          knnSettings = knnSettings,
+          projection = Seq("title"),
+          requiredCriterion = requiredCriterion
+        )
+      } yield {
+        println(s"required: $requiredCriterion, text: $fullTextQuery, kNN: $withKnn => count $count, found ${results.size}")
+        count shouldBe results.size
+        count shouldBe expected
+      }
+    }
+
+    for {
+      _ <- check("category" #== "science", expected = 3)
+      _ <- check("category" #== "science", fullTextQuery = Some("research"), expected = 1)
+      _ <- check("category" #== "science", fullTextQuery = Some("data"), expected = 0)
+      last <- check("category" #== "sports", withKnn = true, expected = 2)
+    } yield last
+  }
+
+  it should "apply per-field boosts in multi-match full-text fields" in {
+    println("\nF7. Test - per-field boost (field^N) in multi-match")
+
+    // Two dedicated docs: one matches 'zyxwombat' only in the title, the other only in the content.
+    // (title is a keyword field => an exact, case-sensitive single-term match)
+    val boostArticles = Seq(
+      Article(
+        title = "zyxwombat",
+        content = "An article about something else entirely.",
+        category = "boosttest",
+        rating = 1.0,
+        embedding = Article.randomNormalizedVector(seed = 7001)
+      ),
+      Article(
+        title = "Marsupials",
+        content = "The zyxwombat is a fictional marsupial that digs long burrows in the outback.",
+        category = "boosttest",
+        rating = 1.0,
+        embedding = Article.randomNormalizedVector(seed = 7002)
+      )
+    )
+
+    def search(fields: Seq[String]) = store.findAsValueMapOmni(
+      fullTextQuery = Some("zyxwombat"),
+      fullTextFields = fields,
+      fullTextSettings = multiMatch,
+      projection = Seq("title"),
+      requiredCriterion = "category" #== "boosttest"
+    )
+
+    def scoreOf(results: Traversable[org.edena.store.elastic.KnnResult], title: String) =
+      results.find(_.valueMap.getAs[String]("title").contains(title)).map(_.score).get
+
+    for {
+      boostIds <- store.save(boostArticles)
+      _ <- Future { Thread.sleep(1500) }
+      plain <- search(Seq("title", "content"))
+      titleBoosted <- search(Seq("title^100", "content"))
+      contentBoosted <- search(Seq("title", "content^100"))
+      // clean up so the remaining tests see the original fixtures only
+      _ <- store.delete(boostIds)
+      _ <- Future { Thread.sleep(1500) }
+    } yield {
+      def show(results: Traversable[org.edena.store.elastic.KnnResult]) =
+        results.map(r => s"${r.valueMap.getAs[String]("title").getOrElse("N/A")} (${r.score.formatted("%.4f")})").mkString(", ")
+      println(s"plain:          ${show(plain)}")
+      println(s"title^100:      ${show(titleBoosted)}")
+      println(s"content^100:    ${show(contentBoosted)}")
+
+      plain should have size 2
+      titles(titleBoosted).head shouldBe "zyxwombat"
+      titles(contentBoosted).head shouldBe "Marsupials"
+      // the boost multiplies the field's score
+      scoreOf(titleBoosted, "zyxwombat") shouldBe (scoreOf(plain, "zyxwombat") * 100 +- 0.01 * scoreOf(plain, "zyxwombat") * 100)
+      scoreOf(contentBoosted, "Marsupials") shouldBe (scoreOf(plain, "Marsupials") * 100 +- 0.01 * scoreOf(plain, "Marsupials") * 100)
+    }
+  }
+
+  // ==================== Required criterion - edge cases ====================
+
+  it should "apply a compound (AND) required criterion to find, kNN and count" in {
+    println("\nR1. Test - required criterion: category == tech AND rating >= 4.6")
+
+    val required = ("category" #== "tech") AND ("rating" #>= 4.6)
+    val expected = Set("Machine Learning Fundamentals", "Python Programming", "Cybersecurity Essentials")
+
+    for {
+      plain <- store.findAsValueMapOmni(projection = Seq("title"), requiredCriterion = required)
+      knn <- store.findAsValueMapOmni(
+        vectorField = Some("embedding"),
+        knnQueryVector = Some(queryVector),
+        knnSettings = KnnSearchSettings(k = 10),
+        projection = Seq("title"),
+        requiredCriterion = required
+      )
+      knnCount <- store.countOmni(
+        vectorField = Some("embedding"),
+        knnQueryVector = Some(queryVector),
+        knnSettings = KnnSearchSettings(k = 10),
+        requiredCriterion = required
+      )
+    } yield {
+      println(s"plain: ${titles(plain)}, kNN: ${titles(knn)}, kNN count: $knnCount")
+
+      titles(plain).toSet shouldBe expected
+      titles(knn).toSet shouldBe expected
+      knnCount shouldBe 3
+    }
+  }
+
+  it should "apply OR / IN / NOT-EQUALS required criteria" in {
+    println("\nR2. Test - required criterion: IN, OR, NOT-EQUALS")
+
+    for {
+      inText <- store.findAsValueMapOmni(
+        fullTextQuery = Some("championship"),
+        fullTextFields = Seq("content"),
+        fullTextSettings = multiMatch,
+        projection = Seq("title", "category"),
+        requiredCriterion = "category" #-> Seq("science", "sports")
+      )
+      orKnn <- store.findAsValueMapOmni(
+        vectorField = Some("embedding"),
+        knnQueryVector = Some(queryVector),
+        knnSettings = KnnSearchSettings(k = 10),
+        projection = Seq("title", "category"),
+        requiredCriterion = ("category" #== "science") OR ("category" #== "sports")
+      )
+      // 'learning' is in a tech article only
+      notTech <- store.findAsValueMapOmni(
+        fullTextQuery = Some("learning"),
+        fullTextFields = Seq("content"),
+        fullTextSettings = multiMatch,
+        projection = Seq("title"),
+        requiredCriterion = "category" #!= "tech"
+      )
+    } yield {
+      println(s"IN + text: ${titles(inText)}, OR + kNN: ${titles(orKnn)}, NOT tech + 'learning': ${titles(notTech)}")
+
+      titles(inText) shouldBe Seq("Football Championships")
+      orKnn should have size 5
+      orKnn.flatMap(_.valueMap.getAs[String]("category")).toSet shouldBe Set("science", "sports")
+      notTech shouldBe empty
+    }
+  }
+
+  it should "pre-filter kNN with a required criterion (not post-filter the top k)" in {
+    println("\nR3. Test - required criterion is applied during the kNN search")
+
+    // The query vector is close to tech; the sports articles are the farthest. Post-filtering the top-2
+    // overall would leave nothing, pre-filtering returns the 2 nearest sports articles.
+    for {
+      results <- store.findAsValueMapOmni(
+        vectorField = Some("embedding"),
+        knnQueryVector = Some(queryVector),
+        knnSettings = KnnSearchSettings(k = 2, numCandidates = Some(2)),
+        projection = Seq("title", "category"),
+        requiredCriterion = "category" #== "sports"
+      )
+      unrestricted <- store.findAsValueMapOmni(
+        vectorField = Some("embedding"),
+        knnQueryVector = Some(queryVector),
+        knnSettings = KnnSearchSettings(k = 2, numCandidates = Some(2)),
+        projection = Seq("title", "category")
+      )
+    } yield {
+      println(s"required sports: ${titles(results)}, unrestricted: ${titles(unrestricted)}")
+
+      unrestricted.flatMap(_.valueMap.getAs[String]("category")).toSet should not contain "sports"
+      titles(results).toSet shouldBe Set("Football Championships", "Olympic Records")
+    }
+  }
+
+  it should "combine a required criterion with minScore" in {
+    println("\nR4. Test - required criterion + minScore")
+
+    def find(minScore: Option[Double]) = store.findAsValueMapOmni(
+      fullTextQuery = Some("data"),
+      fullTextFields = Seq("content"),
+      fullTextSettings = multiMatch,
+      projection = Seq("title"),
+      minScore = minScore,
+      requiredCriterion = "category" #== "tech"
+    )
+
+    def count(minScore: Option[Double]) = store.countOmni(
+      fullTextQuery = Some("data"),
+      fullTextFields = Seq("content"),
+      fullTextSettings = multiMatch,
+      minScore = minScore,
+      requiredCriterion = "category" #== "tech"
+    )
+
+    for {
+      all <- find(None)
+      lowestScore = all.map(_.score).min
+      aboveLowest <- find(Some(lowestScore + 1e-4))
+      tooHigh <- find(Some(1000))
+      allCount <- count(None)
+      aboveLowestCount <- count(Some(lowestScore + 1e-4))
+      tooHighCount <- count(Some(1000))
+    } yield {
+      println(s"all: ${all.map(r => r.valueMap.getAs[String]("title") -> r.score)}, above lowest: ${titles(aboveLowest)}, too high: ${titles(tooHigh)}")
+      println(s"counts: $allCount / $aboveLowestCount / $tooHighCount")
+
+      all should have size 2
+      aboveLowest.size should be < 2
+      tooHigh shouldBe empty
+      allCount shouldBe 2
+      aboveLowestCount shouldBe aboveLowest.size
+      tooHighCount shouldBe 0
+    }
+  }
+
+  it should "paginate and sort results narrowed by a required criterion" in {
+    println("\nR5. Test - required criterion + sort + limit/skip")
+
+    for {
+      page <- store.findAsValueMapOmni(
+        projection = Seq("title", "rating"),
+        sort = Seq(DescSort("rating")),
+        skip = Some(1),
+        limit = Some(2),
+        requiredCriterion = "category" #== "tech"
+      )
+      knnPage <- store.findAsValueMapOmni(
+        vectorField = Some("embedding"),
+        knnQueryVector = Some(queryVector),
+        knnSettings = KnnSearchSettings(k = 10),
+        projection = Seq("title", "category"),
+        limit = Some(2),
+        requiredCriterion = "category" #== "science"
+      )
+    } yield {
+      println(s"tech by rating desc, skip 1, limit 2: ${titles(page)}; science kNN limit 2: ${titles(knnPage)}")
+
+      // tech ratings: 4.9 Python, 4.8 ML, 4.6 Cybersecurity, 4.5 Cloud, 4.2 Database
+      titles(page) shouldBe Seq("Machine Learning Fundamentals", "Cybersecurity Essentials")
+      knnPage should have size 2
+      all(knnPage.map(_.valueMap.getAs[String]("category"))) shouldBe Some("science")
+    }
+  }
+
+  it should "intersect a criterion-only search with the required criterion" in {
+    println("\nR6. Test - criterion (no text, no kNN) + required criterion")
+
+    // Without the full-text query the criterion is the only should clause, i.e. it has to match
+    // (as it did before) - the required criterion narrows it further.
+    for {
+      results <- store.findAsValueMapOmni(
+        criterion = "rating" #> 4.5,
+        projection = Seq("title"),
+        requiredCriterion = "category" #== "science"
+      )
+      count <- store.countOmni(
+        criterion = "rating" #> 4.5,
+        requiredCriterion = "category" #== "science"
+      )
+    } yield {
+      println(s"rating > 4.5 within science: ${titles(results)}, count: $count")
+
+      titles(results) shouldBe Seq("Quantum Physics")
+      count shouldBe 1
+    }
+  }
+
+  it should "return nothing when no doc matches the required criterion (all modes)" in {
+    println("\nR7. Test - required criterion matching no doc")
+
+    val required = "category" #== "nonexistent"
+    val knnArgs = (Some("embedding"), Some(queryVector), KnnSearchSettings(k = 5))
+
+    for {
+      plain <- store.findAsValueMapOmni(requiredCriterion = required)
+      text <- store.findAsValueMapOmni(
+        fullTextQuery = Some("learning"), fullTextFields = Seq("content"), fullTextSettings = multiMatch,
+        requiredCriterion = required
+      )
+      knn <- store.findAsValueMapOmni(
+        vectorField = knnArgs._1, knnQueryVector = knnArgs._2, knnSettings = knnArgs._3,
+        requiredCriterion = required
+      )
+      all3 <- store.findAsValueMapOmni(
+        criterion = "category" #== "tech",
+        fullTextQuery = Some("learning"), fullTextFields = Seq("content"), fullTextSettings = multiMatch,
+        vectorField = knnArgs._1, knnQueryVector = knnArgs._2, knnSettings = knnArgs._3,
+        requiredCriterion = required
+      )
+      streamSource <- store.findAsValueMapOmniStream(
+        vectorField = knnArgs._1, knnQueryVector = knnArgs._2, knnSettings = knnArgs._3,
+        requiredCriterion = required
+      )
+      streamed <- streamSource.runWith(Sink.seq)
+      plainCount <- store.countOmni(requiredCriterion = required)
+      knnCount <- store.countOmni(
+        vectorField = knnArgs._1, knnQueryVector = knnArgs._2, knnSettings = knnArgs._3,
+        requiredCriterion = required
+      )
+    } yield {
+      println(s"sizes: ${Seq(plain, text, knn, all3, streamed).map(_.size)}, counts: $plainCount, $knnCount")
+
+      plain shouldBe empty
+      text shouldBe empty
+      knn shouldBe empty
+      all3 shouldBe empty
+      streamed shouldBe empty
+      plainCount shouldBe 0
+      knnCount shouldBe 0
+    }
+  }
+
+  it should "behave as before with requiredCriterion = NoCriterion passed explicitly" in {
+    println("\nR8. Test - explicit NoCriterion == omitted")
+
+    def find(required: Option[org.edena.core.store.Criterion]) = {
+      val base = (
+        "category" #== "tech",
+        Some("learning"),
+        Some(queryVector)
+      )
+      required match {
+        case Some(r) =>
+          store.findAsValueMapOmni(
+            criterion = base._1, fullTextQuery = base._2, fullTextFields = Seq("title", "content"),
+            fullTextSettings = multiMatch, vectorField = Some("embedding"), knnQueryVector = base._3,
+            knnSettings = KnnSearchSettings(k = 10), projection = Seq("title"), requiredCriterion = r
+          )
+        case None =>
+          store.findAsValueMapOmni(
+            criterion = base._1, fullTextQuery = base._2, fullTextFields = Seq("title", "content"),
+            fullTextSettings = multiMatch, vectorField = Some("embedding"), knnQueryVector = base._3,
+            knnSettings = KnnSearchSettings(k = 10), projection = Seq("title")
+          )
+      }
+    }
+
+    for {
+      omitted <- find(None)
+      explicit <- find(Some(NoCriterion))
+    } yield {
+      println(s"omitted: ${titles(omitted)}")
+      titles(explicit) shouldBe titles(omitted)
+      explicit.map(_.score) shouldBe omitted.map(_.score)
+    }
+  }
+
+  it should "stream the same docs as find for all components + a required criterion" in {
+    println("\nR9. Test - stream vs find consistency with a required criterion")
+
+    def args = (
+      "rating" #> 4.4,
+      Some("learning networks data"),
+      KnnSearchSettings(k = 10, boost = Some(0.5))
+    )
+
+    val required = "category" #-> Seq("tech", "science")
+
+    for {
+      found <- store.findAsValueMapOmni(
+        criterion = args._1, queryBoost = Some(0.2),
+        fullTextQuery = args._2, fullTextFields = Seq("content"), fullTextSettings = multiMatch,
+        vectorField = Some("embedding"), knnQueryVector = Some(queryVector), knnSettings = args._3,
+        projection = Seq("title", "category"), requiredCriterion = required
+      )
+      source <- store.findAsValueMapOmniStream(
+        criterion = args._1, queryBoost = Some(0.2),
+        fullTextQuery = args._2, fullTextFields = Seq("content"), fullTextSettings = multiMatch,
+        vectorField = Some("embedding"), knnQueryVector = Some(queryVector), knnSettings = args._3,
+        projection = Seq("title", "category"), requiredCriterion = required
+      )
+      streamed <- source.runWith(Sink.seq)
+      count <- store.countOmni(
+        criterion = args._1, queryBoost = Some(0.2),
+        fullTextQuery = args._2, fullTextFields = Seq("content"), fullTextSettings = multiMatch,
+        vectorField = Some("embedding"), knnQueryVector = Some(queryVector), knnSettings = args._3,
+        requiredCriterion = required
+      )
+    } yield {
+      println(s"found ${found.size}: ${titles(found)}; streamed ${streamed.size}; count $count")
+
+      found.nonEmpty shouldBe true
+      all(found.map(_.valueMap.getAs[String]("category"))) should (equal(Some("tech")) or equal(Some("science")))
+      titles(streamed).toSet shouldBe titles(found).toSet
+      count shouldBe found.size
     }
   }
 

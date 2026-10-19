@@ -554,6 +554,124 @@ class NestedOmniSearchTest extends AsyncFlatSpec
     }
   }
 
+  // ==================== Tests 17-21: requiredCriterion with nested fields ====================
+
+  private def titles(results: Traversable[KnnResult]) =
+    results.map(_.valueMap.getAs[String]("title").getOrElse("N/A")).toSeq
+
+  it should "17. narrow nested kNN with a top-level required criterion" in {
+    println("\n17. Test - nested kNN (sections.embedding) + required category == science")
+
+    for {
+      results <- store.findAsValueMapOmni(
+        vectorField = Some("sections.embedding"),
+        knnQueryVector = Some(queryVector),
+        knnSettings = KnnSearchSettings(k = 10),
+        requiredCriterion = "category" #== "science"
+      )
+      count <- store.countOmni(
+        vectorField = Some("sections.embedding"),
+        knnQueryVector = Some(queryVector),
+        knnSettings = KnnSearchSettings(k = 10),
+        requiredCriterion = "category" #== "science"
+      )
+    } yield {
+      println(s"Found: ${titles(results)}, count: $count")
+
+      // the query vector is close to tech, yet only science may come back
+      titles(results).toSet shouldBe Set("Quantum Computing Frontiers", "Climate Science Advances")
+      count shouldBe 2
+    }
+  }
+
+  it should "18. narrow nested full-text with a nested required criterion" in {
+    println("\n18. Test - nested full-text + required sections.title == 'introduction'")
+
+    def search(text: String) = store.findAsValueMapOmni(
+      fullTextQuery = Some(text),
+      fullTextFields = Seq("sections.text"),
+      fullTextSettings = FullTextSearchSettings(searchType = FullTextSearchType.Match),
+      requiredCriterion = "sections.title" #== "introduction"
+    )
+
+    for {
+      // 'climate' matches only the climate article, which has no 'Introduction' section
+      climate <- search("climate")
+      quantum <- search("quantum")
+    } yield {
+      println(s"climate: ${titles(climate)}, quantum: ${titles(quantum)}")
+
+      climate shouldBe empty
+      titles(quantum) shouldBe Seq("Quantum Computing Frontiers")
+    }
+  }
+
+  it should "19. narrow nested kNN with a nested required criterion" in {
+    println("\n19. Test - nested kNN + required sections.title == 'introduction'")
+
+    for {
+      results <- store.findAsValueMapOmni(
+        vectorField = Some("sections.embedding"),
+        knnQueryVector = Some(queryVector),
+        knnSettings = KnnSearchSettings(k = 10),
+        requiredCriterion = "sections.title" #== "introduction"
+      )
+      count <- store.countOmni(
+        vectorField = Some("sections.embedding"),
+        knnQueryVector = Some(queryVector),
+        knnSettings = KnnSearchSettings(k = 10),
+        requiredCriterion = "sections.title" #== "introduction"
+      )
+    } yield {
+      println(s"Found: ${titles(results)}, count: $count")
+
+      titles(results).toSet shouldBe Set(
+        "Deep Learning Revolution", "Cloud Native Architecture", "Quantum Computing Frontiers"
+      )
+      count shouldBe 3
+    }
+  }
+
+  it should "20. narrow nested full-text + nested kNN + criterion with a required criterion" in {
+    println("\n20. Test - all components on nested fields + required category == tech")
+
+    store.findAsValueMapOmni(
+      criterion = "rating" #> 4.0,
+      fullTextQuery = Some("climate quantum championship"),
+      fullTextFields = Seq("sections.text"),
+      fullTextSettings = FullTextSearchSettings(searchType = FullTextSearchType.Match),
+      vectorField = Some("sections.embedding"),
+      knnQueryVector = Some(queryVector),
+      knnSettings = KnnSearchSettings(k = 10),
+      requiredCriterion = "category" #== "tech"
+    ).map { results =>
+      println(s"Found: ${titles(results)}")
+
+      // the text matches non-tech articles only and the criterion matches science ones too,
+      // the required criterion leaves the tech ones (found by kNN / criterion)
+      titles(results).toSet shouldBe Set("Deep Learning Revolution", "Cloud Native Architecture")
+    }
+  }
+
+  it should "21. stream nested kNN narrowed by a required criterion" in {
+    println("\n21. Test - stream nested kNN + required category == sports")
+
+    for {
+      source <- store.findAsValueMapOmniStream(
+        vectorField = Some("sections.embedding"),
+        knnQueryVector = Some(queryVector),
+        knnSettings = KnnSearchSettings(k = 10),
+        projection = Seq("title", "category"),
+        requiredCriterion = "category" #== "sports"
+      )
+      results <- source.runWith(Sink.seq)
+    } yield {
+      println(s"Streamed: ${titles(results)}")
+
+      titles(results) shouldBe Seq("Championship Season Recap")
+    }
+  }
+
   // ==================== Lifecycle ====================
 
   override protected def beforeAll(): Unit = {

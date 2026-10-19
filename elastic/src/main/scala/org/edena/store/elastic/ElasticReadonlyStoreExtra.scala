@@ -15,6 +15,7 @@ import com.sksamuel.elastic4s.requests.searches.queries.{
   InnerHit => QueriesInnerHit,
   Query
 }
+import com.sksamuel.elastic4s.requests.searches.queries.compound.BoolQuery
 import com.sksamuel.elastic4s.requests.searches.queries.matches.{
   MatchQuery,
   MultiMatchQuery,
@@ -198,7 +199,7 @@ trait ElasticReadonlyStoreExtra[E, ID] {
 
   /**
    * Hybrid search combining up to three search components:
-   *   1. Traditional query (criterion-based filtering) - optional 2. Full-text search (text
+   *   1. Traditional query (criterion-based score boost) - optional 2. Full-text search (text
    *      matching with optional fuzziness) - optional 3. kNN (semantic/vector search) -
    *      optional
    *
@@ -206,8 +207,22 @@ trait ElasticReadonlyStoreExtra[E, ID] {
    * clauses. Each component can have its own boost factor to control its contribution to the
    * final score.
    *
+   * Which docs are returned:
+   *   - `criterion` and `fullTextQuery` are alternatives (should clauses): a doc is returned if it
+   *     matches at least one of them, and the more it matches, the higher it scores. Hence
+   *     `criterion` does NOT narrow the results - adding it can even widen them.
+   *   - kNN hits are added to these (ES unions them with the query hits).
+   *   - `requiredCriterion` restricts all of the above: a doc that doesn't match it is never
+   *     returned, whether it was found via `criterion`, the full-text query or kNN. It has no
+   *     effect on the score (ES filter clause).
+   *
+   * E.g. to search a text within a library use `requiredCriterion = "library" #== "x"`; with
+   * `criterion = "library" #== "x"` the docs of other libraries matching the text would be
+   * returned too, as well as all the docs of library x, even those not matching the text.
+   *
    * @param criterion
-   *   Traditional query criteria (optional)
+   *   Optional criteria that boost the score of matching docs (should clause). Not mandatory -
+   *   use `requiredCriterion` to restrict the results.
    * @param fullTextFields
    *   Fields to search for full-text (for multi_match queries)
    * @param vectorField
@@ -230,6 +245,11 @@ trait ElasticReadonlyStoreExtra[E, ID] {
    *   kNN search settings (includes k, numCandidates, boost)
    * @param queryBoost
    *   Boost factor for the traditional query score (optional)
+   * @param minScore
+   *   Minimum score threshold (optional)
+   * @param requiredCriterion
+   *   Criteria every returned doc must match, kNN hits included (optional). No effect on the
+   *   score.
    * @return
    *   Traversable of (ValueMap, combined score) tuples
    */
@@ -246,16 +266,18 @@ trait ElasticReadonlyStoreExtra[E, ID] {
     fullTextSettings: FullTextSearchSettings = FullTextSearchSettings(),
     knnSettings: KnnSearchSettings = KnnSearchSettings(),
     queryBoost: Option[Double] = None,
-    minScore: Option[Double] = None
+    minScore: Option[Double] = None,
+    requiredCriterion: Criterion = NoCriterion
   ): Future[Traversable[KnnResult]]
 
   /**
    * Streaming version of omni search combining up to three search components:
-   *   1. Traditional query (criterion-based filtering) - optional 2. Full-text search (text
+   *   1. Traditional query (criterion-based score boost) - optional 2. Full-text search (text
    *      matching with optional fuzziness) - optional 3. kNN (semantic/vector search) -
    *      optional
    *
-   * Uses Elasticsearch scroll API for large result sets.
+   * `criterion` boosts the score of matching docs, `requiredCriterion` restricts the results;
+   * see [[findAsValueMapOmni]] for details. Uses Elasticsearch scroll API for large result sets.
    */
   def findAsValueMapOmniStream(
     criterion: Criterion = NoCriterion,
@@ -269,7 +291,8 @@ trait ElasticReadonlyStoreExtra[E, ID] {
     fullTextSettings: FullTextSearchSettings = FullTextSearchSettings(),
     knnSettings: KnnSearchSettings = KnnSearchSettings(),
     queryBoost: Option[Double] = None,
-    minScore: Option[Double] = None
+    minScore: Option[Double] = None,
+    requiredCriterion: Criterion = NoCriterion
   )(
     implicit system: ActorSystem,
     materializer: Materializer
@@ -302,7 +325,8 @@ trait ElasticReadonlyStoreExtra[E, ID] {
    * Elasticsearch's native `min_score` to count only documents above a score threshold.
    *
    * @param criterion
-   *   Traditional query criteria (optional)
+   *   Optional criteria that boost the score of matching docs (should clause). Not mandatory -
+   *   use `requiredCriterion` to restrict what is counted. See [[findAsValueMapOmni]].
    * @param fullTextFields
    *   Fields to search for full-text (for multi_match queries)
    * @param vectorField
@@ -319,6 +343,8 @@ trait ElasticReadonlyStoreExtra[E, ID] {
    *   Boost factor for the traditional query score (optional)
    * @param minScore
    *   Minimum score threshold — only documents scoring above this are counted (optional)
+   * @param requiredCriterion
+   *   Criteria every counted doc must match, kNN hits included (optional)
    * @return
    *   Count of matching documents
    */
@@ -331,7 +357,8 @@ trait ElasticReadonlyStoreExtra[E, ID] {
     fullTextSettings: FullTextSearchSettings = FullTextSearchSettings(),
     knnSettings: KnnSearchSettings = KnnSearchSettings(),
     queryBoost: Option[Double] = None,
-    minScore: Option[Double] = None
+    minScore: Option[Double] = None,
+    requiredCriterion: Criterion = NoCriterion
   ): Future[Int]
 }
 
@@ -737,42 +764,27 @@ trait ElasticReadonlyStoreExtraImpl[E, ID] extends ElasticReadonlyStoreExtra[E, 
     fullTextSettings: FullTextSearchSettings,
     knnSettings: KnnSearchSettings,
     queryBoost: Option[Double],
-    minScore: Option[Double]
+    minScore: Option[Double],
+    requiredCriterion: Criterion
   ): Future[Int] = {
     val vectorExcludes = vectorField.map(_.split("\\.").last).toSet
 
     // Build the combined query with all components (same logic as findAsValueMapOmni)
-    val shouldQueries = Seq(
-      toQuery(criterion).map { query =>
-        queryBoost match {
-          case Some(boost) => ElasticDsl.constantScoreQuery(query).boost(boost.toFloat)
-          case None        => query
-        }
-      },
-      fullTextQuery
-        .filter(_.nonEmpty)
-        .flatMap(q =>
-          createFullTextQuery(q, fullTextFields, fullTextSettings).map { ftQuery =>
-            wrapQueryForNestedFields(
-              ftQuery,
-              fullTextFields.map(toDBFieldName),
-              withInnerHits = false,
-              innerHitSourceExcludes = vectorExcludes
-            )
-          }
-        )
-    ).flatten
+    def boolQuery(withKnn: Boolean) = omniBoolQuery(
+      criterion, requiredCriterion, fullTextFields, fullTextQuery, fullTextSettings, queryBoost,
+      withInnerHits = false, vectorExcludes, withKnn
+    )
 
     // Create search definition - with or without kNN
     val baseDef: SearchRequest = (vectorField, knnQueryVector) match {
       case (Some(vf), Some(qv)) =>
-        val knnQuery = createKnnQuery(vf, qv, NoCriterion, knnSettings)
+        val knnQuery = createKnnQuery(vf, qv, requiredCriterion, knnSettings)
         val base = ElasticDsl.search(index).knn(knnQuery)
-        if (shouldQueries.nonEmpty) base bool ElasticDsl.should(shouldQueries) else base
+        boolQuery(withKnn = true).map(base bool _).getOrElse(base)
 
       case _ =>
         val base = ElasticDsl.search(index)
-        if (shouldQueries.nonEmpty) base bool ElasticDsl.should(shouldQueries) else base
+        boolQuery(withKnn = false).map(base bool _).getOrElse(base)
     }
 
     val withMinScore = minScore.map(baseDef.minScore(_)).getOrElse(baseDef)
@@ -800,35 +812,17 @@ trait ElasticReadonlyStoreExtraImpl[E, ID] extends ElasticReadonlyStoreExtra[E, 
     fullTextSettings: FullTextSearchSettings,
     knnSettings: KnnSearchSettings,
     queryBoost: Option[Double],
-    minScore: Option[Double]
+    minScore: Option[Double],
+    requiredCriterion: Criterion
   ): Future[Seq[KnnResult]] = {
     val projectionSeq = projection.map(toDBFieldName).toSeq
     val vectorExcludes = vectorField.map(_.split("\\.").last).toSet
 
     // Build the combined query with all components
-    val shouldQueries = Seq(
-      // Traditional query component (if provided)
-      toQuery(criterion).map { query =>
-        queryBoost match {
-          case Some(boost) => ElasticDsl.constantScoreQuery(query).boost(boost.toFloat)
-          case None        => query
-        }
-      },
-      // Full-text search component (if query is provided and non-empty)
-      // Wrap in NestedQuery when full-text fields reside under nested mappings
-      fullTextQuery
-        .filter(_.nonEmpty)
-        .flatMap(q =>
-          createFullTextQuery(q, fullTextFields, fullTextSettings).map { ftQuery =>
-            wrapQueryForNestedFields(
-              ftQuery,
-              fullTextFields.map(toDBFieldName),
-              withInnerHits = true,
-              innerHitSourceExcludes = vectorExcludes
-            )
-          }
-        )
-    ).flatten
+    def boolQuery(withKnn: Boolean) = omniBoolQuery(
+      criterion, requiredCriterion, fullTextFields, fullTextQuery, fullTextSettings, queryBoost,
+      withInnerHits = true, vectorExcludes, withKnn
+    )
 
     // ES storedFields doesn't support nested objects — use _source includes instead
     val useSourceInclude = projection.nonEmpty && projectionHasNestedFields(projection)
@@ -838,14 +832,10 @@ trait ElasticReadonlyStoreExtraImpl[E, ID] extends ElasticReadonlyStoreExtra[E, 
     val searchDef: SearchRequest = (vectorField, knnQueryVector) match {
       case (Some(vf), Some(qv)) =>
         // Include kNN search
-        val knnQuery = createKnnQuery(vf, qv, NoCriterion, knnSettings)
+        val knnQuery = createKnnQuery(vf, qv, requiredCriterion, knnSettings)
         val baseDef =
           createKnnSearchDef(knnQuery, projectionSeq, fetchSource, sort, limit, skip, useSourceInclude)
-        if (shouldQueries.nonEmpty) {
-          baseDef bool ElasticDsl.should(shouldQueries)
-        } else {
-          baseDef
-        }
+        boolQuery(withKnn = true).map(baseDef bool _).getOrElse(baseDef)
 
       case _ =>
         // No kNN - just traditional query and/or full-text search
@@ -859,11 +849,7 @@ trait ElasticReadonlyStoreExtraImpl[E, ID] extends ElasticReadonlyStoreExtra[E, 
           if (sort.nonEmpty) withProjection.sortBy(toSort(sort)) else withProjection
         val withSkip = skip.map(s => withSort.start(s)).getOrElse(withSort)
         val withLimit = limit.map(l => withSkip.limit(l)).getOrElse(withSkip)
-        if (shouldQueries.nonEmpty) {
-          withLimit bool ElasticDsl.should(shouldQueries)
-        } else {
-          withLimit
-        }
+        boolQuery(withKnn = false).map(withLimit bool _).getOrElse(withLimit)
     }
 
     val withMinScore = minScore.map(searchDef.minScore(_)).getOrElse(searchDef)
@@ -889,7 +875,8 @@ trait ElasticReadonlyStoreExtraImpl[E, ID] extends ElasticReadonlyStoreExtra[E, 
     fullTextSettings: FullTextSearchSettings,
     knnSettings: KnnSearchSettings,
     queryBoost: Option[Double],
-    minScore: Option[Double]
+    minScore: Option[Double],
+    requiredCriterion: Criterion
   )(
     implicit system: ActorSystem,
     materializer: Materializer
@@ -898,26 +885,10 @@ trait ElasticReadonlyStoreExtraImpl[E, ID] extends ElasticReadonlyStoreExtra[E, 
     val vectorExcludes = vectorField.map(_.split("\\.").last).toSet
 
     // Build the combined query with all components (same logic as findAsValueMapOmni)
-    val shouldQueries = Seq(
-      toQuery(criterion).map { query =>
-        queryBoost match {
-          case Some(boost) => ElasticDsl.constantScoreQuery(query).boost(boost.toFloat)
-          case None        => query
-        }
-      },
-      fullTextQuery
-        .filter(_.nonEmpty)
-        .flatMap(q =>
-          createFullTextQuery(q, fullTextFields, fullTextSettings).map { ftQuery =>
-            wrapQueryForNestedFields(
-              ftQuery,
-              fullTextFields.map(toDBFieldName),
-              withInnerHits = true,
-              innerHitSourceExcludes = vectorExcludes
-            )
-          }
-        )
-    ).flatten
+    def boolQuery(withKnn: Boolean) = omniBoolQuery(
+      criterion, requiredCriterion, fullTextFields, fullTextQuery, fullTextSettings, queryBoost,
+      withInnerHits = true, vectorExcludes, withKnn
+    )
 
     // ES storedFields doesn't support nested objects — use _source includes instead
     val useSourceInclude = projection.nonEmpty && projectionHasNestedFields(projection)
@@ -928,7 +899,7 @@ trait ElasticReadonlyStoreExtraImpl[E, ID] extends ElasticReadonlyStoreExtra[E, 
     val searchDef: SearchRequest = (vectorField, knnQueryVector) match {
       case (Some(vf), Some(qv)) =>
         // Include kNN search
-        val knnQuery = createKnnQuery(vf, qv, NoCriterion, knnSettings)
+        val knnQuery = createKnnQuery(vf, qv, requiredCriterion, knnSettings)
         val baseDef = createKnnSearchDef(
           knnQuery,
           projectionSeq,
@@ -938,16 +909,11 @@ trait ElasticReadonlyStoreExtraImpl[E, ID] extends ElasticReadonlyStoreExtra[E, 
           None,
           useSourceInclude
         )
-        if (shouldQueries.nonEmpty) {
-          baseDef bool ElasticDsl.should(shouldQueries)
-        } else {
-          baseDef
-        }
+        boolQuery(withKnn = true).map(baseDef bool _).getOrElse(baseDef)
 
       case _ =>
         // No kNN - reuse createSearchDefinition for projection, sort, limit, fetchSource
-        val combinedQuery =
-          if (shouldQueries.nonEmpty) Some(ElasticDsl.should(shouldQueries): Query) else None
+        val combinedQuery = boolQuery(withKnn = false).map(q => q: Query)
 
         createSearchDefinition(
           NoCriterion,
@@ -969,6 +935,64 @@ trait ElasticReadonlyStoreExtraImpl[E, ID] extends ElasticReadonlyStoreExtra[E, 
     }
 
     Future(source)
+  }
+
+  /**
+   * Builds the bool query of an omni search: the (optionally boosted) criterion and the
+   * full-text query as should clauses (scoring), plus the required criterion as a non-scoring
+   * filter clause.
+   *
+   * Notes:
+   *   - Once a bool query has a filter clause ES lowers the default `minimum_should_match` to 0,
+   *     hence it's explicitly set to 1 to keep "at least one should clause matches".
+   *   - ES applies the top-level `knn` section separately from `query` (the hits are unioned),
+   *     hence for a kNN search the required criterion has to be passed to the kNN part as well,
+   *     and a query with the required criterion only is omitted (`withKnn = true`), otherwise all
+   *     the docs matching it would be added to the kNN hits.
+   */
+  private def omniBoolQuery(
+    criterion: Criterion,
+    requiredCriterion: Criterion,
+    fullTextFields: Seq[String],
+    fullTextQuery: Option[String],
+    fullTextSettings: FullTextSearchSettings,
+    queryBoost: Option[Double],
+    withInnerHits: Boolean,
+    vectorExcludes: Set[String],
+    withKnn: Boolean
+  ): Option[BoolQuery] = {
+    val shouldQueries = Seq(
+      // Traditional query component (if provided)
+      toQuery(criterion).map { query =>
+        queryBoost match {
+          case Some(boost) => ElasticDsl.constantScoreQuery(query).boost(boost.toFloat)
+          case None        => query
+        }
+      },
+      // Full-text search component (if query is provided and non-empty)
+      // Wrap in NestedQuery when full-text fields reside under nested mappings
+      fullTextQuery
+        .filter(_.nonEmpty)
+        .flatMap(q =>
+          createFullTextQuery(q, fullTextFields, fullTextSettings).map { ftQuery =>
+            wrapQueryForNestedFields(
+              ftQuery,
+              fullTextFields.map(toDBFieldName),
+              withInnerHits = withInnerHits,
+              innerHitSourceExcludes = vectorExcludes
+            )
+          }
+        )
+    ).flatten
+
+    (shouldQueries, toQuery(requiredCriterion)) match {
+      case (Nil, None)                => None
+      case (shoulds, None)            => Some(ElasticDsl.should(shoulds))
+      case (Nil, Some(_)) if withKnn  => None // applied to kNN directly
+      case (Nil, Some(filterQuery))   => Some(ElasticDsl.boolQuery().filter(filterQuery))
+      case (shoulds, Some(filterQuery)) =>
+        Some(ElasticDsl.boolQuery().should(shoulds).filter(filterQuery).minimumShouldMatch(1))
+    }
   }
 
   // ==================== Full-Text Search Helper Methods ====================

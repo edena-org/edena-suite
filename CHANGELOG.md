@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- **Omni search `requiredCriterion`**: `findAsValueMapOmni`, `findAsValueMapOmniStream` and `countOmni` take a new last parameter `requiredCriterion: Criterion = NoCriterion`, criteria every returned (or counted) doc must match, kNN hits included; it doesn't affect the score (ES filter clause). The existing `criterion` remains an optional score boost (ES should clause): docs matching it are added to the full-text matches and ranked higher, so it widens rather than narrows the results; the Scaladoc now says so. E.g. searching a text within a library needs `requiredCriterion = "library" #== "x"`. Internally the bool query sets `minimum_should_match = 1` (ES drops it to 0 once there's a filter clause), and the required criterion is also passed to the kNN section, which ES applies apart from `query`. A doc matching the required criterion and `criterion` but not the full-text query is still returned, as before. Source-compatible; dependants must recompile.
+
 ## 1.2.0 (2026-10-16)
 
 - **Scripting isolation fix (security)**: pooled GraalVM contexts leaked data between callers. Injected JSON inputs (`<name>_string_<n>` bindings) and the parsed variables stayed in Python `globals()` and piled up; a reset bug left user globals and its own loop variables behind; builtins, pre-imported modules and JavaScript prototypes/built-ins were never restored; and the JavaScript reset deleted `globalThis`, `Reflect` and `Intl` after a context's first use. After every eval the pool now always removes the injected bindings and restores the context to a snapshot taken right after warmup, through a restore function held only on the host side. A context whose cleanup fails is replaced; if no replacement can be created it is quarantined and never serves another eval dirty. JavaScript no longer re-runs a failing script at top level on the error path.
