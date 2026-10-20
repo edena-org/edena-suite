@@ -96,10 +96,11 @@ private[elastic] final class ElasticJsonCrudStoreImpl @Inject()(
 
       case FieldTypeId.Text =>
         // keyword for exact values (filters, sorting, distinct values) of shorter texts + an analyzed sub-field
-        // (<field>.text) for full-text search
+        // (<field>.text) for full-text search; the latter is stored as well, since it's the only stored field that
+        // holds the values longer than the keyword's ignore_above (see toStoredFields)
         (keywordField(fieldName) store true ignoreAbove textKeywordIgnoreAboveCharCount).copy(
           fields = List(
-            textField(ElasticJsonMapping.TextSubFieldName) analyzer textAnalyzerName.getOrElse(ElasticJsonMapping.DefaultTextAnalyzer)
+            textField(ElasticJsonMapping.TextSubFieldName) store true analyzer textAnalyzerName.getOrElse(ElasticJsonMapping.DefaultTextAnalyzer)
           )
         )
 
@@ -111,6 +112,32 @@ private[elastic] final class ElasticJsonCrudStoreImpl @Inject()(
       case FieldTypeId.Json => nestedField(fieldName) enabled false
       case FieldTypeId.Null => shortField(fieldName) // doesn't matter which type since it's always null
     }
+
+  // A Text field's keyword neither indexes nor stores a value longer than its ignore_above, so a projection would
+  // miss it. The stored full-text sub-field has no such limit, hence it is requested too and (if stored, i.e. an index
+  // created with it) it replaces the keyword's value. Never reads _source: that would load the whole document.
+  override protected def toStoredFields(projectionSeq: Seq[String]): Seq[String] =
+    projectionSeq.flatMap { fieldName =>
+      if (isTextField(fieldName)) Seq(fieldName, textSubFieldName(fieldName)) else Seq(fieldName)
+    }
+
+  override protected def mergeStoredFields(fields: Map[String, AnyRef]): Map[String, AnyRef] = {
+    val (subFields, others) = fields.partition { case (fieldName, _) => textSubFieldOwner(fieldName).isDefined }
+    if (subFields.isEmpty) fields
+    else others ++ subFields.map { case (fieldName, value) => (textSubFieldOwner(fieldName).get, value) }
+  }
+
+  private def isTextField(fieldName: String) =
+    fieldNameTypeMap.get(fieldName).exists(_.fieldType == FieldTypeId.Text)
+
+  private def textSubFieldName(fieldName: String) =
+    s"$fieldName.${ElasticJsonMapping.TextSubFieldName}"
+
+  // the Text field a sub-field name (<field>.text) belongs to, if any
+  private def textSubFieldOwner(subFieldName: String): Option[String] = {
+    val suffix = s".${ElasticJsonMapping.TextSubFieldName}"
+    if (subFieldName.endsWith(suffix)) Some(subFieldName.dropRight(suffix.length)).filter(isTextField) else None
+  }
 
   override protected def toDBValue(value: Any): Any =
     value match {

@@ -844,7 +844,7 @@ trait ElasticReadonlyStoreExtraImpl[E, ID] extends ElasticReadonlyStoreExtra[E, 
         else
           ElasticDsl.search(index).fetchSource(projection.isEmpty)
         val withProjection =
-          if (projectionSeq.nonEmpty && !useSourceInclude) baseDef.storedFields(projectionSeq) else baseDef
+          if (projectionSeq.nonEmpty && !useSourceInclude) baseDef.storedFields(toStoredFields(projectionSeq)) else baseDef
         val withSort =
           if (sort.nonEmpty) withProjection.sortBy(toSort(sort)) else withProjection
         val withSkip = skip.map(s => withSort.start(s)).getOrElse(withSort)
@@ -1210,7 +1210,7 @@ trait ElasticReadonlyStoreExtraImpl[E, ID] extends ElasticReadonlyStoreExtra[E, 
     }
 
     val withProjection =
-      if (projectionSeq.nonEmpty && !useSourceInclude) baseDef.storedFields(projectionSeq) else baseDef
+      if (projectionSeq.nonEmpty && !useSourceInclude) baseDef.storedFields(toStoredFields(projectionSeq)) else baseDef
     val withSort = if (sort.nonEmpty) withProjection.sortBy(toSort(sort)) else withProjection
     val withSkip = skip.map(s => withSort.start(s)).getOrElse(withSort)
     val withLimit = limit.map(l => withSkip.limit(l)).getOrElse(withSkip)

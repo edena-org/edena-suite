@@ -103,11 +103,16 @@ trait ElasticSerializer[E] {
 
   protected def fieldsToValueMap(fields: Map[String, Any]): Map[String, Any]
 
+  /**
+    * Folds the extra stored fields requested by `toStoredFields` back into the projection fields. Identity by default.
+    */
+  protected def mergeStoredFields(fields: Map[String, AnyRef]): Map[String, AnyRef] = fields
+
   protected def getFieldsSafe(
     result: SearchHit
   ): Map[String, AnyRef] =
     if (result.exists) {
-      if (result.fields != null) result.fields else Map()
+      if (result.fields != null) mergeStoredFields(result.fields) else Map()
     } else
       throw new EdenaDataStoreException(s"Got an empty result '$result' but at this point should contain some data.")
 

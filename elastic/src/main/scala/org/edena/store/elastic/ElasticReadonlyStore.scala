@@ -137,6 +137,14 @@ abstract class ElasticReadonlyStore[E, ID](
     }
   }
 
+  /**
+    * The stored fields to request for a projection (`projectionSeq` is already in DB field names). By default the
+    * projection itself. A store can request more, e.g. a stored sub-field holding a value that the field itself can't
+    * (a keyword stores no value longer than its `ignore_above`), and fold those back into the projection fields by
+    * overriding [[ElasticSerializer.mergeStoredFields]].
+    */
+  protected def toStoredFields(projectionSeq: Seq[String]): Seq[String] = projectionSeq
+
   // Walk a nested _source map along a dotted path.
   // Lists at intermediate steps are flat-mapped so array-of-objectField paths resolve
   // (e.g. directors.firstName over directors: [{firstName:"John"}, {firstName:"Jane"}] → List("John","Jane")).
@@ -468,7 +476,7 @@ abstract class ElasticReadonlyStore[E, ID](
         // projection — use storedFields only for non-nested projections
         (
           projection.nonEmpty && !useSourceInclude,
-          (_: SearchRequest) storedFields projectionSeq
+          (_: SearchRequest) storedFields toStoredFields(projectionSeq)
         ),
 
         // sort

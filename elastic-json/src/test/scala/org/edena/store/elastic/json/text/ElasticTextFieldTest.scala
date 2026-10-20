@@ -1,11 +1,13 @@
 package org.edena.store.elastic.json.text
 
+import akka.actor.ActorSystem
 import akka.stream.Materializer
+import akka.stream.scaladsl.Sink
 import com.sksamuel.elastic4s.ElasticClient
 import org.edena.core.field.{FieldTypeId, FieldTypeSpec}
 import org.edena.core.store.Criterion._
-import org.edena.core.store.{ContainsWordsCriterion, Criterion}
-import org.edena.store.elastic.ElasticBaseTest
+import org.edena.core.store.{AscSort, ContainsWordsCriterion, Criterion}
+import org.edena.store.elastic.{ElasticBaseTest, FullTextSearchSettings, FullTextSearchType}
 import org.edena.store.elastic.json.{ElasticJsonCrudStoreImpl, ElasticJsonMapping}
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.flatspec.AsyncFlatSpec
@@ -22,6 +24,7 @@ class ElasticTextFieldTest extends AsyncFlatSpec with Matchers with BeforeAndAft
 
   private implicit val materializer: Materializer = instance[Materializer]
   private implicit val ec = materializer.executionContext
+  private implicit lazy val actorSystem: ActorSystem = instance[ActorSystem]
 
   private val client = instance[ElasticClient]
 
@@ -29,6 +32,9 @@ class ElasticTextFieldTest extends AsyncFlatSpec with Matchers with BeforeAndAft
   private val conversionIndexName = "test_text_conversion"
   private val newFieldsIndexName = "test_text_new_fields"
   private val newFieldsDynamicIndexName = "test_text_new_fields_dynamic"
+  private val projectionIndexName = "test_text_projection"
+  private val noSourceIndexName = "test_text_no_source"
+  private val unstoredSubFieldIndexName = "test_text_unstored_sub_field"
 
   private val longNote = "A long note " + ("with many words " * 30) + "and the final word omega."
 
@@ -53,7 +59,7 @@ class ElasticTextFieldTest extends AsyncFlatSpec with Matchers with BeforeAndAft
   private def deleteIndices() =
     Await.result(
       Future.sequence(
-        Seq(textIndexName, conversionIndexName, newFieldsIndexName, newFieldsDynamicIndexName).map(store(_, Nil).deleteIndex)
+        Seq(textIndexName, conversionIndexName, newFieldsIndexName, newFieldsDynamicIndexName, projectionIndexName, noSourceIndexName, unstoredSubFieldIndexName).map(store(_, Nil).deleteIndex)
       ),
       1.minute
     )
@@ -89,7 +95,9 @@ class ElasticTextFieldTest extends AsyncFlatSpec with Matchers with BeforeAndAft
       noteMapping("type") should be ("keyword")
       noteMapping("ignore_above") should be (ElasticJsonMapping.DefaultTextKeywordIgnoreAbove)
       val subFields = noteMapping("fields").asInstanceOf[Map[String, Any]]
-      subFields(ElasticJsonMapping.TextSubFieldName).asInstanceOf[Map[String, Any]]("type") should be ("text")
+      val textSubField = subFields(ElasticJsonMapping.TextSubFieldName).asInstanceOf[Map[String, Any]]
+      textSubField("type") should be ("text")
+      textSubField("store") shouldBe true // holds the values the keyword can't, to be projected
 
       // String fields: keyword only, with a limit safe for non-ASCII values
       val codeMapping = fieldMapping(mappings, textIndexName, "code")
@@ -236,6 +244,191 @@ class ElasticTextFieldTest extends AsyncFlatSpec with Matchers with BeforeAndAft
       dynamicRemark("type") should be ("text") // mapped dynamically, no ".text" sub-field
       dynamicCount should be (0)
       lateMappingFailed should be (true)
+    }
+  }
+
+  // ==================== Projections of long values ====================
+
+  // The Text field's keyword neither indexes nor stores a value longer than its ignore_above (256), so a projection
+  // (stored fields) reads such a value from the stored full-text sub-field. Never from _source (the whole document).
+  private val projectionFields = Seq(
+    "code" -> FieldTypeSpec(FieldTypeId.String),
+    "note" -> FieldTypeSpec(FieldTypeId.Text),
+    "tags" -> FieldTypeSpec(FieldTypeId.Text, isArray = true),
+    "pages" -> FieldTypeSpec(FieldTypeId.Integer)
+  )
+
+  private val projectionDocs = Seq(
+    Json.obj("code" -> "P-1", "note" -> longNote, "tags" -> Json.arr("short", longNote, "tail"), "pages" -> 12),
+    Json.obj("code" -> "P-2", "note" -> "Short note", "tags" -> Json.arr("only"), "pages" -> 3),
+    Json.obj("code" -> "P-3", "pages" -> 7) // no text values at all
+  )
+
+  private lazy val projectionStore = store(projectionIndexName, projectionFields)
+
+  private val allProjected = Seq("code", "note", "tags", "pages")
+
+  private def asStrings(value: Option[Any]) =
+    value.get.asInstanceOf[Iterable[_]].map(_.toString).toSeq
+
+  private def checkProjectedValues(valueMaps: Seq[org.edena.core.store.ValueMapAux.ValueMap]) = {
+    valueMaps should have size 3
+    val Seq(p1, p2, p3) = valueMaps
+
+    // Text above its keyword limit (256)
+    p1("note") should be (Some(longNote))
+    asStrings(p1("tags")) should be (Seq("short", longNote, "tail")) // incl. the elements within the limit
+    p1("code") should be (Some("P-1"))
+    p1("pages").get.asInstanceOf[Number].intValue should be (12)
+
+    // values within the limits
+    p2("note") should be (Some("Short note"))
+    asStrings(p2("tags")) should be (Seq("only"))
+    p2("pages").get.asInstanceOf[Number].intValue should be (3)
+
+    // missing values stay missing
+    p3("code") should be (Some("P-3"))
+    p3.contains("note") should be (false)
+    p3.contains("tags") should be (false)
+    p3("pages").get.asInstanceOf[Number].intValue should be (7)
+  }
+
+  "Projections" should "return values of Text fields longer than the keyword limit" in {
+    for {
+      _ <- Future.sequence(projectionDocs.map(projectionStore.save))
+      _ <- projectionStore.refresh
+      valueMaps <- projectionStore.findAsValueMap(sort = Seq(AscSort("code")), projection = allProjected)
+    } yield
+      checkProjectedValues(valueMaps.toSeq)
+  }
+
+  it should "return them as JSON, too" in {
+    projectionStore.find(criterion = "code" #== "P-1", projection = Seq("code", "note", "tags")).map { items =>
+      items should have size 1
+      val json = items.head
+      (json \ "note").as[String] should be (longNote)
+      (json \ "tags").as[Seq[String]] should be (Seq("short", longNote, "tail"))
+    }
+  }
+
+  it should "return long values when streamed" in {
+    for {
+      source <- projectionStore.findAsValueMapStream(sort = Seq(AscSort("code")), projection = allProjected)
+      valueMaps <- source.runWith(Sink.seq)
+    } yield
+      checkProjectedValues(valueMaps)
+  }
+
+  it should "return long values of a single projected field, with a criterion and skip/limit" in {
+    for {
+      note <- projectionStore.findAsValueMap(criterion = "code" #== "P-1", projection = Seq("note"))
+      skipped <- projectionStore.findAsValueMap(sort = Seq(AscSort("code")), projection = Seq("note"), skip = Some(1), limit = Some(1))
+    } yield {
+      note.toSeq should be (Seq(Map("note" -> Some(longNote))))
+      skipped.toSeq should be (Seq(Map("note" -> Some("Short note"))))
+    }
+  }
+
+  it should "return long values from an omni search" in {
+    def omni(text: String, projection: Seq[String]) = projectionStore.findAsValueMapOmni(
+      fullTextQuery = Some(text),
+      fullTextFields = Seq("note.text"),
+      fullTextSettings = FullTextSearchSettings(searchType = FullTextSearchType.Match),
+      projection = projection
+    )
+
+    for {
+      results <- omni("omega", Seq("code", "note", "tags"))
+      source <- projectionStore.findAsValueMapOmniStream(
+        fullTextQuery = Some("omega"),
+        fullTextFields = Seq("note.text"),
+        fullTextSettings = FullTextSearchSettings(searchType = FullTextSearchType.Match),
+        projection = Seq("code", "note", "tags")
+      )
+      streamed <- source.runWith(Sink.seq)
+    } yield {
+      Seq(results.map(_.valueMap), streamed.map(_.valueMap)).foreach { valueMaps =>
+        valueMaps should have size 1
+        valueMaps.head("code") should be (Some("P-1"))
+        valueMaps.head("note") should be (Some(longNote))
+        asStrings(valueMaps.head("tags")) should be (Seq("short", longNote, "tail"))
+      }
+      succeed
+    }
+  }
+
+  // -- indices as created without a (stored) full-text sub-field, or even with no _source at all --
+
+  private def createIndexFromJson(indexName: String, json: String) = {
+    import com.sksamuel.elastic4s.ElasticDsl._
+    client.execute(createIndex(indexName).source(json)).map { response =>
+      response.isSuccess should be (true)
+    }
+  }
+
+  private def mappingJson(
+    sourceEnabled: Boolean,
+    subFieldStored: Boolean
+  ) =
+    s"""{
+       |  "settings": {"number_of_shards": 1, "number_of_replicas": 0, "max_result_window": ${Integer.MAX_VALUE}},
+       |  "mappings": {
+       |    "_source": {"enabled": $sourceEnabled},
+       |    "properties": {
+       |      "code": {"type": "keyword", "store": true, "ignore_above": 8191},
+       |      "note": {
+       |        "type": "keyword", "store": true, "ignore_above": 256,
+       |        "fields": {"text": {"type": "text", "store": $subFieldStored, "analyzer": "standard"}}
+       |      }
+       |    }
+       |  }
+       |}""".stripMargin
+
+  private val noteFields = Seq(
+    "code" -> FieldTypeSpec(FieldTypeId.String),
+    "note" -> FieldTypeSpec(FieldTypeId.Text)
+  )
+
+  private val noteDocs = Seq(
+    Json.obj("code" -> "N-1", "note" -> longNote),
+    Json.obj("code" -> "N-2", "note" -> "Short note")
+  )
+
+  private def projectedNotes(indexName: String) = {
+    val noteStore = store(indexName, noteFields)
+    for {
+      _ <- Future.sequence(noteDocs.map(noteStore.save))
+      _ <- noteStore.refresh
+      valueMaps <- noteStore.findAsValueMap(sort = Seq(AscSort("code")), projection = Seq("code", "note"))
+    } yield valueMaps.toSeq
+  }
+
+  "Projections of Text fields" should "not need _source" in {
+    for {
+      _ <- createIndexFromJson(noSourceIndexName, mappingJson(sourceEnabled = false, subFieldStored = true))
+      valueMaps <- projectedNotes(noSourceIndexName)
+    } yield {
+      valueMaps.map(_("note")) should be (Seq(Some(longNote), Some("Short note")))
+    }
+  }
+
+  it should "still return the short values of an index whose full-text sub-field isn't stored" in {
+    for {
+      _ <- createIndexFromJson(unstoredSubFieldIndexName, mappingJson(sourceEnabled = true, subFieldStored = false))
+      valueMaps <- projectedNotes(unstoredSubFieldIndexName)
+    } yield {
+      valueMaps.map(_("code")) should be (Seq(Some("N-1"), Some("N-2")))
+      // the long value can't be projected from such an index (it needs re-indexing), but nothing fails
+      valueMaps.last("note") should be (Some("Short note"))
+      valueMaps.head.get("note").flatten should be (None)
+    }
+  }
+
+  it should "not fail for a field Elasticsearch mapped dynamically (no sub-field, not stored at all)" in {
+    val dynamicStore = store(newFieldsDynamicIndexName, Seq("code" -> FieldTypeSpec(FieldTypeId.String), "remark" -> FieldTypeSpec(FieldTypeId.Text)))
+    dynamicStore.findAsValueMap(criterion = "code" #== "R-2", projection = Seq("code", "remark")).map { valueMaps =>
+      // as before: such a field has no stored value to project, the point is that requesting its sub-field is harmless
+      valueMaps.toSeq should be (Seq(Map("code" -> Some("R-2"))))
     }
   }
 }
