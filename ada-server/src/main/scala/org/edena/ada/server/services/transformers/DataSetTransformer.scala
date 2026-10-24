@@ -23,7 +23,8 @@ import org.edena.core.DefaultTypes.Seq
 
 trait DataSetTransformer[T <: DataSetTransformation] extends DataSetMetaTransformer[T]
 
-private[transformers] abstract class AbstractDataSetTransformer[T <: DataSetTransformation](implicit val typeTag: TypeTag[T]) extends DataSetTransformer[T] {
+// services and helpers shared by data set transformers
+private[transformers] abstract class DataSetTransformerBase[T <: DataSetTransformation](implicit val typeTag: TypeTag[T]) extends DataSetTransformer[T] {
 
   @Inject var messageRepo: MessageStore = _
   @Inject var dataSetService: DataSetService = _
@@ -49,6 +50,10 @@ private[transformers] abstract class AbstractDataSetTransformer[T <: DataSetTran
         throw new AdaException(s"Won't perform a transformation because the data set '${dataSetId}' is empty.")
       dsa
     }
+}
+
+// a transformer whose result (a dictionary and a stream of records produced by `execInternal`) is saved as a new data set
+private[transformers] abstract class AbstractDataSetTransformer[T <: DataSetTransformation: TypeTag] extends DataSetTransformerBase[T] {
 
   override def runAsFuture(spec: T) =
     execInternal(spec).flatMap { case (sourceDsa, fields, inputSource, saveViewsAndFiltersFlag) =>

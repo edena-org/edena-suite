@@ -94,7 +94,9 @@ class DataSetTransformationController @Inject()(
           val start = new Date()
 
           val sourceIdsString = transformationInfo.sourceDataSetIds.mkString(", ")
-          retry(s"Data set(s) '$sourceIdsString' transformation failed: ", logger.warn(_), importRetryNum)(
+          val attemptNum = if (transformationInfo.retryRunOnFailure) importRetryNum else 1
+
+          retry(s"Data set(s) '$sourceIdsString' transformation failed: ", logger.warn(_), attemptNum)(
             dataSetCentralTransformer(transformationInfo)
           ).map { _ =>
             val execTimeSec = (new Date().getTime - start.getTime) / 1000

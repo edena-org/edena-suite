@@ -19,6 +19,9 @@ trait DataSetMetaTransformation extends Schedulable {
 
   val sourceDataSetIds: Seq[String]
 
+  // whether a failed run may be retried as a whole (as the Execute action does), not if a run is costly
+  def retryRunOnFailure: Boolean = true
+
   def copyCore(
     _id: Option[BSONObjectID],
     timeCreated: Date,
