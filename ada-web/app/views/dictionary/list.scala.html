@@ -53,17 +53,19 @@
                 conditions
             )
             <div class="dropdown">
+                @* the CSRF token for the POSTs submitted below *@
+                @helper.CSRF.formField
                 <button class="btn btn-info btn-sm dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                     <span class="bi bi-gear" aria-hidden="true"></span>
                 </button>
                 <ul class="dropdown-menu dropdown-menu-right">
                     <li>
-                        <a href="@dictionaryRouter.setDefaultLabels">
+                        <a href="#" class="postLink" data-url="@dictionaryRouter.setDefaultLabels">
                             Set Default Labels
                         </a>
                     </li>
                     <li>
-                        <a href="@dictionaryRouter.convertLabelsToCamelCase">
+                        <a href="#" class="postLink" data-url="@dictionaryRouter.convertLabelsToCamelCase">
                             Convert Labels to Camelcase
                         </a>
                     </li>
@@ -206,6 +208,10 @@
 <script type="text/javascript">
     $(function () {
         $("#inferModal").modal()
+        $(".postLink").on("click", function() {
+            submit('post', $(this).attr("data-url"));
+            return false;
+        });
         $(".fieldLabel").on("keydown",function(e) {
             if(e.keyCode == 13) {
                 var id = getNearestRowId($(this), "id");

@@ -5,7 +5,7 @@ import org.edena.ada.web.controllers.routes
 import org.edena.ada.web.security.play2auth.{AuthConfig, AuthenticityToken, CookieTokenAccessor}
 import org.edena.ada.server.models.{User => AdaUser}
 import play.api.mvc.Results._
-import play.api.mvc.{Request, RequestHeader, Result}
+import play.api.mvc.{Cookie, Request, RequestHeader, Result}
 import org.edena.ada.server.services.UserManager
 
 import scala.concurrent.ExecutionContext.Implicits._
@@ -129,6 +129,8 @@ trait AdaAuthConfig extends AuthConfig {
 //    cookieSecureOption = false, // TODO: Introduce   play.api.Play.isProd(play.api.Play.current),
     cookieHttpOnlyOption = true,
     cookieMaxAge       = Some(sessionTimeoutInSeconds),
-    cookieSigner = cookieSigner
+    cookieSigner = cookieSigner,
+    // not sent with requests from other sites (forms, fetches, frames), only with navigations to the app (e.g. a link)
+    cookieSameSiteOption = Some(Cookie.SameSite.Lax)
   )
 }

@@ -33,7 +33,7 @@
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
             </div>
             @if(call.isDefined) {
-                <form id="@{modalId}Form" action="@call">
+                <form id="@{modalId}Form" action="@call" method="@call.get.method">
                     @CSRF.formField
                     @modalInner
                 </form>
@@ -48,7 +48,17 @@
     $(function () {
         // params passed to the form's action as a call (url) are ignored... need to add them manually
         var params = getQueryParams('@call')
-        addParams($("#@{modalId}Form"), params)
+        var form = $("#@{modalId}Form")
+        addParams(form, params)
+
+        // a POST call binds its params from the query string, not the body: pass the form's values (e.g. a chosen id)
+        // there, as a GET form does, except the CSRF token
+        if (form.attr("method") == "POST") {
+            form.submit(function() {
+                var fields = form.serializeArray().filter(function(field) { return field.name != "csrfToken" })
+                form.attr("action", form.attr("action").split("?")[0] + "?" + $.param(fields))
+            })
+        }
 
         $('#@{modalId}').find('button[type="submit"]').click(function(){
             $('#@{modalId}').modal('hide');

@@ -56,7 +56,7 @@ GET         /runnables/get/:id                                                  
 GET         /runnables/edit/:id                                                     org.edena.ada.web.controllers.RunnableController.edit(id: BSONObjectID)
 POST        /runnables/update/:id                                                   org.edena.ada.web.controllers.RunnableController.update(id: BSONObjectID)
 POST        /runnables/delete/:id                                                   org.edena.ada.web.controllers.RunnableController.delete(id: BSONObjectID)
-GET         /runnables/copy                                                         org.edena.ada.web.controllers.RunnableController.copy(runnableId: BSONObjectID)
+POST        /runnables/copy                                                         org.edena.ada.web.controllers.RunnableController.copy(runnableId: BSONObjectID)
 POST        /runnables/execute/:id                                                  org.edena.ada.web.controllers.RunnableController.execute(id: BSONObjectID)
 GET         /runnables/names                                                        org.edena.ada.web.controllers.RunnableController.getRunnableNames
 GET         /runnables/idAndNames                                                   org.edena.ada.web.controllers.RunnableController.idAndNames
@@ -70,7 +70,7 @@ POST        /admin/dataSetImport/save                                           
 GET         /admin/dataSetImport/:id/get                                            org.edena.ada.web.controllers.dataset.dataimport.DataSetImportController.get(id: BSONObjectID)
 POST        /admin/dataSetImport/:id                                                org.edena.ada.web.controllers.dataset.dataimport.DataSetImportController.update(id: BSONObjectID)
 POST        /admin/dataSetImport/:id/delete                                         org.edena.ada.web.controllers.dataset.dataimport.DataSetImportController.delete(id: BSONObjectID)
-GET         /admin/dataSetImport/copy                                               org.edena.ada.web.controllers.dataset.dataimport.DataSetImportController.copy(dataSetImportId: BSONObjectID)
+POST        /admin/dataSetImport/copy                                               org.edena.ada.web.controllers.dataset.dataimport.DataSetImportController.copy(dataSetImportId: BSONObjectID)
 GET         /admin/dataSetImport/idAndNames                                         org.edena.ada.web.controllers.dataset.dataimport.DataSetImportController.idAndNames
 
 # Data Set Transformation
@@ -82,7 +82,7 @@ POST        /admin/dataSetTransformation/save                                   
 GET         /admin/dataSetTransformation/:id/get                                    org.edena.ada.web.controllers.dataset.datatrans.DataSetTransformationController.get(id: BSONObjectID)
 POST        /admin/dataSetTransformation/:id                                        org.edena.ada.web.controllers.dataset.datatrans.DataSetTransformationController.update(id: BSONObjectID)
 POST        /admin/dataSetTransformation/:id/delete                                 org.edena.ada.web.controllers.dataset.datatrans.DataSetTransformationController.delete(id: BSONObjectID)
-GET         /admin/dataSetTransformation/copy                                       org.edena.ada.web.controllers.dataset.datatrans.DataSetTransformationController.copy(dataSetTransformationId: BSONObjectID)
+POST        /admin/dataSetTransformation/copy                                       org.edena.ada.web.controllers.dataset.datatrans.DataSetTransformationController.copy(dataSetTransformationId: BSONObjectID)
 GET         /admin/dataSetTransformation/idAndNames                                 org.edena.ada.web.controllers.dataset.datatrans.DataSetTransformationController.idAndNames
 GET         /admin/dataSetTransformation/resultDataSetIdAndName                     org.edena.ada.web.controllers.dataset.datatrans.DataSetTransformationController.resultDataSetIdAndName(sourceDataSetId: String, resultNameSuffix: String, transformationId: Option[BSONObjectID])
 GET         /admin/dataSetTransformation/filterIdAndNames                           org.edena.ada.web.controllers.dataset.datatrans.DataSetTransformationController.filterIdAndNames(dataSetId: String)
@@ -172,8 +172,8 @@ POST        /dataSets/dictionary/:name                                          
 POST        /dataSets/dictionary/updateLabel/:id/:label                              org.edena.ada.web.controllers.dataset.DictionaryDispatcher.updateLabel(id: String, label: String)
 GET         /dataSets/dictionary/exportAsCsv                                         org.edena.ada.web.controllers.dataset.DictionaryDispatcher.exportRecordsAsCsv(delimiter: String, replaceEolWithSpace: Boolean, eol: Option[String], filter: org.edena.core.DefaultTypes.Seq[org.edena.core.FilterCondition], tableColumnsOnly: Boolean)
 GET         /dataSets/dictionary/exportAsJson                                        org.edena.ada.web.controllers.dataset.DictionaryDispatcher.exportRecordsAsJson(filter: org.edena.core.DefaultTypes.Seq[org.edena.core.FilterCondition], tableColumnsOnly: Boolean)
-GET         /dataSets/dictionary/setDefaultLabels                                    org.edena.ada.web.controllers.dataset.DictionaryDispatcher.setDefaultLabels
-GET         /dataSets/dictionary/convertLabelsToCamelCase                            org.edena.ada.web.controllers.dataset.DictionaryDispatcher.convertLabelsToCamelCase
+POST        /dataSets/dictionary/setDefaultLabels                                    org.edena.ada.web.controllers.dataset.DictionaryDispatcher.setDefaultLabels
+POST        /dataSets/dictionary/convertLabelsToCamelCase                            org.edena.ada.web.controllers.dataset.DictionaryDispatcher.convertLabelsToCamelCase
 POST        /dataSets/dictionary/convertStringAndTextFields                          org.edena.ada.web.controllers.dataset.DictionaryDispatcher.convertStringAndTextFields(fieldNames: org.edena.core.DefaultTypes.Seq[String], toText: Boolean)
 
 # CategoryDispatcher
@@ -186,8 +186,8 @@ POST        /dataSets/categories/:id                                            
 POST        /dataSets/categories/:id/delete                                          org.edena.ada.web.controllers.dataset.CategoryDispatcher.delete(id: BSONObjectID)
 GET         /dataSets/categories/idAndNames                                          org.edena.ada.web.controllers.dataset.CategoryDispatcher.idAndNames
 GET         /dataSets/categories/getCategoryD3Root                                   org.edena.ada.web.controllers.dataset.CategoryDispatcher.getCategoryD3Root
-GET         /dataSets/categories/relocateToParent/:id/$parentId<[^/]*>               org.edena.ada.web.controllers.dataset.CategoryDispatcher.relocateToParent(id: BSONObjectID, parentId: Option[BSONObjectID])
-GET         /dataSets/categories/addFields                                           org.edena.ada.web.controllers.dataset.CategoryDispatcher.addFields(categoryId: BSONObjectID, fieldNames: org.edena.core.DefaultTypes.Seq[String])
+POST        /dataSets/categories/relocateToParent/:id/$parentId<[^/]*>               org.edena.ada.web.controllers.dataset.CategoryDispatcher.relocateToParent(id: BSONObjectID, parentId: Option[BSONObjectID])
+POST        /dataSets/categories/addFields                                           org.edena.ada.web.controllers.dataset.CategoryDispatcher.addFields(categoryId: BSONObjectID, fieldNames: org.edena.core.DefaultTypes.Seq[String])
 POST        /dataSets/categories/updateLabel/:id/:label                              org.edena.ada.web.controllers.dataset.CategoryDispatcher.updateLabel(id: BSONObjectID, label: String)
 
 # FilterDispatcher
@@ -210,7 +210,7 @@ POST        /dataSets/dataviews/save                                            
 POST        /dataSets/dataviews/:id                                                  org.edena.ada.web.controllers.dataset.DataViewDispatcher.update(id: BSONObjectID)
 POST        /dataSets/dataviews/updateAndShowView/:id                                org.edena.ada.web.controllers.dataset.DataViewDispatcher.updateAndShowView(id: BSONObjectID)
 POST        /dataSets/dataviews/:id/delete                                           org.edena.ada.web.controllers.dataset.DataViewDispatcher.delete(id: BSONObjectID)
-GET         /dataSets/dataviews/copy                                                 org.edena.ada.web.controllers.dataset.DataViewDispatcher.copy(dataViewId: BSONObjectID)
+POST        /dataSets/dataviews/copy                                                 org.edena.ada.web.controllers.dataset.DataViewDispatcher.copy(dataViewId: BSONObjectID)
 GET         /dataSets/dataviews/idAndNames                                           org.edena.ada.web.controllers.dataset.DataViewDispatcher.idAndNames
 GET         /dataSets/dataviews/idAndNamesAccessible                                 org.edena.ada.web.controllers.dataset.DataViewDispatcher.idAndNamesAccessible
 POST        /dataSets/dataviews/addDistributions/:dataViewId                         org.edena.ada.web.controllers.dataset.DataViewDispatcher.addDistributions(dataViewId: BSONObjectID, fieldNames: org.edena.core.DefaultTypes.Seq[String])

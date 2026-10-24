@@ -174,6 +174,10 @@ The project follows a clear dependency hierarchy:
 - **Deadbolt**: Role-based access control
 - **PAC4J**: Multi-provider authentication (LDAP, OIDC)
 - **Play Security**: Session management and CSRF protection
+- **State-changing requests must be POST routes**: Play's CSRF filter checks only unsafe methods, and the auth cookie (`PLAY2AUTH_SESS_ID`, `SameSite=Lax`) goes along with navigations from other sites.
+  - From a modal, pass a POST `Call`; the modal's form sends its values in the query string.
+  - From JS, use `submit('post', url)` (main.js; it needs a `csrfToken` input on the page) or a JS route's `.ajax()` (the CSRF header comes from `$.ajaxSetup` in main.scala.html).
+  - `StateChangingRoutesSpec` lists the former GET routes.
 - Configuration in `conf/core/auth.conf` and `conf/core/deadbolt.conf`
 
 ## Web Application Structure

@@ -129,15 +129,27 @@ function registerMessageEventSource(url) {
   //}
 }
 
+// escapes a text for HTML (element content or a quoted attribute value), so that it's shown as it is
+function escapeHtml(text) {
+  return String(text)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 function prependTrollboxJsonMessage(jsonMessage, isAdmin, fadeIn) {
   var createdBy = jsonMessage.createdByUser
   var isUserAdmin = jsonMessage.isUserAdmin
   var timeCreated = jsonMessage.timeCreated
-  var content = Autolinker.link(jsonMessage.content);
+  // a message is plain text (posted by any user): only the links Autolinker adds are HTML
+  var content = Autolinker.link(escapeHtml(jsonMessage.content));
   var date = new Date(timeCreated);
   prependTrollboxMessage(createdBy, date.toISOString(), content, isUserAdmin, fadeIn);
 }
 
+// the text is HTML, the author plain text
 function prependTrollboxMessage(author, timeCreated, text, isAdmin, fadeIn) {
   var messageBlock = null
   if(author) {
@@ -147,7 +159,7 @@ function prependTrollboxMessage(author, timeCreated, text, isAdmin, fadeIn) {
       messageBlock = $('<div class="alert alert-dismissable" data-toggle="tooltip" data-placement="top" title="Published at: ' + timeCreated + '">')
     }
     messageBlock.append('<span class="bi bi-person-circle"></span>&nbsp;')
-    messageBlock.append('<strong>' + author + ':</strong> &nbsp;')
+    messageBlock.append($('<strong>').text(author + ':'), ' &nbsp;')
   } else {
     messageBlock = $('<div class="alert alert-dismissable alert-info" data-toggle="tooltip" data-placement="top" title="Published at: ' + timeCreated + '">')
     messageBlock.append('<span class="bi bi-crown"></span>&nbsp;')

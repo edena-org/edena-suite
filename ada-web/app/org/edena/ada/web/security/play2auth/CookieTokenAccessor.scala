@@ -10,11 +10,12 @@ class CookieTokenAccessor(
   protected val cookieDomainOption: Option[String] = None,
   protected val cookiePathOption: String = "/",
   protected val cookieMaxAge: Option[Int] = None,
-  val cookieSigner: CookieSigner
+  val cookieSigner: CookieSigner,
+  protected val cookieSameSiteOption: Option[Cookie.SameSite] = None
 ) extends TokenAccessor {
 
   def put(token: AuthenticityToken)(result: Result)(implicit request: RequestHeader): Result = {
-    val c = Cookie(cookieName, sign(token), cookieMaxAge, cookiePathOption, cookieDomainOption, cookieSecureOption, cookieHttpOnlyOption)
+    val c = Cookie(cookieName, sign(token), cookieMaxAge, cookiePathOption, cookieDomainOption, cookieSecureOption, cookieHttpOnlyOption, cookieSameSiteOption)
     result.withCookies(c)
   }
 

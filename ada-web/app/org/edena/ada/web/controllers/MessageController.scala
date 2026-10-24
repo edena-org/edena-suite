@@ -70,11 +70,18 @@ class MessageController @Inject() (
   private implicit val idExtractor = new EventIdExtractor[JsValue](eventId)
 
   def eventStream = restrictSubjectPresentAny(noCaching = true) {
-    implicit request => Future {
-      val requestStart = new java.util.Date()
-      val messageStream = repo.stream.filter(_.timeCreated.after(requestStart)).map(message => Json.toJson(message))
-      Ok.chunked(messageStream via EventSource.flow).as(ContentTypes.EVENT_STREAM) // as("text/event-stream")
-    }
+    implicit request =>
+      for {
+        user <- currentUser()
+      } yield {
+        // as in listMostRecent, only an admin gets system messages (without created-by-user)
+        val isAdmin = user.exists(_.isAdmin)
+        val requestStart = new java.util.Date()
+        val messageStream = repo.stream.filter { message =>
+          message.timeCreated.after(requestStart) && (isAdmin || message.createdByUser.isDefined)
+        }.map(message => Json.toJson(message))
+        Ok.chunked(messageStream via EventSource.flow).as(ContentTypes.EVENT_STREAM) // as("text/event-stream")
+      }
   }
 
   private def removeScriptTags(text: String): String = {
