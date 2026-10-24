@@ -5,6 +5,7 @@
 @import org.edena.play.Page
 @import org.edena.ada.server.models.Field
 @import org.edena.ada.web.util.FieldTypeFullRenderer
+@import org.edena.core.field.FieldTypeId
 @import play.api.Configuration
 
 @(
@@ -19,6 +20,7 @@
     implicit request: Request[_], configuration: Configuration
 )
 
+@* Text fields can't be sorted (analyzed text, no exact values) *@
 @paginatedJsonTable(
     page,
     refreshCall,
@@ -31,7 +33,8 @@
     rowClickCall,
     Some(tableFields.map(field => (field.name, FieldTypeFullRenderer(field))).toMap),
     isAjaxRefresh,
-    tableSelection
+    tableSelection,
+    tableFields.filter(_.fieldType == FieldTypeId.Text).map(_.name).toSet
 )
 
 @if(withRowClickableJs) {

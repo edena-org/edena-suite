@@ -5,6 +5,7 @@ import akka.stream.ActorMaterializer
 import com.typesafe.config.Config
 
 import javax.inject.{Inject, Named}
+import org.edena.ada.server.AdaException
 import org.edena.ada.server.dataaccess.dataset.FieldStoreFactory
 import org.edena.core.store.CrudStoreExtra.CrudInfixOps
 import org.edena.store.elastic.{ElasticSetting, RefreshPolicy}
@@ -15,6 +16,7 @@ import org.edena.store.elastic.json.ElasticJsonCrudStoreFactory
 import org.slf4j.LoggerFactory
 
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 import scala.util.Random
 
 class ReindexElasticDataSet @Inject()(
@@ -63,41 +65,55 @@ class ReindexElasticDataSet @Inject()(
       _ <- tempElasticRepo.flushOps
       tempCount <- tempElasticRepo.count()
 
+      // never delete the original data unless the temp index holds all of it
+      _ <- if (tempCount != originalCount)
+        Future.failed(new AdaException(
+          s"The temporary index '$tempIndexName' has $tempCount documents but the original '$indexName' $originalCount. " +
+            "The original index was left untouched."
+        ))
+      else
+        Future(())
+
       // delete the original index
       _ <- {
         logger.info(s"Deleting and recreating the original index '$indexName' (with new mappings).")
         originalElasticRepo.deleteAll
       }
 
-      // get a data stream from the temp index
-      stream <- tempElasticRepo.findAsStream()
+      // from now on the temp index holds the only complete copy of the data
+      keptTempIndexMessage = s"The temporary index '$tempIndexName' (with all the $tempCount documents) was kept."
 
-      // save the data stream to the temp index
+      // save the data from the temp index back to the original one
       _ <- {
         logger.info(s"Saving the data from the temp index back to the original one '$indexName'.")
-        originalElasticRepo.saveAsStream(stream, input.streamSpec)
+
+        for {
+          stream <- tempElasticRepo.findAsStream()
+          _ <- originalElasticRepo.saveAsStream(stream, input.streamSpec)
+        } yield
+          ()
+      }.recoverWith { case e: Throwable =>
+        Future.failed(new AdaException(s"Saving the data back to the original index '$indexName' failed: ${e.getMessage}. $keptTempIndexMessage", e))
       }
       _ <- originalElasticRepo.flushOps
+      _ <- originalElasticRepo.refresh
       newCount <- originalElasticRepo.count()
+
+      // the temp index is deleted only if the original one got all its data back
+      _ <- if (newCount != tempCount)
+        Future.failed(new AdaException(
+          s"The original index '$indexName' has $newCount documents after saving the data back but the temporary one $tempCount. $keptTempIndexMessage"
+        ))
+      else
+        Future(())
 
       // delete the temp index
       _ <- {
         logger.info(s"Deleting the temp index '$tempIndexName'.")
         tempElasticRepo.deleteIndex
       }
-    } yield {
-      val isMismatch = (originalCount != tempCount || originalCount != newCount)
-      val mismatchPart = if (isMismatch) bold(" -> MISMATCH") else ""
-      def wrap(any: Any) = if (isMismatch) bold(any.toString) else any.toString
-
-      val line = new StringBuilder
-      line ++= wrap(input.dataSetId + " : ")
-      line ++= "Original #: " + wrap(originalCount)
-      line ++= ", Temp #   : " + wrap(tempCount)
-      line ++= ", New #    : " + wrap(newCount)
-
-      addParagraph(line.toString() + mismatchPart)
-    }
+    } yield
+      addParagraph(s"${input.dataSetId} : Original #: $originalCount, Temp #: $tempCount, New #: $newCount")
   }
 }
 

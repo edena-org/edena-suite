@@ -229,7 +229,7 @@
         $("#categorySelectionModal #submitButton").on("click", addFieldsToCategory)
     })
 
-    // one conversion at a time (re-indexing a large data set can take a while)
+    // one conversion at a time (the server refuses a concurrent one of the same data set anyway)
     var stringTextConversionInProgress = false;
 
     function convertStringAndTextFields(toText) {
@@ -243,7 +243,7 @@
             return;
         }
         stringTextConversionInProgress = true;
-        showMessage("Converting " + fieldNames.length + " field(s) to " + (toText ? "Text" : "String") + "... (re-indexing might take a while)");
+        showMessage("Converting " + fieldNames.length + " field(s) to " + (toText ? "Text" : "String") + "...");
 
         dictionaryJsRoutes.org.edena.ada.web.controllers.dataset.DictionaryDispatcher.convertStringAndTextFields(fieldNames, toText).ajax( {
             success: function(message) {

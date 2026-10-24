@@ -31,7 +31,7 @@ Edena Suite is a comprehensive data discovery and analytics platform built with 
 - **Apache Spark**: 4.0.4 (runs on JDK 17 and 21; needs Spark's `--add-opens` JVM options, see CHANGELOG)
 - **MongoDB**: ReactiveMongo 1.1.0-RC12
 - **Elasticsearch**: Elastic4S 8.19.1 (ES 8.x compatible, Akka 2.6.x, Play JSON 2.10.x, Jackson overridden to 2.18.x)
-- **Apache Ignite**: 2.14.0
+- **Apache Ignite**: 2.17.0
 - **GraalVM**: For polyglot scripting (JavaScript, Python)
 - **Akka**: 2.6.21
 
@@ -40,19 +40,35 @@ Edena Suite is a comprehensive data discovery and analytics platform built with 
 ### Build and Compile
 ```bash
 sbt compile           # Compile all modules
-sbt ada-web/compile   # Compile specific module
-sbt publishLocal      # Publish to local Maven repo
+sbt adaWeb/compile    # Compile specific module
+sbt publishLocal      # Publish to the local Ivy repository
 ```
 
 ### Testing
 ```bash
 sbt test                    # Run all tests
 sbt core/test              # Run tests for specific module
-sbt ada-web/test           # Run web app tests
+sbt adaWeb/test            # Run web app tests
 sbt scripting/test         # Run scripting module tests
 sbt "testOnly *ClassName*" # Run specific test class
 sbt "scripting/testOnly *GraalJSPoolTest*" # Run JavaScript pool tests
 ```
+
+Use sbt project IDs in commands, not directory names: `adaWeb` (`ada-web`), `adaServer`
+(`ada-server`), `elasticJson` (`elastic-json`), `storeJson` (`store-json`), `mlSpark`
+(`ml-spark`), `mlDl4j` (`ml-dl4j`), and `elasticUtil` (`elastic-util`). Run `sbt projects`
+to list them. Individual modules disable test aggregation, so explicitly select each
+module whose tests matter.
+
+Focused field/storage checks:
+```bash
+sbt "core/testOnly *ContainsWordsCriterionSpec" \
+    "mongo/testOnly *MongoRegexSpec" \
+    "adaServer/testOnly field.* *StringTextConversionTest *DataSetStoreUpdateTest *SynapseNewFieldMappingTest"
+sbt "elasticJson/testOnly *ElasticTextFieldTest *NestedOmniSearchTest" \
+    "elastic/testOnly *ElasticStoredTextProjectionTest *OmniSearchTest"
+```
+The second command requires the local Elasticsearch test service.
 
 #### Full-suite run requirements
 A clean single-shot `sbt test` needs a larger heap and some external services/config — the defaults will fail:
@@ -63,14 +79,14 @@ A clean single-shot `sbt test` needs a larger heap and some external services/co
 
 ### Running the Application
 ```bash
-sbt ada-web/run            # Run the web application (default port 9000)
-sbt "ada-web/run 8080"     # Run on specific port
+sbt adaWeb/run             # Run the web application (default port 9000)
+sbt "adaWeb/run 8080"       # Run on specific port
 ```
 
 ### Development Tools
 ```bash
 sbt clean                  # Clean build artifacts
-sbt ada-web/assets         # Compile web assets
+sbt adaWeb/assets          # Compile web assets
 sbt reload                 # Reload build configuration
 ```
 
@@ -93,13 +109,31 @@ sbt reload                 # Reload build configuration
 
 ### Module Dependencies
 The project follows a clear dependency hierarchy:
-- `ada-web` depends on `ada-server` and `play`
-- `ada-server` depends on storage modules (`elastic-json`, `mongo`, `ignite`, `kafka`) and `ml-spark`
-- Storage modules depend on `core` and `json`
-- All modules use centralized dependencies from `project/Dependencies.scala`
+- `ada-web` depends on `play`, `ada-server`, and `scripting`; it also aggregates several independent modules.
+- `ada-server` depends on `elastic-json`, `mongo`, `ignite`, and `ml-spark`.
+- `elastic-json` depends on `elastic` and `store-json`; `mongo` depends on `store-json`.
+- `store-json`, `ignite`, `scripting`, `kafka`, and `play` build on `json`, which depends on `core`.
+- `ml-spark`, `ml-dl4j`, `elastic`, and the deprecated `ws` module depend on `core`; `elastic-util` depends on `ws`.
+- Shared dependency versions live in `project/Dependencies.scala`; module-specific dependencies live in each module's `build.sbt`.
+
+### Dataset and Field Flow
+- Shared field identifiers/specifications and query criteria live in `core`.
+- Ada's domain models, field parsing/inference, importers, transformations, and statistics live in `ada-server`.
+- `DataSetAccessor` ties together a dataset's dictionary, filters, views, settings, and data store. Recreating its store wrapper does not itself change an existing Elasticsearch mapping.
+- Data records use the JSON CRUD store abstraction. Storage adapters implement criteria, projections, and serialization; the Play UI uses these through Ada services/controllers.
+- Most web models are presentation-specific; the dataset domain models are in `ada-server/src/main/scala/org/edena/ada/server/models/`.
+
+### Text Fields
+- `FieldTypeId.Text` carries the same scalar/array values as `String`. It is serialized by name and was appended to the enum to preserve existing ordinals.
+- Inference considers Text after numeric/date/JSON/Enum types and before String. The default threshold is a longest value of 50 characters, configurable per import/inference transformation.
+- Elasticsearch maps Text as native `text` with `store: true` (no `keyword`, no sub-field), so projections return values of any length from stored fields, never `_source`. Text has no doc values: it can't be sorted or aggregated (the tables and the records list make Text columns unsortable, and they and the exports ignore such an order, looked up in the dictionary: `DataSetViewHelper.sortableOrderBy`). Widgets with a Text field skip the repo-based generation (`WidgetGenerationService`): the calculators compute them from all the values (full data or streamed).
+- Text supports only `contains` (analyzed words; Mongo/cache: case-insensitive substrings), `is defined` and `is undefined`. Other comparisons are rejected in `FieldUtil.toCriterion` and in `ElasticJsonCrudStoreImpl.toSimpleQuery`, not approximated on tokens.
+- String <-> Text changes the Elasticsearch mapping type, which can't be done in place: `convertStringAndTextFields` refuses it for Elasticsearch data sets (use the Change field types transformation); Mongo/cache convert in place. Indices from 1.2.0 (keyword + `<field>.text`) must be rebuilt.
+- `reindex` fails if any document wasn't copied; never delete a source index based on a reindex or a copy without checking the target's (refreshed) count. Bulk `save`/`update` fail if any item failed (`checkBulkError`): Elasticsearch answers 200 with per-item errors.
+- Omni search `criterion` is a scoring alternative that can widen results. Use `requiredCriterion` for restrictions that must apply to every hit, including kNN hits.
 
 ### Testing Strategy
-- Tests are located in `src/test/scala/` within each module
+- Library tests are located in `src/test/scala/`; the Play application's tests are in `ada-web/test/scala/`.
 - Uses ScalaTest 3.2.19 framework (3.1+ style traits: `org.scalatest.flatspec.AnyFlatSpec`, `org.scalatest.matchers.should.Matchers`, etc.)
 - ScalaTestPlus Play 6.0.2 for web application testing
 - Test resources in `src/test/resources/`
@@ -107,7 +141,7 @@ The project follows a clear dependency hierarchy:
 ### Data Storage
 - **MongoDB**: Primary document storage with ReactiveMongo
 - **Elasticsearch**: Full-text search and document indexing
-- **Apache Ignite**: Distributed caching and fast data access
+- **Apache Ignite**: Distributed caching and fast data access. Known issue: cached JSON data sets (`cacheDataSet = true`) can't store rows since the Ignite 2.14 upgrade, as the cache's index type validation rejects `_id` (a JSON object, declared `Option`) and numbers (`BigDecimal`, declared `Long`); see `JsonBinaryCacheWrappingCrudStore`. Ignite needs its `--add-opens` JVM flags on JDK 17, so it can't start in the (non-forked) ada-server tests
 - **Apache Kafka**: Event streaming with Akka Streams consumers, Schema Registry serialization, and DLQ support
 - Unified JSON storage interface for backend flexibility
 
@@ -191,7 +225,7 @@ The project follows a clear dependency hierarchy:
 
 ### Common Issues
 - **Out of Memory**: Increase JVM heap size with `-Xmx` settings
-- **Port Conflicts**: Use `sbt "ada-web/run 8080"` for alternative port
+- **Port Conflicts**: Use `sbt "adaWeb/run 8080"` for alternative port
 - **Database Connection**: Check MongoDB/Elasticsearch service status
 - **Compilation Errors**: Run `sbt clean` before rebuild
 

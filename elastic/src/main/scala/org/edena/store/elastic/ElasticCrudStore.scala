@@ -1,14 +1,13 @@
 package org.edena.store.elastic
 
 import com.sksamuel.elastic4s.{ElasticDsl, Indexes}
+import com.sksamuel.elastic4s.requests.script.Script
 import com.sksamuel.elastic4s.requests.update.UpdateRequest
 import org.edena.core.Identity
-import org.edena.core.store.{CrudStore, EdenaDataStoreException}
+import org.edena.core.store.CrudStore
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import java.util.concurrent.{CompletableFuture, TimeUnit}
-import scala.concurrent.duration._
-import scala.concurrent.{Future, Promise}
+import scala.concurrent.Future
 
 /**
   * Abstract CRUD (create, ready, update, delete) repo for handling storage and retrieval of documents in Elastic Search.
@@ -51,7 +50,7 @@ abstract class ElasticCrudStore[E, ID](
           updateDefAndIds.toSeq map (_._1)
         } refresh asNative(setting.updateBulkRefresh)
       } map { response =>
-        checkError(response, "update")
+        checkBulkError(response, "update")
         updateDefAndIds map (_._2)
       }
     } else
@@ -60,6 +59,33 @@ abstract class ElasticCrudStore[E, ID](
   }.recover(
     handleExceptions
   )
+
+  /**
+    * Sets fields of documents by a script, which replaces each field's value as a whole (a partial "doc" update would
+    * merge an object with the stored one). A document that doesn't exist is skipped.
+    *
+    * @param idFieldValues the ids of the documents with the values of the fields to set, as a (raw) JSON object
+    */
+  protected def updateFieldsAux(
+    idFieldValues: Traversable[(ID, String)]
+  ): Future[Unit] = {
+    val updateDefs = idFieldValues.map { case (id, fieldValues) =>
+      ElasticDsl.update(stringId(id)) in index script setFieldsScript.paramRaw("fieldValues", fieldValues) retryOnConflict 3
+    }
+
+    if (updateDefs.nonEmpty)
+      client execute {
+        ElasticDsl.bulk(updateDefs.toSeq) refresh asNative(setting.updateBulkRefresh)
+      } map { response =>
+        checkBulkError(response, "update fields", isIgnored = _.status == 404)
+      }
+    else
+      Future(())
+  }.recover(
+    handleExceptions
+  )
+
+  private val setFieldsScript = Script("ctx._source.putAll(params.fieldValues)").lang("painless")
 
   protected def createUpdateDefWithId(entity: E): (UpdateRequest, ID) = {
     val id = identity.of(entity).getOrElse(
@@ -77,35 +103,6 @@ abstract class ElasticCrudStore[E, ID](
       checkError(response, "delete")
       ()
     }
-  }.recover(
-    handleExceptions
-  )
-
-  /**
-    * Puts the current definitions (`fieldDefs`) of the given fields into the index mapping and re-indexes all the
-    * documents in place (update-by-query), so that newly added (sub-)fields get populated, e.g. a full-text sub-field
-    * of an existing keyword field. Only additive/updatable mapping changes are possible this way (a field's type
-    * itself cannot be changed without reindexing into a new index). Waits until the (async) re-indexing completes.
-    */
-  protected def updateFieldMappingsInPlaceAux(
-    fieldNames: Traversable[String],
-    pollInterval: FiniteDuration = 2.seconds
-  ): Future[Unit] = {
-    if (fieldDefsOf(fieldNames).isEmpty)
-      Future(())
-    else
-      for {
-        _ <- putFieldMappingsAux(fieldNames)
-
-        // re-index all docs in place (async, as a task) so that the new sub-fields get populated
-        taskResponse <- client execute {
-          ElasticDsl.updateByQueryAsync(indexName, ElasticDsl.matchAllQuery()).proceedOnConflicts(true).refreshImmediately
-        }
-        task = getResultOrError(taskResponse, "updateByQuery (in-place field update)").task
-
-        _ <- waitForTask(task.nodeId, task.taskId, pollInterval)
-      } yield
-        ()
   }.recover(
     handleExceptions
   )
@@ -134,39 +131,6 @@ abstract class ElasticCrudStore[E, ID](
   private def fieldDefsOf(fieldNames: Traversable[String]) = {
     val fieldNameSet = fieldNames.toSet
     fieldDefs.filter(field => fieldNameSet.contains(field.name)).toSeq
-  }
-
-  private def waitForTask(
-    nodeId: String,
-    taskId: String,
-    pollInterval: FiniteDuration
-  ): Future[Unit] =
-    for {
-      response <- client execute ElasticDsl.getTask(nodeId, taskId)
-
-      result = getResultOrError(response, "getTask")
-
-      _ <- result.error match {
-        case Some(error) =>
-          Future.failed(new EdenaDataStoreException(s"Elastic task '$nodeId:$taskId' failed due to: ${error.reason}"))
-
-        case None if result.completed =>
-          logger.info(s"Elastic task '$nodeId:$taskId' completed: ${result.task.status.updated} of ${result.task.status.total} docs updated.")
-          Future(())
-
-        case None =>
-          delay(pollInterval).flatMap(_ =>
-            waitForTask(nodeId, taskId, pollInterval)
-          )
-      }
-    } yield
-      ()
-
-  // non-blocking delay (no thread is parked while waiting)
-  private def delay(duration: FiniteDuration): Future[Unit] = {
-    val promise = Promise[Unit]()
-    CompletableFuture.delayedExecutor(duration.toMillis, TimeUnit.MILLISECONDS).execute(() => promise.success(()))
-    promise.future
   }
 
   protected def deleteIndexAux: Future[_] =

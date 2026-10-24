@@ -350,8 +350,9 @@ protected[controllers] class DictionaryControllerImpl @Inject() (
     }
   }
 
-  // A type change between String and Text (in the edit form) also has to (re-)index the field in the storage. The
-  // conversion runs first: if it fails, it keeps the field's type and the whole update fails (with the cause shown).
+  // A type change between String and Text (in the edit form) goes through the String/Text conversion, which refuses it
+  // for Elasticsearch (the mapping type can't change in place). The conversion runs first: if it fails, it keeps the
+  // field's type and the whole update fails (with the cause shown).
   override protected def updateCall(
     field: Field)(
     implicit request: AuthenticatedRequest[AnyContent]

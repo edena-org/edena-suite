@@ -14,8 +14,8 @@ abstract class ElasticFormatCrudStore[E, ID](
   // Used only on the storedFields projection path, where ES always wraps values in arrays
   // (even for scalar stored fields). Returning true here keeps the value as a List; false
   // unwraps to .head. NestedField paths are the right "true" set because ES nested mappings
-  // imply an array in _source. The _source flatten path (projectSourceToValueMap in the
-  // parent store) preserves natural JSON shape and does not consult this predicate.
+  // imply an array in _source. The _source paths (projectSourceToValueMap in the parent store,
+  // serializeSourceProjectionFieldMap) preserve natural JSON shapes and don't consult this predicate.
   override protected def isMultiValued(fieldName: String): Boolean =
     nestedFieldNames.contains(fieldName)
 

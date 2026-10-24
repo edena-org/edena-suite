@@ -9,7 +9,8 @@ import org.edena.ada.server.models.DataSetFormattersAndIds.FieldIdentity
 import org.edena.core.field.{FieldHelper, FieldTypeId, FieldTypeSpec}
 import org.edena.core.FilterCondition
 import org.edena.core.FilterCondition.{toCriteria, toCriterion}
-import org.edena.core.store.{And, Criterion}
+import org.edena.core.store.{And, ContainsWordsCriterion, Criterion, EqualsNullCriterion, NotEqualsNullCriterion}
+import org.edena.ada.server.AdaException
 import reactivemongo.api.bson.BSONObjectID
 import org.edena.ada.server.models._
 
@@ -74,13 +75,26 @@ object FieldUtil extends FieldHelper {
     val fieldNames = conditions.map(_.fieldName)
 
     for {
-      valueConverters <- FieldUtil.valueConverters(fieldStore, fieldNames)
-    } yield {
-//      val criteria = conditions.map(toCriterion(valueConverters)).flatten
-//      And(criteria) // use AND implicitly
+      fields <- if (fieldNames.nonEmpty) fieldStore.find(FieldIdentity.name #-> fieldNames.toSeq) else Future(Nil)
+    } yield toCriterion(fields, conditions)
+  }
 
-      FilterCondition.toCriteria(valueConverters, conditions)
+  def toCriterion(fields: Traversable[Field], conditions: Seq[FilterCondition]): Criterion = {
+    val converters = valueConverters(fields)
+    val textNames = fields.filter(_.fieldType == FieldTypeId.Text).map(_.name).toSet
+    val criteria = conditions.flatMap { condition =>
+      val criterion = FilterCondition.toCriterion(converters)(condition)
+      if (textNames.contains(condition.fieldName)) {
+        criterion.foreach {
+          case _: ContainsWordsCriterion | _: EqualsNullCriterion | _: NotEqualsNullCriterion =>
+          case _ => throw new AdaException(
+            s"Text field '${condition.fieldName}' supports contains, is defined, and is undefined only."
+          )
+        }
+      }
+      criterion
     }
+    And(criteria)
   }
 
   def isNumeric(fieldType: FieldTypeId.Value): Boolean =

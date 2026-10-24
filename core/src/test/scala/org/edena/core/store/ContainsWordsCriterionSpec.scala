@@ -47,4 +47,13 @@ class ContainsWordsCriterionSpec extends AnyFlatSpec with Matchers {
     toCriterion(Some("   ")) should be (None)
     toCriterion(None) should be (None)
   }
+
+  "Presence conditions" should "ignore values and converters" in {
+    val converters = Map[String, String => Option[Any]]("note" -> (_ => throw new AssertionError("No value to convert")))
+    def criterion(kind: ConditionType.Value) =
+      FilterCondition.toCriterion(converters)(FilterCondition("note", None, kind, Some("stale input"), None))
+
+    criterion(ConditionType.IsDefined) shouldBe Some(NotEqualsNullCriterion("note"))
+    criterion(ConditionType.IsUndefined) shouldBe Some(EqualsNullCriterion("note"))
+  }
 }

@@ -42,6 +42,8 @@ package object util {
       case ConditionType.RegexEquals => "like"
       case ConditionType.RegexNotEquals => "not like"
       case ConditionType.ContainsWords => "contains"
+      case ConditionType.IsDefined => "is defined"
+      case ConditionType.IsUndefined => "is undefined"
     }
 
   val operators = Vector(
@@ -55,23 +57,29 @@ package object util {
     ConditionType.NotIn -> 8,
     ConditionType.RegexEquals -> 9,
     ConditionType.RegexNotEquals -> 10,
-    ConditionType.ContainsWords -> 11
+    ConditionType.ContainsWords -> 11,
+    ConditionType.IsDefined -> 12,
+    ConditionType.IsUndefined -> 13
   ).sortBy(_._2).map(x => x._1 -> conditionTypeToReadableOperator(x._1))
 
-  def valueOrUndefined(condition: FilterCondition, trim: Boolean = false) = {
-    val valueOrLabel =
-      condition.valueLabel match {
-        case Some(label) => Some(label)
-        case None => condition.value
-      }
+  def valueOrUndefined(condition: FilterCondition, trim: Boolean = false) =
+    // presence operators have no value
+    if (condition.conditionType == ConditionType.IsDefined || condition.conditionType == ConditionType.IsUndefined)
+      ""
+    else {
+      val valueOrLabel =
+        condition.valueLabel match {
+          case Some(label) => Some(label)
+          case None => condition.value
+        }
 
-    valueOrLabel match {
-      case None => "undefined"
-      case Some(s) if s.isEmpty => "undefined"
-      case Some(s) if trim => shorten(s, 80)
-      case Some(s) => s
+      valueOrLabel match {
+        case None => "undefined"
+        case Some(s) if s.isEmpty => "undefined"
+        case Some(s) if trim => shorten(s, 80)
+        case Some(s) => s
+      }
     }
-  }
 
   def widgetElementId(chart: Widget) = chart._id.stringify + "Widget"
 

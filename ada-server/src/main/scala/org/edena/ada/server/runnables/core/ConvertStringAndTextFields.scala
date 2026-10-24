@@ -10,8 +10,8 @@ import org.edena.core.DefaultTypes.Seq
 
 /**
   * Converts String fields of a data set to Text (full-text search) or, with `toText` false, Text fields back to
-  * String in place (no data copying). For an Elasticsearch-stored data set the full-text sub-fields get (re)indexed,
-  * so the conversion to Text can be re-run to finish an interrupted re-indexing.
+  * String in place on Mongo/cache stores. Elasticsearch requires the Change field types transformation,
+  * which creates a new dataset with the appropriate native mapping.
   */
 class ConvertStringAndTextFields @Inject()(
   dataSetService: DataSetService

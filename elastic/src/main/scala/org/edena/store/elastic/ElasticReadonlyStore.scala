@@ -35,6 +35,7 @@ import com.sksamuel.elastic4s.requests.common.{
 }
 import com.sksamuel.elastic4s.requests.searches.queries.compound.BoolQuery
 import com.sksamuel.elastic4s.requests.searches.term.{TermQuery, TermsQuery}
+import com.sksamuel.elastic4s.requests.bulk.{BulkResponse, BulkResponseItem}
 import com.sksamuel.elastic4s.requests.cluster.ClusterHealthRequest
 import com.sksamuel.elastic4s.requests.common.HealthStatus
 import org.edena.core.store.ValueMapAux.ValueMap
@@ -137,14 +138,6 @@ abstract class ElasticReadonlyStore[E, ID](
     }
   }
 
-  /**
-    * The stored fields to request for a projection (`projectionSeq` is already in DB field names). By default the
-    * projection itself. A store can request more, e.g. a stored sub-field holding a value that the field itself can't
-    * (a keyword stores no value longer than its `ignore_above`), and fold those back into the projection fields by
-    * overriding [[ElasticSerializer.mergeStoredFields]].
-    */
-  protected def toStoredFields(projectionSeq: Seq[String]): Seq[String] = projectionSeq
-
   // Walk a nested _source map along a dotted path.
   // Lists at intermediate steps are flat-mapped so array-of-objectField paths resolve
   // (e.g. directors.firstName over directors: [{firstName:"John"}, {firstName:"Jane"}] → List("John","Jane")).
@@ -179,6 +172,32 @@ abstract class ElasticReadonlyStore[E, ID](
       else
         navigateSource(sourceMap, path.split('.').toList).map(v => path -> Option(v))
     }.toMap
+
+  // The field map of a projection read from _source (it has nested fields, which can't be stored fields), keyed like
+  // the stored fields: a projected nested field is kept whole, other paths under a nested field are dropped (as in
+  // projectSourceToValueMap), and nulls are left out (as stored fields don't return them). The values keep their
+  // natural shapes, see serializeSourceProjectionFieldMap.
+  protected def projectSourceToFieldMap(
+    projectionSeq: Seq[String],
+    sourceMap: Map[String, Any]
+  ): Map[String, Any] =
+    projectionSeq.flatMap { path =>
+      val value =
+        if (nestedFieldNames.contains(path))
+          sourceMap.get(path)
+        else if (nestedFieldNames.contains(path.takeWhile(_ != '.')))
+          None
+        else
+          navigateSource(sourceMap, path.split('.').toList)
+
+      value.filter(_ != null).map(path -> _)
+    }.toMap
+
+  private def serializeSourceProjectionSearchHit(
+    projectionSeq: Seq[String],
+    searchHit: SearchHit
+  ): E =
+    serializeSourceProjectionFieldMap(projectionSeq, projectSourceToFieldMap(projectionSeq, searchHit.sourceAsMap))
 
   def get(id: ID): Future[Option[E]] = getAux(id, None)
 
@@ -224,6 +243,10 @@ abstract class ElasticReadonlyStore[E, ID](
         val result: Traversable[E] = projection match {
           case Nil =>
             serializeSearchResult(searchResult)
+
+          // read from _source (see createSearchDefinition)
+          case _ if projectionHasNestedFields(projection) =>
+            searchResult.hits.hits.toSeq.filter(_.exists).map(serializeSourceProjectionSearchHit(projectionSeq, _))
 
           case _ =>
             serializeProjectionSearchHits(projectionSeq, searchResult.hits.hits)
@@ -314,11 +337,13 @@ abstract class ElasticReadonlyStore[E, ID](
     materializer: Materializer
   ): Future[Source[E, _]] = {
     val projectionSeq = projection.map(toDBFieldName).toSeq
+    val fromSource = projection.nonEmpty && projectionHasNestedFields(projection)
 
     val source = findAsStreamAux(criterion, sort, projection, limit, skip, batchSize = batchSize).map { searchHit =>
       if (searchHit.exists) {
         val result = projection match {
           case Nil => serializeSearchHit(searchHit)
+          case _ if fromSource => serializeSourceProjectionSearchHit(projectionSeq, searchHit)
           case _   => serializeProjectionSearchHit(projectionSeq, searchHit)
         }
         Some(result)
@@ -451,6 +476,29 @@ abstract class ElasticReadonlyStore[E, ID](
       )
     }
 
+  // a bulk request succeeds (HTTP 200) even if some of its items failed, e.g. were rejected or couldn't be mapped
+  protected def checkBulkError(
+    response: Response[BulkResponse],
+    operationName: String,
+    isIgnored: BulkResponseItem => Boolean = _ => false
+  ): Unit = {
+    checkError(response, operationName)
+
+    val failures = response.result.failures.filterNot(isIgnored)
+
+    if (failures.nonEmpty) {
+      val reasons = failures.take(3).map { item =>
+        val reason = item.error.map(error => s"${error.`type`}: ${error.reason}").getOrElse(s"status ${item.status}")
+        s"'${item.id}' ($reason)"
+      }
+
+      throw new EdenaDataStoreException(
+        s"Elastic search failed while performing '${operationName}' for ${failures.size} of ${response.result.items.size} " +
+          s"items, e.g. ${reasons.mkString(", ")}."
+      )
+    }
+  }
+
   protected def createSearchDefinition(
     criterion: Criterion,
     sort: Seq[Sort] = Nil,
@@ -476,7 +524,7 @@ abstract class ElasticReadonlyStore[E, ID](
         // projection — use storedFields only for non-nested projections
         (
           projection.nonEmpty && !useSourceInclude,
-          (_: SearchRequest) storedFields toStoredFields(projectionSeq)
+          (_: SearchRequest) storedFields projectionSeq
         ),
 
         // sort
@@ -628,9 +676,9 @@ abstract class ElasticReadonlyStore[E, ID](
   }
 
   /**
-    * Query for [[ContainsWordsCriterion]]. By default (no full-text sub-field known) each word has to occur in the
-    * field's value as a case-insensitive substring, i.e. match the regex `.*<word>.*` (with the word taken literally).
-    * No words: the field must have a value.
+    * Query for [[ContainsWordsCriterion]]. By default (unless a store knows the field is analyzed text, see the JSON
+    * store) each word has to occur in the field's value as a case-insensitive substring, i.e. match the regex
+    * `.*<word>.*` (with the word taken literally). No words: the field must have a value.
     */
   protected def toContainsWordsQuery(
     fieldName: String,

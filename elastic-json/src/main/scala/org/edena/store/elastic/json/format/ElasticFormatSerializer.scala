@@ -74,9 +74,17 @@ trait ElasticFormatSerializer[E] extends ElasticSerializer[E] {
   override protected def serializeProjectionFieldMap(
     projection: Seq[String],
     fieldMap: Map[String, Any]
-  ) = {
-    val valueMap = fieldsToValueMap(fieldMap)
+  ) =
+    valueMapToItem(fieldsToValueMap(fieldMap))
 
+  // the values have their natural shapes, so they aren't unwrapped (by isMultiValued, which knows only nested fields)
+  override protected def serializeSourceProjectionFieldMap(
+    projection: Seq[String],
+    fieldMap: Map[String, Any]
+  ) =
+    valueMapToItem(fieldMap)
+
+  private def valueMapToItem(valueMap: Map[String, Any]) = {
     val jsObject = JsObject(
       valueMap.map { case (fieldName, value) =>
         (fieldName, JsonUtil.toJson(value))

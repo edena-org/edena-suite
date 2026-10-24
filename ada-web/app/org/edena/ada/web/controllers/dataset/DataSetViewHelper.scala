@@ -139,7 +139,8 @@ trait DataSetViewHelper {
 
   // returns count and table data
   protected def getInitViewResponse(
-    repo: JsonReadonlyStore)(
+    repo: JsonReadonlyStore,
+    fieldRepo: FieldStore)(
     page: Int,
     orderBy: String,
     filter: Filter,
@@ -154,7 +155,7 @@ trait DataSetViewHelper {
     val countFuture = repo.count(criterion)
 
     // table items
-    val tableItemsFuture = getTableItems(repo)(page, orderBy, criterion, nameFieldMap, tableFieldNames, pageLimit)
+    val tableItemsFuture = getTableItems(repo, fieldRepo)(page, orderBy, criterion, nameFieldMap, tableFieldNames, pageLimit)
 
     for {
       // obtain the total item count satisfying the resolved filter
@@ -170,7 +171,8 @@ trait DataSetViewHelper {
   }
 
   protected def getTableItems(
-    repo: JsonReadonlyStore)(
+    repo: JsonReadonlyStore,
+    fieldRepo: FieldStore)(
     page: Int,
     orderBy: String,
     criterion: Criterion,
@@ -185,10 +187,32 @@ trait DataSetViewHelper {
 
     // table items
     if (tableFieldNamesToLoad.nonEmpty)
-      findItems(repo)(Some(page), orderBy, criterion, tableFieldNamesToLoad ++ Seq(JsObjectIdentity.name), Some(pageLimit))
+      for {
+        sortableOrderBy <- this.sortableOrderBy(fieldRepo)(orderBy)
+
+        items <- findItems(repo)(Some(page), sortableOrderBy, criterion, tableFieldNamesToLoad ++ Seq(JsObjectIdentity.name), Some(pageLimit))
+      } yield
+        items
     else
       Future(Nil)
   }
+
+  /**
+    * The order, unless by a Text field, which can't be sorted (analyzed text, no exact values). Such an order, e.g.
+    * from an older link, a view's initial sort or the export setting, is ignored (the table headers don't offer it).
+    */
+  protected def sortableOrderBy(
+    fieldRepo: FieldStore)(
+    orderBy: String)(
+    implicit executionContext: ExecutionContext
+  ): Future[String] =
+    toSort(orderBy).headOption match {
+      case Some(sort) =>
+        fieldRepo.get(sort.fieldName).map(field => if (field.exists(_.fieldType == FieldTypeId.Text)) "" else orderBy)
+
+      case None =>
+        Future(orderBy)
+    }
 
   private def findItems(
     repo: JsonReadonlyStore)(

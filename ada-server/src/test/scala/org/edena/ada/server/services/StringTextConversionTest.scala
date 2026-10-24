@@ -17,7 +17,7 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import reactivemongo.api.bson.BSONObjectID
 
-import scala.collection.mutable.{ListBuffer, Map => MMap}
+import scala.collection.mutable.{Map => MMap}
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future, Promise}
 import scala.util.Try
@@ -60,12 +60,12 @@ class StringTextConversionTest extends AnyFlatSpec with Matchers with BeforeAndA
 
   private class Fixture(
     initFields: Seq[Field],
-    elastic: Boolean = true,
-    reindex: Seq[String] => Future[Unit] = _ => Future(()),
+    elastic: Boolean = false,
+    storeUpdate: () => Future[Unit] = () => Future(()),
     failStoreUpdateAttempts: Set[Int] = Set()
   ) {
     val fields = MMap[String, Field](initFields.map(field => (field.name, field)): _*)
-    val reindexCalls = ListBuffer[Seq[String]]()
+    val fieldUpdates = new AtomicInteger(0)
     val storeUpdates = new AtomicInteger(0)
 
     private val fieldStore: FieldStore = stub[FieldStore](classOf[CrudStore[_, _]]) {
@@ -77,22 +77,18 @@ class StringTextConversionTest extends AnyFlatSpec with Matchers with BeforeAndA
         Future(fields.values.filter(field => names.contains(field.name)).toList)
 
       case ("update", Seq(field: Field)) =>
-        Future { fields.update(field.name, field); field.name }
+        Future { fieldUpdates.incrementAndGet(); fields.update(field.name, field); field.name }
 
       case ("update", Seq(entities: Traversable[_])) =>
         Future {
+          fieldUpdates.incrementAndGet()
           entities.map { case field: Field => fields.update(field.name, field); field.name }
         }
     }
 
     private val dataSetStore =
       if (elastic)
-        stub[AnyRef](classOf[CrudStore[_, _]], classOf[ElasticCrudStoreExtra[_, _]]) {
-          case ("updateFieldMappingsInPlace", Seq(fieldNames: Traversable[_])) =>
-            val names = fieldNames.map(_.toString).toList
-            reindexCalls += names
-            reindex(names)
-        }
+        stub[AnyRef](classOf[CrudStore[_, _]], classOf[ElasticCrudStoreExtra[_, _]])(PartialFunction.empty)
       else
         stub[AnyRef](classOf[CrudStore[_, _]])(PartialFunction.empty)
 
@@ -105,7 +101,7 @@ class StringTextConversionTest extends AnyFlatSpec with Matchers with BeforeAndA
         if (failStoreUpdateAttempts.contains(attempt))
           Future.failed(new IllegalStateException(s"Store update #$attempt failed"))
         else
-          Future(())
+          storeUpdate()
     }
 
     private val dsaf = stub[DataSetAccessorFactory](classOf[DataSetAccessorFactory]) {
@@ -139,76 +135,57 @@ class StringTextConversionTest extends AnyFlatSpec with Matchers with BeforeAndA
   private val textField = Field("summary", fieldType = FieldTypeId.Text)
   private val intField = Field("count", fieldType = FieldTypeId.Integer)
 
-  "String to Text conversion" should "change the types and re-index all the requested String/Text fields" in {
+  "Conversion on Elasticsearch" should "reject both directions before any dictionary or store change" in {
+    Seq(true, false).foreach { toText =>
+      val fixture = new Fixture(Seq(stringField, textField, intField), elastic = true)
+      failure(fixture.convert(Seq("notes", "summary"), toText)) should include ("Change field types transformation")
+      fixture.typeOf("notes") shouldBe FieldTypeId.String
+      fixture.typeOf("summary") shouldBe FieldTypeId.Text
+      fixture.fieldUpdates.get shouldBe 0
+      fixture.storeUpdates.get shouldBe 0
+    }
+  }
+
+  it should "leave already converted fields alone" in {
+    val fixture = new Fixture(Seq(textField), elastic = true)
+    result(fixture.convert(Seq("summary"), toText = true)) shouldBe Nil
+    fixture.fieldUpdates.get shouldBe 0
+    fixture.storeUpdates.get shouldBe 0
+  }
+
+  "Conversion on Mongo/cache" should "change string types while preserving other fields" in {
     val fixture = new Fixture(Seq(stringField, textField, intField))
-
-    result(fixture.convert(Seq("notes", "summary", "count", "unknown"), toText = true)) should be (Seq("notes"))
-
-    fixture.typeOf("notes") should be (FieldTypeId.Text)
-    fixture.typeOf("summary") should be (FieldTypeId.Text)
-    fixture.typeOf("count") should be (FieldTypeId.Integer)
-    fixture.reindexCalls.map(_.toSet) should be (Seq(Set("notes", "summary")))
-    fixture.storeUpdates.get should be (1)
+    result(fixture.convert(Seq("notes", "summary", "count", "unknown"), toText = true)) shouldBe Seq("notes")
+    fixture.typeOf("notes") shouldBe FieldTypeId.Text
+    fixture.typeOf("summary") shouldBe FieldTypeId.Text
+    fixture.typeOf("count") shouldBe FieldTypeId.Integer
+    fixture.storeUpdates.get shouldBe 1
+    result(fixture.convert(Seq("notes", "summary"), toText = false)).toSet shouldBe Set("notes", "summary")
+    fixture.typeOf("notes") shouldBe FieldTypeId.String
+    fixture.typeOf("summary") shouldBe FieldTypeId.String
   }
 
-  it should "roll back the field types if the re-indexing fails" in {
-    val fixture = new Fixture(Seq(stringField), reindex = _ => Future.failed(new IllegalStateException("ES is down")))
-
-    val message = failure(fixture.convert(Seq("notes"), toText = true))
-
-    message should include ("ES is down")
-    message should include ("left unchanged")
-    fixture.typeOf("notes") should be (FieldTypeId.String)
-    fixture.storeUpdates.get should be (2) // conversion + rollback
-  }
-
-  it should "roll back the field types if the store re-creation fails" in {
+  it should "roll back dictionary changes if refreshing the store fails" in {
     val fixture = new Fixture(Seq(stringField), failStoreUpdateAttempts = Set(1))
-
-    failure(fixture.convert(Seq("notes"), toText = true)) should include ("Store update #1 failed")
-    fixture.typeOf("notes") should be (FieldTypeId.String)
-    fixture.reindexCalls should be (empty)
+    val message = failure(fixture.convert(Seq("notes"), toText = true))
+    message should include ("Store update #1 failed")
+    message should include ("left unchanged")
+    fixture.typeOf("notes") shouldBe FieldTypeId.String
+    fixture.storeUpdates.get shouldBe 2
   }
 
-  it should "keep fields that already were Text if their re-indexing fails" in {
-    val fixture = new Fixture(Seq(textField), reindex = _ => Future.failed(new IllegalStateException("ES is down")))
-
-    val message = failure(fixture.convert(Seq("summary"), toText = true))
-
-    message should include ("ES is down")
-    message should not include ("left unchanged")
-    fixture.typeOf("summary") should be (FieldTypeId.Text)
+  it should "report a failed rollback" in {
+    val fixture = new Fixture(Seq(stringField), failStoreUpdateAttempts = Set(1, 2))
+    failure(fixture.convert(Seq("notes"), toText = true)) should include ("Restoring the original field types failed")
   }
 
-  it should "not run concurrently for the same data set" in {
-    val reindexPromise = Promise[Unit]()
-    val fixture = new Fixture(Seq(stringField), reindex = _ => reindexPromise.future)
-
+  it should "serialize conversions and release the guard after completion" in {
+    val refresh = Promise[Unit]()
+    val fixture = new Fixture(Seq(stringField), storeUpdate = () => refresh.future)
     val first = fixture.convert(Seq("notes"), toText = true)
     failure(fixture.convert(Seq("notes"), toText = true)) should include ("already in progress")
-
-    reindexPromise.success(())
-    result(first) should be (Seq("notes"))
-
-    // released again
-    result(fixture.convert(Seq("notes"), toText = true)) should be (Nil)
-    fixture.reindexCalls.size should be (2)
-  }
-
-  "Text to String conversion" should "change the types without re-indexing" in {
-    val fixture = new Fixture(Seq(stringField, textField))
-
-    result(fixture.convert(Seq("notes", "summary"), toText = false)) should be (Seq("summary"))
-
-    fixture.typeOf("summary") should be (FieldTypeId.String)
-    fixture.typeOf("notes") should be (FieldTypeId.String)
-    fixture.reindexCalls should be (empty)
-  }
-
-  "Conversion on a non-Elasticsearch store" should "only change the types" in {
-    val fixture = new Fixture(Seq(stringField), elastic = false)
-
-    result(fixture.convert(Seq("notes"), toText = true)) should be (Seq("notes"))
-    fixture.typeOf("notes") should be (FieldTypeId.Text)
+    refresh.success(())
+    result(first) shouldBe Seq("notes")
+    result(fixture.convert(Seq("notes"), toText = true)) shouldBe Nil
   }
 }

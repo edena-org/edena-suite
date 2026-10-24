@@ -116,7 +116,10 @@ protected[controllers] class TemporalRegressionRunControllerImpl @Inject()(
       // order field
       orderField = fields.find(_.name == ioSpec.orderFieldName).getOrElse(throw new AdaException(s"Order field ${ioSpec.outputFieldName} not found."))
       orderFieldType = ftf(orderField.fieldTypeSpec).asValueOf[Any]
-      orderedValues = if (ioSpec.orderedStringValues.isEmpty && (orderField.isEnum || orderField.isStringOrText)) {
+      orderedValues = if (orderField.isText) {
+        // its rows can't be selected by (exact) values
+        throw new AdaException(s"The Text field ${ioSpec.orderFieldName} can't be an order field, use a String or Enum one.")
+      } else if (ioSpec.orderedStringValues.isEmpty && (orderField.isEnum || orderField.isString)) {
         throw new AdaException(s"String (display) values in fixed order required for the ${orderField.fieldType} order field ${ioSpec.orderFieldName}.")
       } else
         ioSpec.orderedStringValues.map(x => orderFieldType.displayStringToValue(x).get)

@@ -68,11 +68,10 @@ trait DataSetService {
   ): Future[Unit]
 
   /**
-    * Converts String fields to Text (full-text search) or Text fields back to String in place, i.e. without copying
-    * the data (the values are plain strings either way). The dictionary is updated and the data set store refreshed;
-    * for an Elasticsearch-stored data set the full-text sub-fields of all the given String/Text fields are (re)added
-    * and populated (re-indexing), so a call with `toText` can be repeated to finish an interrupted re-indexing.
-    * Other storages (Mongo, cache) keep the data as it is. Fields of other types are ignored.
+    * Converts String fields to Text or back on stores where both use the same physical representation.
+    * Elasticsearch uses different native mapping types and rejects this in-place operation before changing the
+    * dictionary. Use ChangeFieldTypesDataSetTransformation to create a converted dataset with a new index.
+    * Fields of other types are ignored.
     *
     * @return Names of the fields whose type was changed.
     */
@@ -813,7 +812,7 @@ private[services] class DataSetServiceImpl @Inject()(
       (fieldName, jsonFieldTypeInferrer(jsons))
     }
 
-  // data sets with a String/Text conversion in progress (so the same data doesn't get re-indexed concurrently)
+  // Serialize dictionary/store updates for a dataset.
   private val stringTextConversionsInProgress = java.util.concurrent.ConcurrentHashMap.newKeySet[String]()
 
   override def convertStringAndTextFields(
@@ -845,11 +844,15 @@ private[services] class DataSetServiceImpl @Inject()(
 
       fields <- dsa.fieldStore.find(FieldIdentity.name #-> fieldNames.toSeq)
 
-      stringOrTextFields = fields.filter(field => field.fieldType == FieldTypeId.String || field.fieldType == FieldTypeId.Text)
-      fieldsToConvert = stringOrTextFields.filter(_.fieldType == sourceType)
+      fieldsToConvert = fields.filter(_.fieldType == sourceType)
 
-      _ <- if (stringOrTextFields.nonEmpty)
-        convertStringAndTextFieldsWithRollback(dsa, stringOrTextFields, fieldsToConvert, targetType)
+      _ <- if (fieldsToConvert.nonEmpty && dsa.dataSetStore.isInstanceOf[ElasticCrudStoreExtra[_, _]])
+        Future.failed(new AdaException(
+          "Changing String/Text fields in Elasticsearch requires a new index. " +
+            "Use the Change field types transformation to create a converted dataset. The field types were left unchanged."
+        ))
+      else if (fieldsToConvert.nonEmpty)
+        convertStringAndTextFieldsWithRollback(dsa, fieldsToConvert, targetType)
       else
         Future(())
     } yield {
@@ -859,12 +862,9 @@ private[services] class DataSetServiceImpl @Inject()(
     }
   }
 
-  // Updates the dictionary, re-creates the data set store, and (for Text) re-indexes the fields in Elasticsearch. If any
-  // step fails, the dictionary change is rolled back, so no field ends up as Text without its (populated) full-text
-  // sub-field, and the failure is reported (with its cause) as an AdaException.
+  // The supported stores keep the values unchanged; restore the dictionary if refreshing the store fails.
   private def convertStringAndTextFieldsWithRollback(
     dsa: DataSetAccessor,
-    stringOrTextFields: Traversable[Field],
     fieldsToConvert: Traversable[Field],
     targetType: FieldTypeId.Value
   ): Future[Unit] = {
@@ -873,43 +873,22 @@ private[services] class DataSetServiceImpl @Inject()(
     val conversionFuture =
       for {
         // update the dictionary
-        _ <- if (fieldsToConvert.nonEmpty)
-          dsa.fieldStore.update(fieldsToConvert.map(_.copy(fieldType = targetType)))
-        else
-          Future(())
+        _ <- dsa.fieldStore.update(fieldsToConvert.map(_.copy(fieldType = targetType)))
 
-        // re-create the data set store with the current field types (also if no type changed, so it's not stale)
+        // re-create the data set store with the current field types
         _ <- dsa.updateDataSetStore
-
-        // Elasticsearch: add and populate the full-text sub-fields; nothing to do for other storages
-        _ <- if (targetType == FieldTypeId.Text)
-          dsa.dataSetStore match {
-            case elasticStore: ElasticCrudStoreExtra[_, _] =>
-              logger.info(s"Re-indexing ${stringOrTextFields.size} Text field(s) of the data set '$dataSetId' in place.")
-              elasticStore.updateFieldMappingsInPlace(stringOrTextFields.map(_.name))
-
-            case _ =>
-              Future(())
-          }
-        else
-          Future(())
       } yield
         ()
 
     conversionFuture.recoverWith { case error =>
-      val fieldNamesString = stringOrTextFields.map(_.name).mkString(", ")
+      val fieldNamesString = fieldsToConvert.map(_.name).mkString(", ")
       logger.error(s"Conversion of the field(s) $fieldNamesString of the data set '$dataSetId' to $targetType failed.", error)
 
       // restore the original field types (and the store)
-      val rollbackFuture =
-        if (fieldsToConvert.nonEmpty)
-          for {
-            _ <- dsa.fieldStore.update(fieldsToConvert)
-            _ <- dsa.updateDataSetStore
-          } yield
-            ()
-        else
-          Future(())
+      val rollbackFuture = for {
+        _ <- dsa.fieldStore.update(fieldsToConvert)
+        _ <- dsa.updateDataSetStore
+      } yield ()
 
       rollbackFuture.transform { rollbackResult =>
         rollbackResult.failed.foreach(rollbackError =>
@@ -917,8 +896,7 @@ private[services] class DataSetServiceImpl @Inject()(
         )
 
         val typesState =
-          if (fieldsToConvert.isEmpty) ""
-          else if (rollbackResult.isSuccess) " The field types were left unchanged."
+          if (rollbackResult.isSuccess) " The field types were left unchanged."
           else " WARNING: Restoring the original field types failed too."
 
         Failure(new AdaException(

@@ -33,6 +33,26 @@ object FieldTypeFullRenderer {
   type FieldTypeFullInput = (Option[JsValue], String, Option[BSONObjectID])
   type FieldTypeFullRenderer = FieldTypeFullInput => Html
 
+  // a (free-form) Text value longer than this is cut in a table, the item's page shows it whole
+  val TableTextMaxLength = 200
+
+  // cuts a text after maxLength chars (never between the two chars of a surrogate pair) and appends "..."
+  def shortenText(text: String, maxLength: Int = TableTextMaxLength): String =
+    if (text.length <= maxLength)
+      text
+    else {
+      val cutLength = if (Character.isHighSurrogate(text.charAt(maxLength - 1))) maxLength - 1 else maxLength
+      text.substring(0, cutLength) + "..."
+    }
+
+  // escaped, since a value cut in the middle of an HTML tag would break the page
+  private def textRender(field: Field): FieldTypeFullRenderer = {
+    val fieldType = FieldTypeHelper.fieldTypeFactory()(field.fieldTypeSpec)
+
+    input: FieldTypeFullInput =>
+      HtmlFormat.escape(shortenText(input._1.map(fieldType.jsonToDisplayString).getOrElse("")))
+  }
+
   private def jsonRender(fieldLabel: String): FieldTypeFullRenderer = {
     input: FieldTypeFullInput =>
       input._3.map { id =>
@@ -91,6 +111,10 @@ object FieldTypeFullRenderer {
             input._1,
             field.displayAsURLType.getOrElse(URLType.GET)
           )
+
+        case FieldTypeId.Text =>
+          textRender(field)
+
         case _ =>
           val renderer = FieldTypeRenderer(field)
           input => renderer(input._1)

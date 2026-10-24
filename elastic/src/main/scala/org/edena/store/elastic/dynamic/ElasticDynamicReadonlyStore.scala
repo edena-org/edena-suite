@@ -72,6 +72,13 @@ final class ElasticDynamicReadonlyStore private[dynamic] (
   ): Map[String, Any] =
     fieldsToValueMap(fieldMap)
 
+  // a projection read from _source passes through untouched, as serializeSourceSearchHitAsValueMap below
+  override protected def serializeSourceProjectionFieldMap(
+    projection: Seq[String],
+    fieldMap: Map[String, Any]
+  ): Map[String, Any] =
+    fieldMap
+
   // _source carries natural JSON shapes, so values pass through untouched — the single-element
   // list unwrap below exists for the STORED-FIELDS path, where ES array-wraps every value; not
   // unwrapping _source keeps single-element plain arrays intact WITHOUT declaring them in

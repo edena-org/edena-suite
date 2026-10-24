@@ -344,9 +344,9 @@ private object SynapseDataSetImporter {
   /**
     * Elasticsearch: maps the fields that are new to the data set before any record is saved. A re-import upserts the
     * records into the existing index (it's not re-created with the new mapping), so new fields would otherwise be
-    * mapped dynamically, e.g. a Text field as plain `text` without its full-text sub-field. Best-effort: if the mapping
-    * is rejected (e.g. the index still holds an earlier field of the same name with another type), the new fields are
-    * left to the dynamic mapping, as before.
+    * mapped dynamically, e.g. not stored (so projections miss them) and a String field as analyzed text. Best-effort:
+    * if the mapping is rejected (e.g. the index still holds an earlier field of the same name with another type), the
+    * new fields are left to the dynamic mapping, as before.
     */
   def mapNewFields(
     store: JsonCrudStore,

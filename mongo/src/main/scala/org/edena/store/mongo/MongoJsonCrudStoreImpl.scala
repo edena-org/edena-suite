@@ -9,7 +9,7 @@ import org.edena.core.store.EdenaDataStoreException
 import scala.concurrent.Future
 import javax.inject.Inject
 import reactivemongo.api.{FailoverStrategy, ReadPreference}
-import org.edena.store.json.JsObjectIdentity
+import org.edena.store.json.{JsObjectIdentity, JsonFieldUpdateStore}
 import org.edena.store.json.StoreTypes.JsonCrudStore
 import reactivemongo.play.json.compat.bson2json.fromReader
 import reactivemongo.play.json.compat._
@@ -22,7 +22,7 @@ private[mongo] class MongoJsonCrudStoreImpl @Inject()(
     @Assisted mongoAutoCreateIndexForProjection: Boolean
   ) extends MongoReadonlyStore[JsObject, BSONObjectID](
     collectionName, JsObjectIdentity.name, mongoAutoCreateIndexForProjection
-  ) with JsonCrudStore {
+  ) with JsonCrudStore with JsonFieldUpdateStore {
 
   override def save(entity: JsObject): Future[BSONObjectID] =
     withCollection { collection =>
@@ -61,6 +61,32 @@ private[mongo] class MongoJsonCrudStoreImpl @Inject()(
         )
       }
     }
+
+  // a $set replaces each field's value as a whole
+  override def updateFields(idFieldValues: Traversable[(BSONObjectID, JsObject)]): Future[Unit] = {
+    val idSetValues = idFieldValues.map { case (id, fieldValues) => (id, fieldValues - identityName) }.filter(_._2.fields.nonEmpty)
+
+    if (idSetValues.isEmpty)
+      Future(())
+    else
+      withCollection { collection =>
+        val updateBuilder = collection.update(ordered = false)
+
+        for {
+          elements <- Future.sequence(
+            idSetValues.map { case (id, setValues) =>
+              updateBuilder.element(q = Json.obj(identityName -> id), u = Json.obj("$set" -> setValues))
+            }
+          )
+
+          result <- updateBuilder.many(elements)
+        } yield
+          if (result.writeErrors.nonEmpty || result.writeConcernError.isDefined)
+            throw new EdenaDataStoreException(
+              result.writeErrors.map(_.errmsg).mkString(". ") + result.writeConcernError.map(_.errmsg).mkString("")
+            )
+      }
+  }
 
   override def delete(id: BSONObjectID): Future[Unit] = withCollection(
     _.delete(ordered = false).one(Json.obj(identityName -> id)) map handleResult

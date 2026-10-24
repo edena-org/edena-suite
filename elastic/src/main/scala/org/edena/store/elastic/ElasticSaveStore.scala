@@ -48,7 +48,7 @@ abstract class ElasticSaveStore[E, ID](
           saveDefAndIds.toSeq map (_._1)
         } refresh asNative(setting.saveBulkRefresh)
       } map { response =>
-        checkError(response, "save")
+        checkBulkError(response, "save")
         saveDefAndIds map (_._2)
       }
     } else

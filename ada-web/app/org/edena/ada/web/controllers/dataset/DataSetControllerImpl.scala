@@ -17,6 +17,7 @@ import org.edena.ada.server.dataaccess._
 import org.edena.ada.server.dataaccess.dataset.FilterRepoExtra._
 import org.edena.ada.server.models.{MultiChartDisplayOptions, _}
 import org.edena.ada.server.field.FieldUtil.{FieldOps, valueConverters}
+import org.edena.ada.server.field.FieldUtil
 import com.google.inject.assistedinject.Assisted
 import org.edena.ada.web.controllers.{routes, _}
 import org.edena.ada.server.models.DataSetFormattersAndIds.FieldIdentity
@@ -179,11 +180,57 @@ protected[controllers] class DataSetControllerImpl @Inject() (
       "saveBatchSize" -> optional(number(min = 1, max = 200))
     )(DataSetSeriesTransformationSpec.apply)(DataSetSeriesTransformationSpec.unapply))
 
+  // the default view's columns, else any view's (as getDefaultView), else (no view) all the fields
   override protected def listViewColumns = result(
-    dataViewRepo.find().map {
-      _.filter(_.default).headOption.map(_.tableColumnNames)
-    }
+    for {
+      views <- dataViewRepo.find()
+
+      columns <- views.find(_.default).orElse(views.headOption) match {
+        case Some(view) => Future(view.tableColumnNames)
+        case None => fieldRepo.find().map(_.map(_.name).toSeq.sorted)
+      }
+    } yield
+      Some(columns)
   )
+
+  // the list view links each row through its key field (_id by default), so it has to be loaded with the columns;
+  // unlike Mongo, Elasticsearch returns only the projected fields
+  override protected def getFutureItemsAndCount(
+    page: Int,
+    orderBy: String,
+    filter: Seq[FilterCondition]
+  ): Future[(Traversable[JsObject], Int)] =
+    for {
+      setting <- dsa.setting
+
+      projection = listViewColumns.getOrElse(Nil) match {
+        case Nil => Nil
+        case columns => (columns ++ Seq(JsObjectIdentity.name, setting.keyFieldName)).distinct
+      }
+
+      itemsAndCount <- getFutureItemsAndCount(Some(page), orderBy, filter, projection, Some(pageLimit))
+    } yield
+      itemsAndCount
+
+  // the list's (and its JSONL export's) order, unless by a Text field, see sortableOrderBy
+  override protected def getFutureItemsAndCount(
+    page: Option[Int],
+    orderBy: String,
+    filter: Seq[FilterCondition],
+    projection: Seq[String],
+    limit: Option[Int]
+  ): Future[(Traversable[JsObject], Int)] =
+    sortableOrderBy(fieldRepo)(orderBy).flatMap(
+      super.getFutureItemsAndCount(page, _, filter, projection, limit)
+    )
+
+  override protected def jsonlExportResult(
+    orderBy: String,
+    conditions: Seq[FilterCondition]
+  ): Future[Result] =
+    sortableOrderBy(fieldRepo)(orderBy).flatMap(
+      super.jsonlExportResult(_, conditions)
+    )
 
   override protected lazy val homeCall = router.getDefaultView(Nil)
 
@@ -195,6 +242,7 @@ protected[controllers] class DataSetControllerImpl @Inject() (
       Seq[FilterCondition],
       Map[String, String],
       Seq[String],
+      Set[String],
       DataSetSetting
     )
 
@@ -203,15 +251,21 @@ protected[controllers] class DataSetControllerImpl @Inject() (
     conditions: Seq[FilterCondition]
   ) = { request =>
     val dataSetNameFuture = dsa.dataSetName
-    val fieldLabelMapFuture = getFieldLabelMap(listViewColumns.get)
+    val fieldsFuture = getFields(listViewColumns.get)
     val settingFuture = dsa.setting
 
     for {
       dataSetName <- dataSetNameFuture
-      fieldLabelMap <- fieldLabelMapFuture
+      fields <- fieldsFuture
       setting <- settingFuture
-    } yield
-      (itemName(dataSetName, setting), page, conditions, fieldLabelMap, listViewColumns.get, setting)
+    } yield {
+      val fieldLabelMap = fields.flatMap(field => field.label.map((field.name, _))).toMap
+
+      // Text fields can't be sorted (analyzed text, no exact values)
+      val unsortableFieldNames = fields.filter(_.isText).map(_.name).toSet
+
+      (itemName(dataSetName, setting), page, conditions, fieldLabelMap, listViewColumns.get, unsortableFieldNames, setting)
+    }
   }
 
   private def itemName(
@@ -221,7 +275,7 @@ protected[controllers] class DataSetControllerImpl @Inject() (
     setting.displayItemName.getOrElse(dataSetName + " Item")
 
   override protected[controllers] def listView = { implicit ctx =>
-    (dataset.list(_, _, _, _, _, _)).tupled
+    (dataset.list(_, _, _, _, _, _, _)).tupled
   }
 
   // show view and data
@@ -275,6 +329,9 @@ protected[controllers] class DataSetControllerImpl @Inject() (
     fieldNames: Traversable[String]
   ): Future[Map[String, String => Option[Any]]] =
     valueConverters(fieldRepo, fieldNames)
+
+  override protected def toCriterion(filter: Seq[FilterCondition]): Future[Criterion] =
+    FieldUtil.toCriterion(fieldRepo, filter)
 
   /**
     * Generate content of csv export file and create download.
@@ -364,6 +421,8 @@ protected[controllers] class DataSetControllerImpl @Inject() (
       // load the requested fields or all
       fields <- if (tableFieldNames.nonEmpty) getFields(tableFieldNames) else fieldRepo.find()
 
+      orderBy <- exportOrderBy(setting)
+
       // get the result by calling exportToCsv core function
       result <- {
         // sort field names if use ALL otherwise use the original order
@@ -378,7 +437,7 @@ protected[controllers] class DataSetControllerImpl @Inject() (
           replacements,
           escapeStringValues)(
           headerFieldNames,
-          setting.exportOrderByFieldName,
+          orderBy,
           filter,
           extraCriterion,
           tableFieldNames.nonEmpty,
@@ -451,6 +510,8 @@ protected[controllers] class DataSetControllerImpl @Inject() (
       // load the requested fields or all
       fields <- if (tableFieldNames.nonEmpty) getFields(tableFieldNames) else fieldRepo.find()
 
+      orderBy <- exportOrderBy(setting)
+
       // get the result by calling exportToCsv core function
       result <- {
         // sort field names if use ALL otherwise use the original order
@@ -461,7 +522,7 @@ protected[controllers] class DataSetControllerImpl @Inject() (
 
         exportToJson(
           jsonFileName)(
-          setting.exportOrderByFieldName,
+          orderBy,
           filter,
           extraCriterion,
           headerFieldNames,
@@ -473,6 +534,13 @@ protected[controllers] class DataSetControllerImpl @Inject() (
     } yield
       result
   }
+
+  // the export order (by the setting), unless by a Text field, see sortableOrderBy
+  private def exportOrderBy(setting: DataSetSetting): Future[Option[String]] =
+    setting.exportOrderByFieldName match {
+      case Some(orderBy) => sortableOrderBy(fieldRepo)(orderBy).map(Some(_).filter(_.nonEmpty))
+      case None => Future(None)
+    }
 
   private def dataViewTableColumnNames(
     dataViewId: BSONObjectID
@@ -589,7 +657,7 @@ protected[controllers] class DataSetControllerImpl @Inject() (
           Future.sequence(
             (tablePagesToUse, criteria, resolvedFilters).zipped.map { case (tablePage, criteria, resolvedFilter) =>
               val orderBy = if (tablePage.orderBy.isEmpty) defaultOrderBy else tablePage.orderBy
-              getInitViewResponse(store)(tablePage.page, orderBy, resolvedFilter, criteria, nameFieldMap, tableColumnNames, pageLimit)
+              getInitViewResponse(store, fieldRepo)(tablePage.page, orderBy, resolvedFilter, criteria, nameFieldMap, tableColumnNames, pageLimit)
             }
           )
       } yield {
@@ -684,7 +752,7 @@ protected[controllers] class DataSetControllerImpl @Inject() (
       viewResponses <-
         Future.sequence(
           (tablePagesToUse, criteria, resolvedFilters).zipped.map { case (tablePage, criteria, resolvedFilter) =>
-            getInitViewResponse(store)(tablePage.page, tablePage.orderBy, resolvedFilter, criteria, nameFieldMap, tableColumnNames, pageLimit)
+            getInitViewResponse(store, fieldRepo)(tablePage.page, tablePage.orderBy, resolvedFilter, criteria, nameFieldMap, tableColumnNames, pageLimit)
           }
         )
     } yield {
@@ -791,7 +859,7 @@ protected[controllers] class DataSetControllerImpl @Inject() (
         nameFieldMap <- createNameFieldMap(fieldRepo)(Seq(resolvedFilter.conditions), widgetSpecs, tableColumnNames)
 
         // get the init response data
-        viewResponse <- getInitViewResponse(store)(tablePage, tableOrder, resolvedFilter, criteria, nameFieldMap, tableColumnNames, pageLimit)
+        viewResponse <- getInitViewResponse(store, fieldRepo)(tablePage, tableOrder, resolvedFilter, criteria, nameFieldMap, tableColumnNames, pageLimit)
       } yield {
         //        Logger.info(s"Data loading of a widget panel and a table for the data set '${dataSetId}' finished in ${new ju.Date().getTime - start.getTime} ms")
 
@@ -858,7 +926,7 @@ protected[controllers] class DataSetControllerImpl @Inject() (
         nameFieldMap <- createNameFieldMap(fieldRepo)(Nil, widgetSpecs, tableColumnNames)
 
         // get the init response data
-        viewResponse <- getInitViewResponse(store)(tablePage, tableOrder, new Filter(), noOpCriterion, nameFieldMap, tableColumnNames, pageLimit)
+        viewResponse <- getInitViewResponse(store, fieldRepo)(tablePage, tableOrder, new Filter(), noOpCriterion, nameFieldMap, tableColumnNames, pageLimit)
       } yield {
         // create a widgets-future calculation and register with a callback id
         val method = dataView.map(_.generationMethod).getOrElse(WidgetGenerationMethod.Auto)
@@ -1829,7 +1897,7 @@ protected[controllers] class DataSetControllerImpl @Inject() (
         criteria <- toCriterion(resolvedFilter.conditions)
 
         // retrieve all the table items
-        tableItems <- getTableItems(store)(page, orderBy, criteria, nameFieldMap, fieldNames, pageLimit)
+        tableItems <- getTableItems(store, fieldRepo)(page, orderBy, criteria, nameFieldMap, fieldNames, pageLimit)
 
         // get the total count
         count <- store.count(criteria)
@@ -1863,7 +1931,7 @@ protected[controllers] class DataSetControllerImpl @Inject() (
         nameFieldMap <- createNameFieldMap(fieldRepo)(Seq(resolvedFilter.conditions), Nil, fieldNames)
 
         // retrieve all the table items
-        tableItems <- getTableItems(store)(page, orderBy, criteria, nameFieldMap, fieldNames, pageLimit)
+        tableItems <- getTableItems(store, fieldRepo)(page, orderBy, criteria, nameFieldMap, fieldNames, pageLimit)
 
         // get the total count
         count <- store.count(criteria)
@@ -2365,17 +2433,6 @@ protected[controllers] class DataSetControllerImpl @Inject() (
     )
   }
 
-  private def getFieldLabelMap(fieldNames : Traversable[String]): Future[Map[String, String]] = {
-    val futureFieldLabelPairs : Traversable[Future[Option[(String, String)]]]=
-      fieldNames.map { fieldName =>
-        fieldRepo.get(fieldName).map { fieldOption =>
-          fieldOption.flatMap{_.label}.map{ label => (fieldName, label)}
-        }
-      }
-
-    Future.sequence(futureFieldLabelPairs).map{ _.flatten.toMap }
-  }
-
   private def filterSubCriteriaMap(widgetSpecs: Traversable[WidgetSpec])  =
     Future.sequence(
       widgetSpecs.map(_.subFilterId).flatten.toSet.map { subFilterId: BSONObjectID =>
@@ -2407,11 +2464,13 @@ protected[controllers] class DataSetControllerImpl @Inject() (
       for {
         setting <- dsa.setting
 
+        orderBy <- exportOrderBy(setting)
+
         fileContent <- generateTranSMARTDataFile(
           tranSMARTDataFileName,
           delimiter,
           setting.keyFieldName,
-          setting.exportOrderByFieldName,
+          orderBy,
           visitFieldName,
           replaceEolWithSpace
         )

@@ -58,7 +58,8 @@ Elasticsearch JSON storage implementation
 
 ### - ignite
 Apache Ignite in-memory data grid
-- **Apache Ignite**: 2.14.0 (core, spring, indexing, scalar)
+- **Apache Ignite**: 2.17.0 (core, spring, indexing)
+- **Known issue**: the JSON cache of data sets (`cacheDataSet = true`) can't store rows since Ignite 2.14, see the CHANGELOG
 - Depends on: json
 
 ### - scripting

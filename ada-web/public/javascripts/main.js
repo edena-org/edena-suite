@@ -529,15 +529,48 @@ function addSpinner(element, style) {
     element.append("<div class='spinner' style='margin: auto;'></div>")
 }
 
+function textFilterCondition(conditionType, value, isEditing) {
+  if (!isEditing && conditionType == "=") return "contains";
+  // Existing null predicates have the same semantics as the explicit presence operators.
+  if (isEditing && (value == null || value.trim() == "")) {
+    if (conditionType == "=") return "is undefined";
+    if (conditionType == "!=") return "is defined";
+  }
+  return conditionType;
+}
+
 function updateFilterValueElement(filterElement, data) {
   var fieldType = (data.isArray) ? data.fieldType + " Array" : data.fieldType
   filterElement.find("#fieldInfo").html("Field type: " + fieldType)
   var conditionTypeElement = filterElement.find("#conditionType")
 
-  // Text (free-form) fields are searched by words rather than compared as a whole
-  if (data.fieldType == "Text" && conditionTypeElement.val() == "=") {
-    conditionTypeElement.val("contains");
+  var isText = data.fieldType == "Text";
+  var oldValueElement = filterElement.find("#addEditConditionModal .conditionValue");
+  var oldValue = oldValueElement.val();
+  var isEditing = filterElement.find("#conditionIndex").val() !== "";
+  if (isText) {
+    conditionTypeElement.val(textFilterCondition(conditionTypeElement.val(), oldValue, isEditing));
   }
+
+  // Preserve an existing unsupported condition for inspection, but require an explicit choice before saving it.
+  var textOperators = ["contains", "is defined", "is undefined"];
+  function updateConditionControls() {
+    var selected = conditionTypeElement.val();
+    var supported = !isText || textOperators.indexOf(selected) >= 0;
+    conditionTypeElement.find("option").each(function() {
+      var allowed = !isText || textOperators.indexOf(this.value) >= 0;
+      $(this).prop("hidden", !allowed && this.value != selected);
+    });
+    var presence = selected == "is defined" || selected == "is undefined";
+    var valueElement = filterElement.find("#addEditConditionModal .conditionValue");
+    valueElement.prop("disabled", presence);
+    if (presence) valueElement.val("");
+    filterElement.find("#addEditConditionModal #submitButton").prop("disabled", !supported);
+    filterElement.find("#fieldInfo").text(
+      "Field type: " + fieldType + (supported ? "" : ". Choose contains, is defined, or is undefined for Text.")
+    );
+  }
+  conditionTypeElement.off("change.fieldType").on("change.fieldType", updateConditionControls);
 
   var conditionType = conditionTypeElement.val();
   var isInNinType = (conditionType == "in" || conditionType == "nin") ? "multiple" : ""
@@ -573,8 +606,6 @@ function updateFilterValueElement(filterElement, data) {
   } else {
     newValueElement = $("<input id='value' class='conditionValue' placeholder='Condition'/>")
   }
-  var oldValueElement = filterElement.find("#addEditConditionModal .conditionValue")
-  var oldValue = oldValueElement.val()
   oldValueElement.selectpicker('destroy');
   oldValueElement.replaceWith(newValueElement);
 
@@ -587,6 +618,7 @@ function updateFilterValueElement(filterElement, data) {
   } else {
     newValueElement.val(oldValue);
   }
+  updateConditionControls();
 }
 
 function updatePlusMinusIcon(element) {

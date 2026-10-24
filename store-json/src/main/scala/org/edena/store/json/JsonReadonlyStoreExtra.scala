@@ -1,5 +1,7 @@
 package org.edena.store.json
 
+import akka.NotUsed
+import akka.stream.scaladsl.Source
 import org.edena.core.store._
 import StoreTypes.JsonReadonlyStore
 import play.api.libs.json.{JsLookupResult, JsObject}
@@ -15,7 +17,7 @@ object JsonReadonlyStoreExtra {
 
   implicit class ReadonlyInfixOps(val jsonStore: JsonReadonlyStore) extends AnyVal {
 
-    import Criterion.Infix
+    import Criterion._
 
     def allIds: Future[Traversable[BSONObjectID]] =
       jsonStore.find(
@@ -24,6 +26,34 @@ object JsonReadonlyStoreExtra {
         val ids  = jsons.map(json => (json \ idName).as[BSONObjectID])
         ids.toSeq.sortBy(_.stringify)
       }
+
+    /**
+      * Streams the found items in the order of their ids, by pages, each found by a separate query for the items
+      * after the previous page. Unlike `findAsStream` (an Elasticsearch scroll or a Mongo cursor, which expire if not
+      * read for a few minutes), the stream can be read at any pace, e.g. by a slow function.
+      *
+      * @param projection the fields to find (the id is added), Nil for all
+      * @param pageSize the number of items found by a query
+      */
+    def findAsIdPagedStream(
+      criterion: Criterion = NoCriterion,
+      projection: Traversable[String] = Nil,
+      pageSize: Int = 1000
+    ): Source[JsObject, NotUsed] = {
+      val pageProjection = if (projection.isEmpty) Nil else (projection.toSeq :+ idName).distinct
+
+      // the state is the id after which the next page starts; an empty page ends the stream
+      Source.unfoldAsync(Option.empty[BSONObjectID]) { afterId =>
+        jsonStore.find(
+          criterion = criterion AND afterId.map(idName #> _),
+          sort = Seq(AscSort(idName)),
+          projection = pageProjection,
+          limit = Some(pageSize)
+        ).map { items =>
+          items.lastOption.map(lastItem => (Some((lastItem \ idName).as[BSONObjectID]), items))
+        }
+      }.mapConcat(_.toList)
+    }
 
     @Deprecated
     def findByIds(

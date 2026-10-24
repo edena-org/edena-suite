@@ -135,9 +135,15 @@ class WidgetGenerationServiceImpl @Inject() (
     def isDateBinned(dateBinsType: Option[DateBinsType], fieldName: String) =
       dateBinsType.isDefined && nameFieldMap.get(fieldName).exists(_.isDate)
 
+    // Text values can't be compared by the repo (Elasticsearch analyzes them, without a keyword), so the widgets of
+    // Text fields are calculated from all the values (full data or streamed)
+    def hasTextField(widgetSpec: WidgetSpec) =
+      widgetSpec.fieldNames.exists(fieldName => nameFieldMap.get(fieldName).exists(_.isText))
+
     val splitWidgetSpecs: Traversable[Either[WidgetSpec, WidgetSpec]] =
       if (genMethod.isRepoBased) {
         widgetSpecs.collect {
+          case p: WidgetSpec if hasTextField(p) => Right(p)
           case p: DistributionWidgetSpec => if (isScalar(p.fieldName) && !isDateBinned(p.dateBinsType, p.fieldName)) Left(p) else Right(p)
           case p: CategoricalCheckboxWidgetSpec => if (isScalar(p.fieldName)) Left(p) else Right(p)
           case p: BoxWidgetSpec => if (isScalar(p.fieldName)) Left(p) else Right(p)

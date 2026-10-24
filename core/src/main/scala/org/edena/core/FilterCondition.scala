@@ -34,6 +34,8 @@ object ConditionType extends Enumeration {
   val GreaterEqual = Value(">=")
   val Less = Value("<")
   val LessEqual = Value("<=")
+  val IsDefined = Value("is defined")
+  val IsUndefined = Value("is undefined")
 }
 
 object FilterCondition {
@@ -69,6 +71,10 @@ object FilterCondition {
     }
 
     filterCondition.conditionType match {
+      case IsDefined => Some(NotEqualsNullCriterion(fieldName))
+
+      case IsUndefined => Some(EqualsNullCriterion(fieldName))
+
       case Equals => Some(
         convertedValue.map(
           EqualsCriterion(fieldName, _)

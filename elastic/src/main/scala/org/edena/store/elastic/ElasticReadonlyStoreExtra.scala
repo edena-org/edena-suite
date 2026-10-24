@@ -4,9 +4,12 @@ import akka.NotUsed
 import akka.actor.ActorSystem
 import akka.stream.Materializer
 import akka.stream.scaladsl.Source
+import com.fasterxml.jackson.module.scala.JavaTypeable
+import com.sksamuel.elastic4s.handlers.ElasticErrorParser
+import com.sksamuel.elastic4s.handlers.reindex.ReindexResponse
 import com.sksamuel.elastic4s.requests.reindex.ReindexRequest
 import com.sksamuel.elastic4s.streams.ReactiveElastic._
-import com.sksamuel.elastic4s.{ElasticDsl, HttpClient, Index, Indexes}
+import com.sksamuel.elastic4s.{CommonRequestOptions, ElasticDsl, Executor, Functor, Handler, HttpClient, HttpResponse, Index, Indexes, ResponseHandler}
 import com.sksamuel.elastic4s.requests.searches.{HighlightField, SearchHit, SearchRequest}
 import com.sksamuel.elastic4s.requests.searches.knn.Knn
 import com.sksamuel.elastic4s.requests.common.FetchSourceContext
@@ -41,6 +44,7 @@ import org.edena.core.store.{
 import scala.concurrent.ExecutionContext.Implicits.global
 
 import scala.concurrent.Future
+import scala.util.Try
 
 /**
  * Extension of a classic readonly repo with some Elastic-specific functionality
@@ -60,7 +64,14 @@ trait ElasticReadonlyStoreExtra[E, ID] {
 
   def getMappings: Future[Map[String, Map[String, Any]]]
 
-  def reindex(newIndexName: String): Future[_]
+  /**
+   * Copies all the documents into another index (which keeps its own mapping, if it exists). Fails if any document
+   * couldn't be copied.
+   *
+   * @return
+   *   The number of copied (created) documents
+   */
+  def reindex(newIndexName: String): Future[Long]
 
   def findWithHighlight(
     highlightField: String,
@@ -387,18 +398,42 @@ trait ElasticReadonlyStoreExtraImpl[E, ID] extends ElasticReadonlyStoreExtra[E, 
       result.map(indexMappings => (indexMappings.index, indexMappings.mappings)).toMap
     }
 
-  override def reindex(newIndexName: String): Future[_] = {
-    val baseRequest = ElasticDsl.reindex(Index(indexName), Index(newIndexName))
+  // Fails if any document wasn't copied: ES answers with an error status, listing the failed documents, which the
+  // handler reads to report them (see ReindexReportingFailuresHandler). No wait_for_active_shards: it's a number of
+  // copies per shard (ES default: the primary), not of shards - set to the number of shards (5 by default) with no
+  // replicas, every document failed.
+  override def reindex(newIndexName: String): Future[Long] = {
+    val request: ReindexRequest =
+      ElasticDsl.reindex(Index(indexName), Index(newIndexName)) refresh asNative(RefreshPolicy.Immediate)
 
-    // TODO: there was an error in a previous version:
-    //    serialization of index names is buggy for the reindex function, therefore we pass there apostrophes
-    //    ElasticDsl.reindex(Indexes(Seq("\"" + indexName + "\""))) into ("\"" + newIndexName +"\"") refresh true waitForActiveShards setting.shards
+    client.execute(request)(
+      implicitly[Executor[Future]],
+      implicitly[Functor[Future]],
+      ReindexReportingFailuresHandler,
+      implicitly[JavaTypeable[ReindexResponse]],
+      implicitly[CommonRequestOptions]
+    ).map { response =>
+      val result = getResultOrError(response, "reindex")
+      val failures = result.failures.getOrElse(Nil)
 
-    client execute {
-      (baseRequest waitForActiveShards setting.shards refresh (asNative(
-        RefreshPolicy.Immediate
-      ))): ReindexRequest
-    }
+      failures.headOption.foreach { failure =>
+        // a failure of the reading (search) side has no document id or cause
+        val reason = Option(failure.cause).map(cause => s"${cause.`type`}: ${cause.reason.getOrElse("")}")
+          .getOrElse(s"status ${failure.status}")
+
+        throw new EdenaDataStoreException(
+          s"Reindexing '$indexName' to '$newIndexName' failed for ${failures.size} of ${result.total} documents, " +
+            s"e.g. '${Option(failure.id).getOrElse("?")}' due to $reason."
+        )
+      }
+
+      if (result.timed_out)
+        throw new EdenaDataStoreException(
+          s"Reindexing '$indexName' to '$newIndexName' timed out after ${result.created} of ${result.total} documents."
+        )
+
+      result.created
+    }.recover(handleExceptions)
   }
 
   private implicit class HighlightDefInfix(highDef: HighlightField) {
@@ -844,7 +879,7 @@ trait ElasticReadonlyStoreExtraImpl[E, ID] extends ElasticReadonlyStoreExtra[E, 
         else
           ElasticDsl.search(index).fetchSource(projection.isEmpty)
         val withProjection =
-          if (projectionSeq.nonEmpty && !useSourceInclude) baseDef.storedFields(toStoredFields(projectionSeq)) else baseDef
+          if (projectionSeq.nonEmpty && !useSourceInclude) baseDef.storedFields(projectionSeq) else baseDef
         val withSort =
           if (sort.nonEmpty) withProjection.sortBy(toSort(sort)) else withProjection
         val withSkip = skip.map(s => withSort.start(s)).getOrElse(withSort)
@@ -1210,7 +1245,7 @@ trait ElasticReadonlyStoreExtraImpl[E, ID] extends ElasticReadonlyStoreExtra[E, 
     }
 
     val withProjection =
-      if (projectionSeq.nonEmpty && !useSourceInclude) baseDef.storedFields(toStoredFields(projectionSeq)) else baseDef
+      if (projectionSeq.nonEmpty && !useSourceInclude) baseDef.storedFields(projectionSeq) else baseDef
     val withSort = if (sort.nonEmpty) withProjection.sortBy(toSort(sort)) else withProjection
     val withSkip = skip.map(s => withSort.start(s)).getOrElse(withSort)
     val withLimit = limit.map(l => withSkip.limit(l)).getOrElse(withSkip)
@@ -1273,3 +1308,24 @@ trait ElasticReadonlyStoreExtraImpl[E, ID] extends ElasticReadonlyStoreExtra[E, 
 trait ElasticReadonlyExtraStore[E, ID]
     extends ReadonlyStore[E, ID]
     with ElasticReadonlyStoreExtra[E, ID]
+
+/**
+  * A reindex handler that, unlike elastic4s' one, reads also an error response listing failed documents: ES answers a
+  * reindex in which some documents failed with an error status (the highest of the failures') but the usual body.
+  */
+private object ReindexReportingFailuresHandler extends Handler[ReindexRequest, ReindexResponse] {
+
+  override def build(request: ReindexRequest) =
+    ElasticDsl.ReindexHandler.build(request)
+
+  override def responseHandler = new ResponseHandler[ReindexResponse] {
+    override def handle(response: HttpResponse) =
+      if (response.statusCode == 200 || listsFailures(response))
+        Right(ResponseHandler.fromResponse[ReindexResponse](response))
+      else
+        Left(ElasticErrorParser.parse(response))
+  }
+
+  private def listsFailures(response: HttpResponse) =
+    response.entity.exists(entity => Try(ResponseHandler.json(entity).has("failures")).getOrElse(false))
+}

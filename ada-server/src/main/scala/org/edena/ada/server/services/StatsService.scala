@@ -301,7 +301,7 @@ private[services] class StatsServiceImpl @Inject() (
         val values = Seq(true, false)
         calcUniqueCountsFromRepo(field.name, values, dataRepo, criterion)
 
-      case FieldTypeId.String | FieldTypeId.Text =>
+      case FieldTypeId.String =>
         calcUniqueDistByDistinctValuesAux[String]
 
       case FieldTypeId.Integer =>

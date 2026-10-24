@@ -18,6 +18,7 @@
     conditions: Seq[FilterCondition],
     fieldLabelMap: Map[String, String],
     fieldsToShow: Seq[String],
+    unsortableFieldNames: Set[String],
     setting: DataSetSetting
 )(
     implicit context: DataSetWebContext
@@ -46,7 +47,8 @@
             (item: JsObject) => play.api.mvc.Call("GET", baseUrl.replace("{{id}}", (item \ setting.keyFieldName).as[String]))
         }.orElse(
             Some({ (item: JsObject) => dataSetRouter.get((item \ setting.keyFieldName).as[BSONObjectID]) })
-        )
+        ),
+        unsortableFieldNames = unsortableFieldNames
     )
 }
 

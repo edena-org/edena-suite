@@ -11,7 +11,8 @@
     rowClickCall : Option[JsObject => Call] = None,
     fieldNameRenderMap: Option[Map[String, FieldTypeFullRenderer]] = None,
     isAjaxRefresh: Boolean = false,
-    tableSelection: Boolean = false
+    tableSelection: Boolean = false,
+    unsortableFieldNames: Set[String] = Set()
 )
 
 @refreshCallAux(newPage : Int, newOrderBy : Option[String]) = @{
@@ -27,7 +28,9 @@
 @if(page.items.nonEmpty) {
     @displayJsonTable(
         page.items,
-        header(page.orderBy, refreshCallAux, isAjaxRefresh)(_, _),
+        // an unsortable field's header has no (sorting) link
+        (fieldName: Option[String], label: String) =>
+            header(page.orderBy, refreshCallAux, isAjaxRefresh)(fieldName.filterNot(unsortableFieldNames.contains), label),
         fieldLabelMap,
         fieldsToShow,
         rowClickCall,
