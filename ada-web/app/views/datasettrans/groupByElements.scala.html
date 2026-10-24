@@ -1,0 +1,54 @@
+@import org.edena.ada.server.models.datatrans.GroupByTransformation
+@import views.html.datasettrans.dataSetTypeahead
+@import views.html.elements.{inputText, textarea}
+@import org.edena.play.controllers.WebContext
+@import org.edena.play.controllers.WebContext._
+@import reactivemongo.api.bson.BSONObjectID
+
+@(
+    id: Option[BSONObjectID],
+    form: Form[GroupByTransformation]
+)(
+    implicit webContext: WebContext
+)
+
+@dataSetTypeahead("groupByTransformation", "sourceDataSetId", form, id, Some("Grouped"))
+
+<p class="text-muted">
+    Aggregates the rows with the same values of the group-by fields to one row of a new data set (e.g. examinations to
+    patients): the group-by values and the aggregated values, whose fields are derived from the aggregations. The rows of a
+    group are ordered by the order fields (an undefined value last), which defines first / last and the order of collected values.
+</p>
+
+@inputText("groupByTransformation", "groupByFieldNames", form)
+
+@textarea("groupByTransformation", "orderBy", form, Seq('rows -> 4))
+
+@textarea("groupByTransformation", "aggregations", form, Seq('rows -> 20))
+
+<div class="text-muted small">
+    <p>
+        An aggregation: <code>outFieldName</code>, <code>function</code>, <code>inFieldNames</code> (several for CountDistinct,
+        Mode, Collect, CollectDistinct, Priority; none for Count), optionally <code>label</code>, <code>categoryName</code> (created if missing),
+        <code>conditions</code> (filter conditions: only the matching rows are aggregated; on an array field <code>=</code> means
+        an element equals), <code>excludeValues</code>, <code>skipNulls</code> (First / Last), <code>ranking</code> (Priority),
+        <code>distinctFieldName</code> (Mode: a value counted once per distinct value of this field).
+    </p>
+    <p>
+        Functions: Count, CountDistinct (Integer), Min, Max, First, Last, Mode (the most frequent value, the first on a tie),
+        Collect (an array of all the values, repeated ones too; undefined ones skipped), CollectDistinct (an array of the distinct
+        values), Priority (the highest-ranked value present), Sum, Avg (Double).
+        An array field's values are its elements (First / Last take the whole array).
+    </p>
+<pre>[
+  {"outFieldName": "visits", "function": "CountDistinct", "inFieldNames": ["VISIT_ID"]},
+  {"outFieldName": "xray_visits", "function": "CountDistinct", "inFieldNames": ["VISIT_ID"],
+   "conditions": [{"fieldName": "tests.xray", "conditionType": "=", "value": "Ordered"}]},
+  {"outFieldName": "gender", "function": "First", "inFieldNames": ["GENDER"], "skipNulls": true},
+  {"outFieldName": "conditions", "function": "CollectDistinct", "inFieldNames": ["visit.conditions"], "excludeValues": ["None"]},
+  {"outFieldName": "allergy_ever", "function": "Priority", "inFieldNames": ["allergy.ever"], "ranking": ["Yes", "No", "Not mentioned"]}
+]</pre>
+    <p>
+        Order: <code>[{"fieldName": "VISIT_DATE"}, {"fieldName": "EXAMINATION_DATE", "desc": true}]</code>
+    </p>
+</div>

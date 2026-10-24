@@ -130,6 +130,10 @@ matchGroupsWithConfoundersTransformation.sourceDataSetId.label = Source Data Set
 matchGroupsWithConfoundersTransformation.filterId.label = Filter Id
 matchGroupsWithConfoundersTransformation.targetGroupFieldName.label = Target Group Field
 renameFieldsTransformation.sourceDataSetId.label = Source Data Set
+groupByTransformation.sourceDataSetId.label = Source Data Set
+groupByTransformation.groupByFieldNames.label = Group By Fields
+groupByTransformation.orderBy.label = Order By
+groupByTransformation.aggregations.label = Aggregations
 
 dataSetSeriesProcessing.core.resultDataSetId.label = Result Data Set Id 
 dataSetSeriesProcessing.core.resultDataSetName.label = Result Data Set Name 
