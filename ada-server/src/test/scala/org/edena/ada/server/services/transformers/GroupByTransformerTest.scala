@@ -121,7 +121,7 @@ class GroupByTransformerTest extends AnyFlatSpec with Matchers with BeforeAndAft
     }
 
     private val dataSetService = stub[DataSetService] {
-      case ("saveDerivedDataSet", args @ Seq(_, _, source: Source[_, _], fields: Traversable[_], _, _)) =>
+      case ("saveDerivedDataSet", args @ Seq(_, _, source: Source[_, _], fields: Traversable[_], _, _, _)) =>
         saveCalls.add(args)
         source.asInstanceOf[Source[JsObject, _]].runWith(Sink.seq).flatMap { savedRows =>
           resultRows.addAll(savedRows.asJava)
@@ -176,14 +176,16 @@ class GroupByTransformerTest extends AnyFlatSpec with Matchers with BeforeAndAft
     fixture.dataSetStore.projections.asScala.toSeq shouldBe Seq(Seq("PATIENT_ID", "VISIT_ID", "tests.xray"))
   }
 
-  it should "save the group-by fields as they are and the out fields, without the source views and filters" in {
+  it should "save the group-by fields as they are and the out fields, without the source views, filters and unused categories" in {
     val fixture = new Fixture
 
     fixture.run(spec())
 
-    val Seq(_, resultSpec, _, fields, _, saveViewsAndFilters) = fixture.saveCalls.asScala.head
+    val Seq(_, resultSpec, _, fields, _, saveViewsAndFilters, onlyReferencedCategories) = fixture.saveCalls.asScala.head
     resultSpec shouldBe ResultDataSetSpec(resultId, "Patients")
     saveViewsAndFilters shouldBe false
+    // the source categories the result fields don't use aren't copied
+    onlyReferencedCategories shouldBe true
     // the source category (its id replaced by the data set service)
     fields.asInstanceOf[Traversable[Field]].toSeq shouldBe Seq(
       patientIdField,

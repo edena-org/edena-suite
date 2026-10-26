@@ -132,7 +132,7 @@ class RowFunctionTransformerTest extends AnyFlatSpec with Matchers with BeforeAn
     @volatile var saved: Option[(ResultDataSetSpec, Seq[JsObject], Seq[Field])] = None
 
     val service = stub[DataSetService] {
-      case ("saveDerivedDataSet", Seq(_, resultSpec: ResultDataSetSpec, source: Source[_, _], fields: Traversable[_], _, _)) =>
+      case ("saveDerivedDataSet", Seq(_, resultSpec: ResultDataSetSpec, source: Source[_, _], fields: Traversable[_], _, _, _)) =>
         source.asInstanceOf[Source[JsObject, _]].runWith(Sink.seq).map { rows =>
           saved = Some((resultSpec, rows, fields.toSeq.map(_.asInstanceOf[Field])))
         }
@@ -463,6 +463,9 @@ class RowFunctionTransformerTest extends AnyFlatSpec with Matchers with BeforeAn
             case ("hashCode", Nil) => Int.box(System.identityHashCode(proxy))
             case ("equals", Seq(other)) => Boolean.box(proxy eq other)
             case _ if handle.isDefinedAt(nameAndArgs) => handle(nameAndArgs)
+            // a default argument, as the trait defines it
+            case _ if method.isDefault && method.getName.contains("$default$") =>
+              InvocationHandler.invokeDefault(proxy, method, Option(args).getOrElse(Array.empty[AnyRef]): _*)
             case _ => throw new UnsupportedOperationException(s"Stub method '${method.getName}' not supported.")
           }
         }

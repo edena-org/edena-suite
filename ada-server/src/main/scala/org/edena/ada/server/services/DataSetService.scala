@@ -155,7 +155,8 @@ trait DataSetService {
     inputSource: Source[JsObject, _],
     fields: Traversable[Field],
     streamSpec: StreamSpec = StreamSpec(),
-    saveViewsAndFiltersFlag: Boolean = true
+    saveViewsAndFiltersFlag: Boolean = true,
+    onlyReferencedCategories: Boolean = false
   ): Future[Unit]
 
   def registerDerivedDataSet(
@@ -1271,7 +1272,8 @@ private[services] class DataSetServiceImpl @Inject()(
     inputSource: Source[JsObject, _],
     fields: Traversable[Field],
     streamSpec: StreamSpec = StreamSpec(),
-    saveViewsAndFiltersFlag: Boolean = true
+    saveViewsAndFiltersFlag: Boolean = true,
+    onlyReferencedCategories: Boolean = false
   ): Future[Unit] = {
     for {
       // register a new data set
@@ -1281,8 +1283,14 @@ private[services] class DataSetServiceImpl @Inject()(
       _ <- targetDsa.categoryStore.deleteAll
       _ <- targetDsa.categoryStore.flushOps
 
-      // get the categories referenced by the fields
-      sourceCategories <- sourceDsa.categoryStore.find()
+      // get the categories (all, or those referenced by the fields and their ancestors)
+      allSourceCategories <- sourceDsa.categoryStore.find()
+
+      sourceCategories =
+        if (onlyReferencedCategories)
+          Category.withAncestors(allSourceCategories, fields.flatMap(_.categoryId).toSet)
+        else
+          allSourceCategories
 
       // save the referenced categories and collect new ids
       newCategoryIds <- {

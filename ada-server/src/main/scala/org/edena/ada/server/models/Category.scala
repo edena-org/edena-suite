@@ -49,7 +49,25 @@ case class Category(
 
 object Category {
   import scala.jdk.CollectionConverters._
-  
+
+  /**
+    * The categories with the given ids and their ancestors, in the given order (e.g. those a dictionary uses).
+    */
+  def withAncestors(
+    categories: Traversable[Category],
+    ids: Set[BSONObjectID]
+  ): Seq[Category] = {
+    val idCategoryMap = categories.flatMap(category => category._id.map((_, category))).toMap
+
+    def withParents(ids: Set[BSONObjectID]): Set[BSONObjectID] = {
+      val newIds = ids ++ ids.flatMap(id => idCategoryMap.get(id).flatMap(_.parentId))
+      if (newIds.size == ids.size) ids else withParents(newIds)
+    }
+
+    val allIds = withParents(ids)
+    categories.filter(_._id.exists(allIds.contains)).toSeq
+  }
+
   def fromPOJO(pojo: CategoryPOJO): Category = {
     val originalItem = Option(pojo.getOriginalItem)
 

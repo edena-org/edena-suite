@@ -20,7 +20,7 @@ import org.edena.core.DefaultTypes.Seq
   *
   * The source rows are streamed sorted by the group-by fields (and the id), so only a group's rows are held at once.
   * The result dictionary consists of the group-by fields and the out fields; an out field's category is the source
-  * category with its name, or a new one.
+  * category with its name, or a new one. Only the source categories the result fields use (and their ancestors) are copied.
   */
 private class GroupByTransformer extends AbstractDataSetTransformer[GroupByTransformation] {
 
@@ -65,7 +65,8 @@ private class GroupByTransformer extends AbstractDataSetTransformer[GroupByTrans
         inputSource.via(GroupByFlow(plan, counts)).map(_ ++ Json.obj(idName -> JsObjectIdentity.next)),
         fields,
         spec.streamSpec,
-        saveViewsAndFiltersFlag = false
+        saveViewsAndFiltersFlag = false,
+        onlyReferencedCategories = true
       )
 
       _ <- saveNewCategories(
