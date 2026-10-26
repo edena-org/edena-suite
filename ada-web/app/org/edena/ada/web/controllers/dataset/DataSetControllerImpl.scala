@@ -71,6 +71,7 @@ import play.api.mvc.{AnyContent, Call, ControllerComponents, Request, Result}
 
 import scala.math.Ordering.Implicits._
 import scala.concurrent.{Future, TimeoutException}
+import scala.util.Try
 import scala.language.postfixOps
 import org.edena.core.DefaultTypes.Seq
 
@@ -272,7 +273,7 @@ protected[controllers] class DataSetControllerImpl @Inject() (
     dataSetName: String,
     setting: DataSetSetting
   ) =
-    setting.displayItemName.getOrElse(dataSetName + " Item")
+    RecordView.itemName(dataSetName, setting)
 
   override protected[controllers] def listView = { implicit ctx =>
     (dataset.list(_, _, _, _, _, _, _)).tupled
@@ -289,6 +290,7 @@ protected[controllers] class DataSetControllerImpl @Inject() (
     val dataSetNameFuture = dsa.dataSetName
     val dataSpaceTreeFuture = dataSpaceService.getTreeForCurrentUser(request)
     val fieldsFuture = fieldRepo.find()
+    val categoriesFuture = categoryRepo.find()
     val settingFuture = dsa.setting
 
     for {
@@ -301,26 +303,61 @@ protected[controllers] class DataSetControllerImpl @Inject() (
       // get all the fields
       fields <- fieldsFuture
 
+      // get all the categories
+      categories <- categoriesFuture
+
       // setting
       setting <- settingFuture
+
+      recordViewSetting = setting.recordView.getOrElse(RecordViewSetting())
+
+      // the summary fields set, or the table columns of the view the record was opened from
+      summaryFieldNames <-
+        if (recordViewSetting.summaryFieldNames.nonEmpty)
+          Future(recordViewSetting.summaryFieldNames)
+        else
+          recordDataView(request).map(_.map(_.tableColumnNames).getOrElse(Nil))
     } yield {
-      // create a field name label / renderer map
-      val fieldNameLabelAndRendererMap = fields.map { field =>
-        val fieldType = ftf(field.fieldTypeSpec)
-        (field.name, (field.labelOrElseName, fieldType.jsonToDisplayString(_)))
-      }.toMap
+      val title = recordViewSetting.title.flatMap(RecordView.title(_, item, fields, ftf)).getOrElse(
+        itemName(dataSetName, setting)
+      )
 
       DataSetShowViewDataHolder(
         id,
-        itemName(dataSetName, setting),
-        item,
+        title,
+        RecordView.summaryFields(item, summaryFieldNames, fields, ftf, setting.filterShowFieldStyle, recordViewSetting),
+        // the item's values displayed by their fields' types, grouped by categories
+        RecordView.fieldGroups(item, fields, categories, ftf, setting.filterShowFieldStyle, recordViewSetting),
         router.getDefaultView(Nil),
-        true,
-        fieldNameLabelAndRendererMap,
         setting,
         dataSpaceTree
       )
     }
+  }
+
+  // the data view a record was opened from (its id in the request, or in the URL of the referring page), else the
+  // default view (as opened by getDefaultView)
+  private def recordDataView(
+    request: Request[_]
+  ): Future[Option[DataView]] = {
+    def dataViewIdParam(query: Option[String]) =
+      query.flatMap(query =>
+        Try(play.core.parsers.FormUrlEncodedParser.parse(query)).toOption.flatMap(_.get("dataViewId")).flatMap(_.headOption)
+      )
+
+    val refererQuery = request.headers.get(REFERER).flatMap(url => Try(Option(new java.net.URI(url).getRawQuery)).toOption.flatten)
+    val dataViewId = (request.getQueryString("dataViewId") orElse dataViewIdParam(refererQuery)).flatMap(BSONObjectID.parse(_).toOption)
+
+    for {
+      dataView <- dataViewId.map(dataViewRepo.get).getOrElse(Future(None))
+
+      defaultView <-
+        if (dataView.isDefined)
+          Future(None)
+        else
+          dataViewRepo.find(sort = Seq(DescSort("default")), limit = Some(1)).map(_.headOption)
+    } yield
+      dataView orElse defaultView
   }
 
   override protected[controllers] def showView = { implicit ctx => dataset.show(_) }
@@ -2629,13 +2666,15 @@ protected[controllers] class DataSetControllerImpl @Inject() (
   }
 }
 
+/**
+  * @param summaryFields shown at the top, also in their groups
+  */
 case class DataSetShowViewDataHolder(
   id: BSONObjectID,
   title: String,
-  item: JsObject,
+  summaryFields: Seq[RecordField],
+  fieldGroups: Seq[RecordFieldGroup],
   listCall: Call,
-  nonNullOnly: Boolean,
-  fieldNameLabelAndRendererMap: Map[String, (String, JsReadable => String)],
   setting: DataSetSetting,
   dataSpaceMetaInfos: Traversable[DataSpaceMetaInfo]
 )

@@ -1,5 +1,5 @@
-@import views.html.layout.jsonShow
-@import views.html.dataset.{datasetMenu, datasetSubNavWithJs}
+@import views.html.layout.main
+@import views.html.dataset.{datasetMenu, datasetSubNavWithJs, recordContent}
 @import org.edena.ada.web.controllers.dataset.{DataSetShowViewDataHolder, DataSetWebContext}
 @import org.edena.ada.web.controllers.dataset.DataSetWebContext._
 
@@ -9,13 +9,10 @@
     implicit context: DataSetWebContext
 )
 
-@jsonShow(
-    data.title,
-    data.item,
-    data.listCall,
-    None,
-    data.nonNullOnly,
-    data.fieldNameLabelAndRendererMap,
-    Some(datasetMenu(data.dataSpaceMetaInfos)),
-    Some(datasetSubNavWithJs(data.setting))
-)
+@main(
+    Messages("show.title", data.title),
+    sideBar = Some(datasetMenu(data.dataSpaceMetaInfos)),
+    topContentBar = Some(datasetSubNavWithJs(data.setting))
+) {
+    @recordContent(data.title, data.id, data.summaryFields, data.fieldGroups, data.listCall, data.setting.dataSetId)
+}

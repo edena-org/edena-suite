@@ -1,0 +1,68 @@
+@import org.edena.ada.web.models.{RecordValue, RecordView}
+@import org.edena.ada.web.models.RecordValue._
+
+@(value: RecordValue)
+
+@moreButton(label: String) = {
+    <button type="button" class="record-more" data-more="@label" data-less="Show less"><span class="record-more-label">@label</span><span class="bi bi-chevron-down"></span></button>
+}
+
+@extraClass(index: Int) = @{
+    if (index >= RecordView.ArrayPreviewSize) "record-extra" else ""
+}
+
+@value match {
+    case NumberValue(text) => {<span class="record-number">@text</span>}
+
+    case DateValue(text) => {<span class="record-date">@text</span>}
+
+    case BooleanValue(flag, text) => {<span class="record-pill record-boolean-@flag"><span class="bi @if(flag) {bi-check-lg} else {bi-x-lg}"></span>@text</span>}
+
+    case EnumValue(label, storedValue) => {<span class="record-pill record-enum" title="Stored value: @storedValue">@label</span>}
+
+    case TextValue(text, long) => {
+        @if(text.trim.isEmpty) {
+            <span class="record-empty">empty</span>
+        } else {
+            <div class="record-text@if(long) { record-collapsible}">@text</div>
+            @if(long) { @moreButton("Show more") }
+        }
+    }
+
+    case LinkValue(url) => {<a href="@url" class="record-link" target="_blank" rel="noopener noreferrer">@url<span class="bi bi-box-arrow-up-right"></span></a>}
+
+    case JsonValue(text, long) => {
+        <pre class="record-json@if(long) { record-collapsible}">@text</pre>
+        @if(long) { @moreButton("Show more") }
+    }
+
+    case ArrayValue(elements, size, asList) => {
+        @if(elements.isEmpty) {
+            <span class="record-empty">empty array</span>
+        } else {
+            @if(asList) {
+                <ol class="record-list">
+                    @for((element, index) <- elements.zipWithIndex) {
+                        <li class="@extraClass(index)">@recordValue(element)</li>
+                    }
+                </ol>
+            } else {
+                <div class="record-chips">
+                    @for((element, index) <- elements.zipWithIndex) {
+                        <div class="record-chip @extraClass(index)">@recordValue(element)</div>
+                    }
+                </div>
+            }
+            @if(elements.size > RecordView.ArrayPreviewSize) { @moreButton("Show all " + elements.size) }
+            @if(size > elements.size) {
+                <div class="record-note">The first @elements.size of @size values are shown.</div>
+            }
+        }
+    }
+
+    case NullValue => {<span class="record-empty">null</span>}
+
+    case EmptyValue => {<span class="record-empty" title="No value">—</span>}
+
+    case InvalidValue(json, message) => {<span class="record-invalid" title="@message"><span class="bi bi-exclamation-triangle"></span><code>@json</code></span>}
+}

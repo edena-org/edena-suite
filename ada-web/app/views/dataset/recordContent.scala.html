@@ -1,0 +1,187 @@
+@import views.html.dataset.recordValue
+@import org.edena.ada.web.models.{RecordField, RecordFieldGroup, RecordView}
+@import reactivemongo.api.bson.BSONObjectID
+@import java.util.Locale
+
+@(
+    title: String,
+    id: BSONObjectID,
+    summaryFields: Seq[RecordField],
+    fieldGroups: Seq[RecordFieldGroup],
+    listCall: Call,
+    storageKey: String
+)
+
+@fieldCount = @{ fieldGroups.map(_.fields.size).sum }
+
+@fieldCountText(count: Int) = @{ if (count == 1) "1 field" else s"$count fields" }
+
+<div class="record-header">
+    <div>
+        <h3 class="record-title">@title</h3>
+        <div class="record-meta">
+            <div class="record-meta-item" title="Record id"><span class="bi bi-fingerprint"></span><span class="record-id">@id.stringify</span></div>
+        </div>
+    </div>
+    <a href="@listCall" id="recordBackButton" class="btn btn-secondary btn-sm"><span class="bi bi-arrow-left"></span> Back</a>
+</div>
+
+@if(summaryFields.nonEmpty) {
+    <dl class="record-summary">
+        @for(field <- summaryFields) {
+            <div class="record-summary-item">
+                <dt class="record-summary-label" title="@field.name">@field.label</dt>
+                <dd class="record-summary-value">@recordValue(field.value)</dd>
+            </div>
+        }
+    </dl>
+}
+
+@if(fieldCount == 0) {
+    <div class="record-no-match">The record has no values.</div>
+} else {
+    <div class="record-toolbar">
+        <div class="record-search">
+            <span class="bi bi-search"></span>
+            <input type="search" id="recordFieldSearch" class="form-control form-control-sm" placeholder="Find a field" aria-label="Find a field" autocomplete="off">
+        </div>
+        <span id="recordFieldCount" class="record-count" data-count="@fieldCount">@fieldCountText(fieldCount)</span>
+    </div>
+
+    <div id="recordGroups" class="record-groups" data-storage-key="@storageKey">
+        @for(group <- fieldGroups) {
+            <section class="record-group@if(group.collapsed && group.label.isDefined) { collapsed}" data-key="@group.key">
+                @group.label.map { label =>
+                    <h6 class="record-group-header">
+                        <button type="button" class="record-group-toggle" aria-expanded="@{!group.collapsed}">
+                            <span class="bi bi-chevron-down record-group-chevron"></span>@label<span class="record-group-count">@group.fields.size</span>
+                        </button>
+                    </h6>
+                }
+                <dl class="record-fields">
+                    @for(field <- group.fields) {
+                        <div class="record-field" data-search="@{(field.label + " " + field.name).toLowerCase(Locale.ROOT)}">
+                            <dt class="record-label" title="@field.name">
+                                <span class="bi @RecordView.typeIcon(field) record-type-icon" title="@RecordView.typeName(field)"></span>
+                                <span>@field.label@if(field.showName) {<span class="record-name">@field.name</span>}</span>
+                            </dt>
+                            <dd class="record-value">@recordValue(field.value)</dd>
+                        </div>
+                    }
+                </dl>
+            </section>
+        }
+    </div>
+
+    <div id="recordNoMatch" class="record-no-match d-none">No field matches.</div>
+}
+
+<script type="text/javascript">
+    $(function () {
+        const fieldCount = parseInt($("#recordFieldCount").attr("data-count"))
+
+        function fieldCountText(count) {
+            return (count == 1) ? "1 field" : count + " fields"
+        }
+
+        // the fields whose label or name contains the text (shown also in collapsed sections)
+        $("#recordFieldSearch").on("input", function () {
+            const text = $(this).val().trim().toLowerCase()
+            var shownCount = 0
+
+            $("#recordGroups").toggleClass("searching", text.length > 0)
+
+            $(".record-group").each(function () {
+                var groupShownCount = 0
+
+                $(this).find(".record-field").each(function () {
+                    const matches = !text || $(this).attr("data-search").indexOf(text) >= 0
+                    $(this).toggleClass("d-none", !matches)
+                    if (matches) groupShownCount++
+                })
+
+                $(this).toggleClass("d-none", groupShownCount == 0)
+                shownCount += groupShownCount
+            })
+
+            $("#recordNoMatch").toggleClass("d-none", shownCount > 0)
+            $("#recordFieldCount").text(text ? shownCount + " of " + fieldCountText(fieldCount) : fieldCountText(fieldCount))
+
+            removeNeedlessMoreButtons(document)
+        })
+
+        // the whole value (or all the elements of an array), and back
+        $(".record-more").on("click", function () {
+            const button = $(this)
+            const expanded = !button.hasClass("expanded")
+            const value = button.prev()
+
+            button.toggleClass("expanded", expanded)
+            value.toggleClass("expanded", expanded)
+            button.find(".record-more-label").text(expanded ? button.attr("data-less") : button.attr("data-more"))
+
+            if (expanded) removeNeedlessMoreButtons(value)
+        })
+
+        // a user's collapsed and expanded sections of a data set, remembered by the browser (if it can)
+        const sectionStateKey = "ada.recordSections." + $("#recordGroups").attr("data-storage-key")
+
+        function sectionStates() {
+            try {
+                return JSON.parse(window.localStorage.getItem(sectionStateKey)) || {}
+            } catch (e) {
+                return {}
+            }
+        }
+
+        function setCollapsed(group, collapsed) {
+            group.toggleClass("collapsed", collapsed)
+            group.find(".record-group-toggle").attr("aria-expanded", !collapsed)
+        }
+
+        const states = sectionStates()
+        $(".record-group").each(function () {
+            const key = $(this).attr("data-key")
+            if ($(this).find(".record-group-toggle").length && key in states)
+                setCollapsed($(this), states[key])
+        })
+
+        $(".record-group-toggle").on("click", function () {
+            const group = $(this).closest(".record-group")
+            const collapsed = !group.hasClass("collapsed")
+            setCollapsed(group, collapsed)
+
+            if (!collapsed) removeNeedlessMoreButtons(group)
+
+            try {
+                const newStates = sectionStates()
+                newStates[group.attr("data-key")] = collapsed
+                window.localStorage.setItem(sectionStateKey, JSON.stringify(newStates))
+            } catch (e) {
+                // not remembered
+            }
+        })
+
+        // back to the page the record was opened from (e.g. a filtered view) if it's on this site
+        $("#recordBackButton").on("click", function (event) {
+            if (document.referrer.indexOf(window.location.origin + "/") == 0 && window.history.length > 1) {
+                event.preventDefault()
+                window.history.back()
+            }
+        })
+    })
+
+    // a cut value that fits whole needs no "Show more" (checked once shown, with the fonts loaded)
+    function removeNeedlessMoreButtons(container) {
+        $(container).find(".record-collapsible:visible").each(function () {
+            if (this.scrollHeight <= this.clientHeight + 1) {
+                $(this).removeClass("record-collapsible")
+                $(this).next(".record-more").remove()
+            }
+        })
+    }
+
+    $(window).on("load", function () {
+        removeNeedlessMoreButtons(document)
+    })
+</script>
