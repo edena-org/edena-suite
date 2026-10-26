@@ -4,11 +4,13 @@
 @import org.edena.ada.web.controllers.dataset.routes.{DataSetSettingController => dataSetSettingRoutes}
 @import org.edena.ada.server.models.DataSpaceMetaInfo
 @import org.edena.ada.server.models.DataSetSetting
+@import org.edena.ada.web.models.RecordViewEditorData
 @import org.edena.ada.web.controllers.dataset.DataSetWebContext._
 @import org.edena.ada.web.controllers.dataset.DataSetWebContext
 
 @(
     form: Form[DataSetSetting],
+    recordViewData: RecordViewEditorData,
     updateCall: Call,
     cancelCall: Call,
     dataSpaceMetaInfos: Traversable[DataSpaceMetaInfo]
@@ -20,7 +22,7 @@
     "Data Set Setting",
     "dataSetSetting",
     errors = form.errors,
-    elements = elements(form),
+    elements = elements(form, recordViewData),
 	updateCall = updateCall,
     cancelCall = cancelCall,
     deleteCall = None,

@@ -9,8 +9,10 @@
 @import org.edena.ada.web.controllers.dataset.DataSetWebContext.widgetEngineNames
 @import org.edena.play.controllers.WebContext
 @import org.edena.play.controllers.WebContext._
+@import org.edena.ada.web.models.RecordViewEditorData
+@import views.html.datasetsetting.recordViewElements
 
-@(form: Form[DataSetSetting])(implicit webContext: WebContext)
+@(form: Form[DataSetSetting], recordViewData: RecordViewEditorData)(implicit webContext: WebContext)
 
 @inputTextReadonly("dataSetSetting", "dataSetId", form)
 
@@ -104,3 +106,5 @@
 @inputText("dataSetSetting", "customStorageCollectionName", form)
 
 @inputText("dataSetSetting", "getListItemURL", form)
+
+@recordViewElements(form, recordViewData)

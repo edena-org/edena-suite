@@ -1,0 +1,274 @@
+@import org.edena.ada.server.models.{DataSetSetting, FilterShowFieldStyle}
+@import org.edena.ada.web.models.{RecordSection, RecordView, RecordViewEditorData}
+@import play.api.libs.json.Json
+@import views.html.elements.labelValue
+
+@(
+    form: Form[DataSetSetting],
+    data: RecordViewEditorData
+)
+
+@* the values of a list option, as bound or filled *@
+@seqValues(key: String) = @{
+    form(key).indexes.flatMap(index => form(s"$key[$index]").value).map(_.trim).filter(_.nonEmpty).distinct
+}
+
+@fieldLabelMap = @{ data.fields.toMap }
+
+@summaryFieldNames = @{ seqValues("recordView.summaryFieldNames") }
+@hiddenFieldNames = @{ seqValues("recordView.hiddenFieldNames") }
+@sectionOrder = @{ seqValues("recordView.sectionOrder") }
+@collapsedSections = @{ seqValues("recordView.collapsedSections").toSet }
+
+@defaultSectionIndexMap = @{ data.sections.zipWithIndex.map { case (section, index) => (section.names, index) }.toMap }
+
+@showOption = @{
+    FilterShowFieldStyle.values.find(value => form("filterShowFieldStyle").value.contains(value.toString)).getOrElse(FilterShowFieldStyle.NamesAndLabels).id
+}
+
+@fieldsJson = @{
+    Json.stringify(Json.toJson(data.fields.map { case (name, label) => Json.arr(name, label) }))
+}
+
+@fieldChip(name: String) = {
+    @defining(fieldLabelMap.get(name)) { field =>
+        <span class="record-setting-chip@if(field.isEmpty) { unknown}" data-name="@name" title="@if(field.isEmpty) {Not in the dictionary: @name} else {@name}">
+            <span class="record-setting-chip-label">@field.flatten.getOrElse(name)</span><button type="button" class="record-setting-chip-remove" title="Remove" aria-label="Remove"><span class="bi bi-x"></span></button>
+        </span>
+    }
+}
+
+@fieldPicker(id: String, names: Seq[String], sortable: Boolean) = {
+    <div class="record-setting-picker" id="@id" data-sortable="@sortable">
+        <div class="record-setting-chips">@for(name <- names) {@fieldChip(name)}</div>
+        <input type="text" class="form-control form-control-sm record-setting-field-input" placeholder="Add a field" aria-label="Add a field" autocomplete="off">
+    </div>
+}
+
+@fieldLabels(names: Seq[String]) = @{
+    names.map(name => fieldLabelMap.get(name).flatten.getOrElse(name)).mkString(", ")
+}
+
+<div class="record-setting" id="recordViewSetting" data-fields="@fieldsJson" data-show-option="@showOption"
+     data-default-summary="@Json.stringify(Json.toJson(data.defaultView.map(_._2).getOrElse(Nil)))">
+
+    <div class="record-setting-header">
+        <span class="bi bi-card-heading"></span>Record page
+    </div>
+    <p class="record-setting-intro">
+        How the page of a record (opened from a table row) looks. An option left empty takes its default, shown in grey.
+    </p>
+
+    @labelValue("recordViewTitle", "Title") {
+        <div class="record-setting-title">
+            <input type="text" id="recordViewTitle" name="recordView.title" class="form-control" value="@form("recordView.title").value.getOrElse("")" placeholder="@data.defaultTitle" autocomplete="off">
+            <input type="text" id="recordViewTitleField" class="form-control record-setting-field-input" placeholder="Insert a field" aria-label="Insert a field into the title" autocomplete="off">
+        </div>
+        <div class="record-setting-help">
+            <code>{{FIELD_NAME}}</code> shows the record's value of a field, e.g. <code>Patient {{PATIENT_ID}}</code>.
+            Empty: the item name, <em>@data.defaultTitle</em>.
+        </div>
+        <div class="record-setting-warning d-none" id="recordViewTitleWarning"></div>
+    }
+
+    @labelValue("recordViewSummaryFields", "Summary fields") {
+        @fieldPicker("recordViewSummaryFields", summaryFieldNames, true)
+        <div class="record-setting-help">
+            Shown at the top of the record, in this order (drag to reorder).
+            Empty: the table columns of the view the record is opened from@data.defaultView.filter(_._2.nonEmpty) match {
+                case Some((viewName, columns)) => {, by default <em>@viewName</em>'s: @fieldLabels(columns). <a href="#" id="recordViewUseDefaultSummary">Use these</a>}
+                case None => {.}
+            }
+        </div>
+    }
+
+    @labelValue("recordViewSections", "Sections") {
+        @if(data.sections.isEmpty) {
+            <div class="record-setting-help">The data set has no categories, so a record's fields are one list. Categories are defined in the dictionary.</div>
+        } else {
+            <ul class="record-setting-sections" id="recordViewSections" data-custom-order="@sectionOrder.nonEmpty">
+                @for(section <- RecordView.orderedSections(data.sections, sectionOrder)) {
+                    <li class="record-setting-section" data-name="@section.name" data-default-index="@defaultSectionIndexMap.getOrElse(section.names, 0)">
+                        <span class="bi bi-grip-vertical record-setting-handle" title="Drag to reorder"></span>
+                        <span class="record-setting-section-label">@section.label</span>
+                        <label class="record-setting-collapsed"><input type="checkbox" @if(collapsedSections.contains(section.name)) {checked}> Collapsed</label>
+                    </li>
+                }
+            </ul>
+            <div class="record-setting-help">
+                Drag to reorder. <span id="recordViewSectionOrderState"></span>
+                <a href="#" id="recordViewResetSectionOrder">Reset to the tree's order</a>
+            </div>
+        }
+    }
+
+    @labelValue("recordViewHiddenFields", "Hidden fields") {
+        @fieldPicker("recordViewHiddenFields", hiddenFieldNames, false)
+        <div class="record-setting-help">Never shown on the record page, e.g. embeddings or internal ids.</div>
+    }
+
+    @* the options as the form's inputs, kept in sync by the script below *@
+    <div id="recordViewInputs">
+        @for((name, index) <- summaryFieldNames.zipWithIndex) {<input type="hidden" name="recordView.summaryFieldNames[@index]" value="@name">}
+        @for((name, index) <- sectionOrder.zipWithIndex) {<input type="hidden" name="recordView.sectionOrder[@index]" value="@name">}
+        @for((name, index) <- collapsedSections.toSeq.zipWithIndex) {<input type="hidden" name="recordView.collapsedSections[@index]" value="@name">}
+        @for((name, index) <- hiddenFieldNames.zipWithIndex) {<input type="hidden" name="recordView.hiddenFieldNames[@index]" value="@name">}
+    </div>
+</div>
+
+<script type="text/javascript">
+    $(function () {
+        const root = $("#recordViewSetting")
+        const fields = JSON.parse(root.attr("data-fields"))
+        const showOption = parseInt(root.attr("data-show-option"))
+
+        const fieldLabels = {}
+        fields.forEach(function (field) { fieldLabels[field[0]] = field[1] || field[0] })
+
+        const sectionList = $("#recordViewSections")
+        var customSectionOrder = sectionList.attr("data-custom-order") == "true"
+
+        function chipNames(picker) {
+            return picker.find(".record-setting-chip").map(function () { return $(this).attr("data-name") }).get()
+        }
+
+        // the options to the form's inputs
+        function sync() {
+            const inputs = $("#recordViewInputs").empty()
+
+            function addInputs(key, values) {
+                values.forEach(function (value, index) {
+                    inputs.append($('<input type="hidden">').attr("name", key + "[" + index + "]").val(value))
+                })
+            }
+
+            const sections = sectionList.find(".record-setting-section")
+
+            addInputs("recordView.summaryFieldNames", chipNames($("#recordViewSummaryFields")))
+            addInputs("recordView.hiddenFieldNames", chipNames($("#recordViewHiddenFields")))
+            addInputs("recordView.sectionOrder", customSectionOrder ? sections.map(function () { return $(this).attr("data-name") }).get() : [])
+            addInputs("recordView.collapsedSections", sections.filter(function () {
+                return $(this).find("input[type=checkbox]").is(":checked")
+            }).map(function () { return $(this).attr("data-name") }).get())
+
+            $("#recordViewSectionOrderState").text(customSectionOrder ? "A custom order." : "The category tree's order.")
+            $("#recordViewResetSectionOrder").toggle(customSectionOrder)
+        }
+
+        function chip(name) {
+            const known = name in fieldLabels
+            const element = $('<span class="record-setting-chip"></span>').attr("data-name", name)
+                .attr("title", known ? name : "Not in the dictionary: " + name).toggleClass("unknown", !known)
+
+            element.append($('<span class="record-setting-chip-label"></span>').text(known ? fieldLabels[name] : name))
+            element.append('<button type="button" class="record-setting-chip-remove" title="Remove" aria-label="Remove"><span class="bi bi-x"></span></button>')
+            return element
+        }
+
+        function addChip(picker, name) {
+            if (chipNames(picker).indexOf(name) < 0)
+                picker.find(".record-setting-chips").append(chip(name))
+        }
+
+        // a field picked by its name or label
+        function fieldTypeahead(input, onSelect) {
+            input.typeahead({
+                hint: false,
+                highlight: true,
+                minLength: 0
+            }, {
+                source: createFieldBloodhoundSource(fields, showOption),
+                display: function (item) { return item.value },
+                templates: {
+                    suggestion: function (item) {
+                        const badge = (showOption >= 2) ? (item.isLabel ? '<span class="badge badge-success label-filter">label</span>' : '<span class="badge badge-info label-filter">name</span>') : ''
+                        return '<div><span>' + escapeHtml(item.value) + '</span>' + badge + '</div>'
+                    }
+                },
+                limit: 1000
+            })
+
+            input.on("typeahead:select", function (event, item) {
+                onSelect(item.key)
+                input.typeahead("val", "")
+            })
+        }
+
+        $(".record-setting-picker").each(function () {
+            const picker = $(this)
+
+            fieldTypeahead(picker.find(".record-setting-field-input"), function (name) {
+                addChip(picker, name)
+                sync()
+            })
+
+            picker.on("click", ".record-setting-chip-remove", function () {
+                $(this).closest(".record-setting-chip").remove()
+                sync()
+            })
+
+            if (picker.attr("data-sortable") == "true" && $.fn.sortable)
+                picker.find(".record-setting-chips").sortable({items: "> .record-setting-chip", tolerance: "pointer", update: sync})
+        })
+
+        // {{FIELD_NAME}} inserted at the title's cursor
+        const title = $("#recordViewTitle")
+
+        fieldTypeahead($("#recordViewTitleField"), function (name) {
+            const text = title.val()
+            const position = title[0].selectionStart != null ? title[0].selectionStart : text.length
+            const token = "{{" + name + "}}"
+
+            title.val(text.slice(0, position) + token + text.slice(position)).trigger("input").focus()
+            title[0].setSelectionRange(position + token.length, position + token.length)
+        })
+
+        // the title's names that aren't fields
+        title.on("input", function () {
+            const unknownNames = []
+            const pattern = /\{\{\s*([^{}]+?)\s*\}\}/g
+            var match
+
+            while ((match = pattern.exec(title.val())) !== null)
+                if (!(match[1] in fieldLabels)) unknownNames.push(match[1])
+
+            $("#recordViewTitleWarning").text(unknownNames.length ? "Not a field: " + unknownNames.join(", ") : "").toggleClass("d-none", unknownNames.length == 0)
+        }).trigger("input")
+
+        $("#recordViewUseDefaultSummary").on("click", function (event) {
+            event.preventDefault()
+            const picker = $("#recordViewSummaryFields")
+
+            picker.find(".record-setting-chip").remove()
+            JSON.parse(root.attr("data-default-summary")).forEach(function (name) { addChip(picker, name) })
+            sync()
+        })
+
+        if ($.fn.sortable)
+            sectionList.sortable({
+                handle: ".record-setting-handle",
+                axis: "y",
+                placeholder: "record-setting-section-placeholder",
+                forcePlaceholderSize: true,
+                update: function () {
+                    customSectionOrder = true
+                    sync()
+                }
+            })
+
+        sectionList.on("change", "input[type=checkbox]", sync)
+
+        $("#recordViewResetSectionOrder").on("click", function (event) {
+            event.preventDefault()
+            const sections = sectionList.find(".record-setting-section").get().sort(function (a, b) {
+                return parseInt($(a).attr("data-default-index")) - parseInt($(b).attr("data-default-index"))
+            })
+
+            sectionList.append(sections)
+            customSectionOrder = false
+            sync()
+        })
+
+        sync()
+    })
+</script>

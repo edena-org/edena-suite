@@ -144,6 +144,11 @@ The project follows a clear dependency hierarchy:
 - The stream must be sorted by the group-by fields: the flow fails if a group recurs. Group-by fields are scalars that every store can sort (not Text, Json or arrays); `orderBy` is applied in memory per group (an undefined value last), so it can be any scalar.
 - The transformation companions depend on `DataSetTransformation`'s formats, whose initialization looks them all up: initialize `DataSetTransformation` first in a test that touches a companion (another suite doing it the other way round in parallel deadlocks the class initialization).
 
+### Data Set Settings and the Record Page
+- `DataSetSetting` has more than 22 fields: its JSON format is written by hand (`DataSetFormattersAndIds.dataSetSettingFormat`), and the settings and import forms map it with custom apply/unapply functions at Play's 22-field mapping limit. Add a new option to a nested setting (like `recordView: RecordViewSetting`) rather than as another top-level field.
+- The app reads settings through a write-through Ignite cache of `DataSetSettingPOJO`s: `DataSetSetting.fromPOJO` must take a field the POJO lacks from `originalItem` (as `extraNavigationItems`, `recordView`), otherwise the cache drops it and the next save writes the setting without it.
+- The record page (*records/get*) is `RecordView` (`ada-web` models: the values by field type, the groups, the summary, the title) rendered by `dataset/recordContent` and `dataset/recordValue`. The `recordView` options left empty take their defaults when the page is shown (the item name, the table columns of the view the record was opened from, from the `dataViewId` parameter or the referring page's URL, else the default view, the category tree's order).
+
 ### Testing Strategy
 - Library tests are located in `src/test/scala/`; the Play application's tests are in `ada-web/test/scala/`.
 - Uses ScalaTest 3.2.19 framework (3.1+ style traits: `org.scalatest.flatspec.AnyFlatSpec`, `org.scalatest.matchers.should.Matchers`, etc.)

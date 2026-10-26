@@ -22,6 +22,8 @@ import org.edena.ada.web.services.DataSpaceService
 import views.html.{category, datasetsetting => view}
 import org.edena.ada.web.controllers.dataset.routes.{DataSetSettingController => dataSetSettingRoutes}
 import org.edena.core.store.Criterion.Infix
+import org.edena.core.store.DescSort
+import org.edena.ada.web.models.{RecordView, RecordViewEditorData}
 import org.edena.play.controllers._
 import org.edena.play.formatters._
 import play.api.data.format.Formatter
@@ -54,9 +56,10 @@ class DataSetSettingController @Inject() (
   private implicit val navigationItemFormatter = JsonFormatter[NavigationItem]
   private implicit val linkFormatter = JsonFormatter[Link]
 
-  // Custom apply/unapply to stay within Play's 22-field mapping limit (cacheDataSet excluded, always false)
+  // Custom apply/unapply to stay within Play's 22-field mapping limit (the id and cacheDataSet aren't bound: the id
+  // comes from the URL, cacheDataSet is always false)
   private val dataSetSettingApply = (
-    _id: Option[BSONObjectID], dataSetId: String, keyFieldName: String,
+    dataSetId: String, keyFieldName: String,
     exportOrderByFieldName: Option[String], defaultScatterXFieldName: Option[String],
     defaultScatterYFieldName: Option[String], defaultDistributionFieldName: Option[String],
     defaultCumulativeCountFieldName: Option[String], filterShowFieldStyle: Option[FilterShowFieldStyle.Value],
@@ -65,28 +68,29 @@ class DataSetSettingController @Inject() (
     showSideCategoricalTree: Boolean, extraNavigationItems: Seq[NavigationItem],
     extraExportActions: Seq[Link], customControllerClassName: Option[String],
     description: Option[String], widgetEngineClassName: Option[String],
-    customStorageCollectionName: Option[String], getListItemURL: Option[String]
+    customStorageCollectionName: Option[String], getListItemURL: Option[String],
+    recordView: Option[RecordViewSetting]
   ) => DataSetSetting(
-    _id, dataSetId, keyFieldName, exportOrderByFieldName, defaultScatterXFieldName,
+    None, dataSetId, keyFieldName, exportOrderByFieldName, defaultScatterXFieldName,
     defaultScatterYFieldName, defaultDistributionFieldName, defaultCumulativeCountFieldName,
     filterShowFieldStyle, filterShowNonNullCount, displayItemName, storageType,
     mongoAutoCreateIndexForProjection, cacheDataSet = false, ownerId, showSideCategoricalTree,
     extraNavigationItems, extraExportActions, customControllerClassName, description,
-    widgetEngineClassName, customStorageCollectionName, getListItemURL
+    widgetEngineClassName, customStorageCollectionName, getListItemURL, recordView
   )
 
   private val dataSetSettingUnapply = (s: DataSetSetting) => Some((
-    s._id, s.dataSetId, s.keyFieldName, s.exportOrderByFieldName, s.defaultScatterXFieldName,
+    s.dataSetId, s.keyFieldName, s.exportOrderByFieldName, s.defaultScatterXFieldName,
     s.defaultScatterYFieldName, s.defaultDistributionFieldName, s.defaultCumulativeCountFieldName,
     s.filterShowFieldStyle, s.filterShowNonNullCount, s.displayItemName, s.storageType,
     s.mongoAutoCreateIndexForProjection, s.ownerId, s.showSideCategoricalTree,
     s.extraNavigationItems, s.extraExportActions, s.customControllerClassName,
-    s.description, s.widgetEngineClassName, s.customStorageCollectionName, s.getListItemURL
+    s.description, s.widgetEngineClassName, s.customStorageCollectionName, s.getListItemURL,
+    s.recordView
   ))
 
   override protected[controllers] val form = Form(
     mapping(
-      "id" -> ignored(Option.empty[BSONObjectID]),
       "dataSetId" -> nonEmptyText,
       "keyFieldName" -> nonEmptyText,
       "exportOrderByFieldName" -> optional(text),
@@ -107,7 +111,8 @@ class DataSetSettingController @Inject() (
       "description" -> optional(text),
       "widgetEngineClassName" -> optional(text),
       "customStorageCollectionName" -> optional(text),
-      "getListItemURL" -> optional(text)
+      "getListItemURL" -> optional(text),
+      "recordView" -> DataSetSettingController.recordViewMapping
     )(dataSetSettingApply)(dataSetSettingUnapply)
   )
 
@@ -123,7 +128,8 @@ class DataSetSettingController @Inject() (
 
   override protected type EditViewData = (
     BSONObjectID,
-    Form[DataSetSetting]
+    Form[DataSetSetting],
+    RecordViewEditorData
   )
 
   override protected def getFormEditViewData(
@@ -138,23 +144,49 @@ class DataSetSettingController @Inject() (
     for {
       // get the setting if not provided
       setting <- settingFuture
+
+      // the data set's fields and categories, and the record page's defaults
+      recordViewData <- setting.map(recordViewEditorData).getOrElse(Future(RecordViewEditorData(Nil, Nil, "", None)))
     } yield {
       val newForm = form.copy(value = setting)
-      (id, newForm)
+      (id, newForm, recordViewData)
     }
   }
 
-  override protected def editView = { implicit ctx => data: (BSONObjectID, Form[DataSetSetting]) =>
-    val (id, form) = data
+  override protected def editView = { implicit ctx => data: (BSONObjectID, Form[DataSetSetting], RecordViewEditorData) =>
+    val (id, form, recordViewData) = data
     form.value.map(_.dataSetId) match {
       case Some(dataSetId) =>
         implicit val context = DataSetWebContext(dataSetId)
 
-        view.editNormal(id, form)
+        view.editNormal(id, form, recordViewData)
 
       case None => throw new IllegalArgumentException(s"No data set setting found for an id ${id.stringify}.")
     }
   }
+
+  // what the editor of the record page's options needs
+  private def recordViewEditorData(
+    setting: DataSetSetting
+  ): Future[RecordViewEditorData] =
+    for {
+      dsa <- dsaf.getOrError(setting.dataSetId)
+
+      dataSetName <- dsa.dataSetName
+
+      fields <- dsa.fieldStore.find()
+
+      categories <- dsa.categoryStore.find()
+
+      // the view opened by default
+      defaultView <- dsa.dataViewStore.find(sort = Seq(DescSort("default")), limit = Some(1)).map(_.headOption)
+    } yield
+      RecordViewEditorData(
+        fields.toSeq.sortBy(_.name).map(field => (field.name, field.label)),
+        RecordView.sections(categories),
+        RecordView.itemName(dataSetName, setting),
+        defaultView.map(view => (view.name, view.tableColumnNames))
+      )
 
   // list view
 
@@ -164,26 +196,29 @@ class DataSetSettingController @Inject() (
 
   def editForDataSet(dataSet: String) = restrictAdminAny(noCaching = true) { implicit request =>
     val foundSettingFuture = repo.find("dataSetId" #== dataSet).map(_.headOption)
-    foundSettingFuture.map { setting =>
+    foundSettingFuture.flatMap { setting =>
       setting.fold(
-        NotFound(s"Setting for the data set '#$dataSet' not found")
+        Future(NotFound(s"Setting for the data set '#$dataSet' not found"))
       ) { entity =>
-        implicit val msg = messagesApi.preferred(request)
+        recordViewEditorData(entity).map { recordViewData =>
+          implicit val msg = messagesApi.preferred(request)
 
-        render {
-          case Accepts.Html() => {
-            implicit val context = DataSetWebContext(dataSet)
-            val updateCall = dataSetSettingRoutes.updateForDataSet(entity._id.get)
-            val cancelCall = context.dataSetRouter.getDefaultView(Nil)
+          render {
+            case Accepts.Html() => {
+              implicit val context = DataSetWebContext(dataSet)
+              val updateCall = dataSetSettingRoutes.updateForDataSet(entity._id.get)
+              val cancelCall = context.dataSetRouter.getDefaultView(Nil)
 
-            Ok(view.edit(
-              fillForm(entity),
-              updateCall,
-              cancelCall,
-              result(dataSpaceService.getTreeForCurrentUser(request)))
-            )
+              Ok(view.edit(
+                fillForm(entity),
+                recordViewData,
+                updateCall,
+                cancelCall,
+                result(dataSpaceService.getTreeForCurrentUser(request)))
+              )
+            }
+            case Accepts.Json() => BadRequest("Edit function doesn't support JSON response. Use get instead.")
           }
-          case Accepts.Json() => BadRequest("Edit function doesn't support JSON response. Use get instead.")
         }
       }
     }.recover {
@@ -244,4 +279,22 @@ class DataSetSettingController @Inject() (
         )
       }
     }.toSeq
+}
+
+object DataSetSettingController {
+
+  private val namesMapping: Mapping[Seq[String]] =
+    seq(text).transform[Seq[String]](_.map(_.trim).filter(_.nonEmpty).distinct, identity)
+
+  // the record page's options; with none set it's none (the defaults)
+  val recordViewMapping: Mapping[Option[RecordViewSetting]] =
+    optional(
+      mapping(
+        "title" -> optional(text).transform[Option[String]](_.map(_.trim).filter(_.nonEmpty), identity),
+        "summaryFieldNames" -> namesMapping,
+        "sectionOrder" -> namesMapping,
+        "collapsedSections" -> namesMapping,
+        "hiddenFieldNames" -> namesMapping
+      )(RecordViewSetting.apply)(RecordViewSetting.unapply)
+    ).transform[Option[RecordViewSetting]](_.filterNot(_.isEmpty), identity)
 }

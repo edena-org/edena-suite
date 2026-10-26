@@ -1598,3 +1598,186 @@ a.carousel-control-next{
     text-align: center;
     color: #94A3B8;
 }
+
+/* ── Record page setting (in the data set setting's editor) ── */
+.record-setting {
+    margin: 28px 0 12px 0;
+    border: 1px solid #E2E8F0;
+    border-radius: 12px;
+    overflow: hidden;
+}
+.record-setting-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 20px;
+    background-color: #F8FAFC;
+    border-bottom: 1px solid #E2E8F0;
+    font-size: 16px;
+    font-weight: 600;
+    color: #334155;
+}
+.record-setting-header > .bi {
+    color: #64748B;
+}
+.record-setting-intro {
+    margin: 14px 20px 10px 20px;
+    font-size: 13px;
+    color: #64748B;
+}
+.record-setting .form-group {
+    background-color: transparent;
+    padding-top: 6px;
+    padding-bottom: 6px;
+}
+.record-setting-help {
+    margin-top: 6px;
+    font-size: 12px;
+    color: #64748B;
+}
+.record-setting-help code {
+    padding: 0 4px;
+    border-radius: 4px;
+    background-color: #F1F5F9;
+    font-size: 90%;
+    color: #475569;
+}
+.record-setting-warning {
+    margin-top: 4px;
+    font-size: 12px;
+    color: #B45309;
+}
+
+.record-setting-title {
+    display: flex;
+    gap: 8px;
+}
+.record-setting-title > #recordViewTitle {
+    flex: 1 1 auto;
+}
+.record-setting-title > .twitter-typeahead {
+    flex: 0 0 200px;
+}
+.record-setting-title .twitter-typeahead > .form-control {
+    width: 100%;
+}
+
+.record-setting-picker {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    min-height: 38px;
+    padding: 4px 6px;
+    border: 1.5px solid #E2E8F0;
+    border-radius: 8px;
+    background-color: #fff;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.record-setting-picker:focus-within {
+    border-color: #93C5FD;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+.record-setting-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+.record-setting-chips:empty {
+    display: none;
+}
+.record-setting-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    padding: 1px 4px 1px 10px;
+    border: 1px solid #DBEAFE;
+    border-radius: 999px;
+    background-color: #EFF6FF;
+    font-size: 13px;
+    line-height: 1.6;
+    color: #1D4ED8;
+}
+.record-setting-picker[data-sortable="true"] .record-setting-chip {
+    cursor: grab;
+}
+.record-setting-chip.unknown {
+    border-color: #FDE68A;
+    background-color: #FFFBEB;
+    color: #B45309;
+}
+.record-setting-chip-remove {
+    padding: 0 2px;
+    border: none;
+    background: none;
+    line-height: 1;
+    color: inherit;
+    opacity: 0.6;
+    cursor: pointer;
+}
+.record-setting-chip-remove:hover {
+    opacity: 1;
+}
+.record-setting-picker > .twitter-typeahead {
+    flex: 1 1 160px;
+}
+.record-setting-picker .record-setting-field-input {
+    width: 100%;
+    height: auto;
+    padding: 2px 4px;
+    border: none;
+    box-shadow: none;
+    background-color: transparent;
+}
+.record-setting-picker .record-setting-field-input:focus {
+    box-shadow: none;
+}
+
+.record-setting-sections {
+    max-height: 360px;
+    margin: 0;
+    padding: 0;
+    overflow-y: auto;
+    list-style: none;
+    border: 1.5px solid #E2E8F0;
+    border-radius: 8px;
+    background-color: #fff;
+}
+.record-setting-section {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 7px 12px;
+    border-bottom: 1px solid #F1F5F9;
+    background-color: #fff;
+    font-size: 14px;
+    color: #334155;
+}
+.record-setting-section:last-child {
+    border-bottom: none;
+}
+.record-setting-section.ui-sortable-helper {
+    border-radius: 6px;
+    box-shadow: 0 6px 16px rgba(15, 23, 42, 0.12);
+}
+.record-setting-section-placeholder {
+    background-color: #EFF6FF;
+    border-bottom: 1px solid #DBEAFE;
+}
+.record-setting-handle {
+    color: #94A3B8;
+    cursor: grab;
+}
+.record-setting-section-label {
+    flex: 1 1 auto;
+}
+.record-setting-collapsed {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin: 0;
+    font-size: 13px;
+    font-weight: 400;
+    color: #64748B;
+    cursor: pointer;
+}
