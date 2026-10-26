@@ -111,7 +111,7 @@ object DataSetFormattersAndIds {
   implicit val filterShowFieldStyleFormat = EnumFormat(FilterShowFieldStyle)
   implicit val storageTypeFormat = EnumFormat(StorageType)
 
-  // Manual format needed because DataSetSetting has 23 fields (exceeds Play JSON's 22-field macro limit)
+  // Manual format needed because DataSetSetting has 24 fields (exceeds Play JSON's 22-field macro limit)
   val dataSetSettingFormat: OFormat[DataSetSetting] = OFormat(
     Reads[DataSetSetting] { json =>
       for {
@@ -138,13 +138,14 @@ object DataSetFormattersAndIds {
         widgetEngineClassName <- (json \ "widgetEngineClassName").validateOpt[String]
         customStorageCollectionName <- (json \ "customStorageCollectionName").validateOpt[String]
         getListItemURL <- (json \ "getListItemURL").validateOpt[String]
+        recordView <- (json \ "recordView").validateOpt[RecordViewSetting]
       } yield DataSetSetting(
         _id, dataSetId, keyFieldName, exportOrderByFieldName, defaultScatterXFieldName,
         defaultScatterYFieldName, defaultDistributionFieldName, defaultCumulativeCountFieldName,
         filterShowFieldStyle, filterShowNonNullCount, displayItemName, storageType,
         mongoAutoCreateIndexForProjection, cacheDataSet, ownerId, showSideCategoricalTree,
         extraNavigationItems, extraExportActions, customControllerClassName, description,
-        widgetEngineClassName, customStorageCollectionName, getListItemURL
+        widgetEngineClassName, customStorageCollectionName, getListItemURL, recordView
       )
     },
     OWrites[DataSetSetting] { s =>
@@ -171,7 +172,8 @@ object DataSetFormattersAndIds {
         "description" -> s.description,
         "widgetEngineClassName" -> s.widgetEngineClassName,
         "customStorageCollectionName" -> s.customStorageCollectionName,
-        "getListItemURL" -> s.getListItemURL
+        "getListItemURL" -> s.getListItemURL,
+        "recordView" -> s.recordView
       )
     }
   )

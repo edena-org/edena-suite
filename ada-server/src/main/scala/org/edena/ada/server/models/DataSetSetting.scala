@@ -1,5 +1,6 @@
 package org.edena.ada.server.models
 
+import play.api.libs.json.{Format, Json}
 import reactivemongo.api.bson.BSONObjectID
 
 case class DataSetSetting(
@@ -25,7 +26,8 @@ case class DataSetSetting(
   description: Option[String] = None,
   widgetEngineClassName: Option[String] = None,
   customStorageCollectionName: Option[String] = None,
-  getListItemURL: Option[String] = None
+  getListItemURL: Option[String] = None,
+  recordView: Option[RecordViewSetting] = None
 ) {
   def this(
     dataSetId: String,
@@ -35,6 +37,33 @@ case class DataSetSetting(
 
   def this(dataSetId: String) =
     this(dataSetId, StorageType.Mongo)
+}
+
+/**
+  * How the page of a data set's record (item) looks. An option not set takes its default.
+  *
+  * @param title the page's title, `{{FIELD_NAME}}` replaced by the record's value of the field; default: the item name
+  * @param summaryFieldNames the fields shown at the top, in this order; default: the table columns of the data view the
+  *                          record was opened from (or of the default view)
+  * @param sectionOrder the names of the categories shown first, in this order (a category's subcategories with it); the
+  *                     others follow in the category tree's order
+  * @param collapsedSections the names of the categories shown collapsed at first
+  * @param hiddenFieldNames the fields never shown on the page
+  */
+case class RecordViewSetting(
+  title: Option[String] = None,
+  summaryFieldNames: Seq[String] = Nil,
+  sectionOrder: Seq[String] = Nil,
+  collapsedSections: Seq[String] = Nil,
+  hiddenFieldNames: Seq[String] = Nil
+) {
+  def isEmpty: Boolean =
+    title.isEmpty && summaryFieldNames.isEmpty && sectionOrder.isEmpty && collapsedSections.isEmpty && hiddenFieldNames.isEmpty
+}
+
+object RecordViewSetting {
+  // a missing option takes its default
+  implicit val format: Format[RecordViewSetting] = Json.using[Json.WithDefaultValues].format[RecordViewSetting]
 }
 
 object StorageType extends Enumeration {
@@ -71,6 +100,8 @@ object DataSetSetting {
 
       extraNavigationItems = originalItem.map(_.extraNavigationItems).getOrElse(Nil),
       extraExportActions = originalItem.map(_.extraExportActions).getOrElse(Nil),
+      // a field without a POJO counterpart must come from the original item, otherwise the (write-through) cache drops it
+      recordView = originalItem.flatMap(_.recordView)
     )
   }
   
