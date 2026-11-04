@@ -373,6 +373,23 @@ trait ElasticReadonlyStoreExtra[E, ID] {
   ): Future[Int]
 }
 
+object ElasticReadonlyStoreExtra {
+
+  // the inner hits of a kNN search on a vector field in nested documents (at the path): the matching nested documents
+  // without their vectors, at most the settings' size of them per parent document (Elasticsearch's default is 3)
+  private[elastic] def knnInnerHit(
+    path: String,
+    vectorField: String,
+    settings: KnnSearchSettings
+  ): QueriesInnerHit = {
+    val leafField = vectorField.split("\\.").last
+    val srcContext = FetchSourceContext(fetchSource = true, excludes = Set(leafField))
+    val innerHit = QueriesInnerHit(path + "_knn").fetchSource(srcContext)
+
+    settings.innerHitsSize.map(innerHit.size).getOrElse(innerHit)
+  }
+}
+
 /**
  * Impl. of [[ElasticReadonlyStoreExtra]]
  *
@@ -647,10 +664,7 @@ trait ElasticReadonlyStoreExtraImpl[E, ID] extends ElasticReadonlyStoreExtra[E, 
     )
 
     nestedPaths.headOption match {
-      case Some(path) =>
-        val leafField = vectorField.split("\\.").last
-        val srcContext = FetchSourceContext(fetchSource = true, excludes = Set(leafField))
-        baseKnn.inner(QueriesInnerHit(path + "_knn").fetchSource(srcContext))
+      case Some(path) => baseKnn.inner(ElasticReadonlyStoreExtra.knnInnerHit(path, vectorField, settings))
       case None => baseKnn
     }
   }
