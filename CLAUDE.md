@@ -188,6 +188,7 @@ The project follows a clear dependency hierarchy:
   - From a modal, pass a POST `Call`; the modal's form sends its values in the query string.
   - From JS, use `submit('post', url)` (main.js; it needs a `csrfToken` input on the page) or a JS route's `.ajax()` (the CSRF header comes from `$.ajaxSetup` in main.scala.html).
   - `StateChangingRoutesSpec` lists the former GET routes.
+- **Locked users**: every request resolves its session's user through `AdaAuthConfig.resolveUser`, which doesn't resolve a locked user, so locking takes effect at the next request. A new login path must also refuse a locked user (as the password, LDAP and OIDC logins do).
 - Configuration in `conf/core/auth.conf` and `conf/core/deadbolt.conf`
 
 ## Web Application Structure

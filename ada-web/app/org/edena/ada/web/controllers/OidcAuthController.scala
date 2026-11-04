@@ -42,6 +42,12 @@ class OidcAuthController @Inject() (
         gotoLoginSucceeded(user.userId)
       }
 
+      // a locked user can't log in (as with a password); the stored user is left as it is
+      def lockedUserResult(user: User) = {
+        logger.info(s"Refused the OIDC login of the user '${user.userId}', who is locked.")
+        Future(Redirect(routes.AppController.index).flashing("errors" -> "User locked."))
+      }
+
       /**
        * Manage existing user updating userId with oidcId,
        * username with old userId/username, name or email if necessary
@@ -51,7 +57,9 @@ class OidcAuthController @Inject() (
        * @return Login information
        */
       def manageExistingUser(existingUser: User, oidcUser: User) = {
-        if (existingUser.oidcUserName.isEmpty)
+        if (existingUser.locked)
+          lockedUserResult(existingUser)
+        else if (existingUser.oidcUserName.isEmpty)
           updateUser(existingUser, oidcUser)
         else if (existingUser.oidcUserName.isDefined &&
           (!existingUser.name.equalsIgnoreCase(oidcUser.name)

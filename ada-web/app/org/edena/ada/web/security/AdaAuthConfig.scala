@@ -69,9 +69,12 @@ trait AdaAuthConfig extends AuthConfig {
   /**
     * A function that returns a `User` object from an `Id`.
     * Retrieves user from Account class.
+    *
+    * A locked user isn't resolved: every request resolves the user of its session here, so a user locked during
+    * a session loses access at the next request (as not logged in), not only at the next login.
     */
   override def resolveUser(id: Id)(implicit ctx: ExecutionContext): Future[Option[User]] =
-    ldapUserManager.findById(id)
+    ldapUserManager.findById(id).map(_.filterNot(_.locked))(ctx)
 
   /**
     * Where to redirect the user after a successful login.
