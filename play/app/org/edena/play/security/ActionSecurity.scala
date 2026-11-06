@@ -9,7 +9,8 @@ import play.api.mvc.{Action, AnyContent, BodyParser, Result}
 import org.edena.play.security.ActionSecurity._
 import play.api.http.{Status => HttpStatus}
 
-import scala.concurrent.Future
+import scala.concurrent.{Future, Promise}
+import scala.util.Success
 import play.api.mvc.{BaseController => PlayBaseController}
 import org.edena.core.DefaultTypes.Seq
 
@@ -273,7 +274,12 @@ trait ActionSecurity extends HasCurrentUser with HasAuthAction {
            Future(result)
     )(restrictions, bodyParser)
 
-  // General: for both, AND + OR
+  // General: for both, AND + OR.
+  // Each restriction is evaluated on a probe action, which runs nothing and only records that the
+  // restriction let it through (with the request the restriction passes on). The action itself
+  // runs once, after the whole chain has authorized the request; otherwise the failing
+  // restriction's own result is returned. (Evaluating a restriction on the action itself would
+  // run the action at an AND chain's first passing step, before the next steps are checked.)
   protected def restrictChainFuture[A](
     start: Boolean,
     stop: Boolean => Boolean,
@@ -282,33 +288,50 @@ trait ActionSecurity extends HasCurrentUser with HasAuthAction {
     bodyParser: BodyParser[A]
   ): AuthActionTransformation[A] = { action: AuthenticatedAction[A] =>
     AuthAction[A](bodyParser) { implicit request => // action.parser)
-      def isAuthorized(result: Result) = result.header.status != HttpStatus.UNAUTHORIZED
 
-      for {
-        (_, result) <-
-          restrictions.foldLeft(
-            Future((start, BadRequest("No restriction found")))
-          ) { (resultFuture, restriction) =>
-              for {
-                (authorized, result) <- resultFuture
+      // Right: the restriction authorized the request (passed on as this request); Left: its failure result
+      def evaluate(
+        restriction: AuthActionFutureTransformation[A]
+      ): Future[Either[Result, AuthenticatedRequest[A]]] = {
+        val passed = Promise[AuthenticatedRequest[A]]()
+        val probe: AuthenticatedAction[A] = { passedRequest =>
+          passed.trySuccess(passedRequest)
+          Future.successful(Ok)
+        }
 
-                // if we should stop (i.e., the result of chaining is already determined) we do so, otherwise we move forward
-                nextResult <- if (stop(authorized))
-                  Future((authorized, result))
-                else
-                  restriction(action).flatMap {
-                    _ (request).map(newResult =>
-                      (isAuthorized(newResult), newResult)
-                    )
-                  }
-              } yield
-                nextResult
+        restriction(probe).flatMap(_(request)).map { result =>
+          passed.future.value match {
+            case Some(Success(passedRequest)) => Right(passedRequest)
+            case _ => Left(result)
           }
+        }
+      }
+
+      val outcomeFuture =
+        restrictions.foldLeft(
+          Future((start, Option.empty[Either[Result, AuthenticatedRequest[A]]]))
+        ) { (outcomeFuture, restriction) =>
+          for {
+            (authorized, outcome) <- outcomeFuture
+
+            // if we should stop (i.e., the result of chaining is already determined) we do so, otherwise we move forward
+            nextOutcome <- if (stop(authorized))
+              Future((authorized, outcome))
+            else
+              evaluate(restriction).map(newOutcome => (newOutcome.isRight, Some(newOutcome)))
+          } yield
+            nextOutcome
+        }
+
+      outcomeFuture.flatMap {
+        case (_, None) => Future(BadRequest("No restriction found"))
 
         // if needed produce a custom final result
-        finalResult <- handleFinalResult(result, request)
-      } yield
-        finalResult
+        case (_, Some(Left(result))) => handleFinalResult(result, request)
+
+        case (_, Some(Right(authorizedRequest))) =>
+          action(authorizedRequest).flatMap(handleFinalResult(_, authorizedRequest))
+      }
     }
   }
 

@@ -173,6 +173,16 @@ protected[controllers] class FilterControllerImpl @Inject() (
     (view.list(_, _, _, _, _)).tupled
   }
 
+  // the list (and its JSON and JSONL) shows a non-admin the public filters and their own
+  override protected def listedItemFilter(
+    implicit request: AuthenticatedRequest[AnyContent]
+  ): Future[Option[Filter => Boolean]] =
+    currentUser().map {
+      case Some(user) if user.isAdmin => None
+      case Some(user) => Some(filter => OwnerAccess.canSee(user, filter.isPrivate, filter.createdById))
+      case None => Some(_ => false)
+    }
+
   override def saveCall(
     filter: Filter)(
     implicit request: AuthenticatedRequest[AnyContent]
@@ -189,8 +199,10 @@ protected[controllers] class FilterControllerImpl @Inject() (
     } yield
       id
 
+  // creates a filter: an id in the given filter is dropped (the store's save may be an upsert,
+  // which would replace an existing filter)
   override def saveAjax(filter: Filter) = AuthAction { implicit request =>
-    saveCall(filter).map { id =>
+    saveCall(filter.copy(_id = None)).map { id =>
       Ok(s"Item ${id} has been created")
     }.recover {
       case e: AdaException =>
@@ -211,7 +223,17 @@ protected[controllers] class FilterControllerImpl @Inject() (
   ): Future[BSONObjectID] =
     for {
       existingFilterOption <- store.get(filter._id.get)
+
+      user <- currentUser()
+
       id <- {
+        // only the owner or an admin: the update route checks it in the dispatcher, but a JSON save
+        // with keyMode=replace updates through here too
+        existingFilterOption.foreach(existingFilter =>
+          if (!user.exists(OwnerAccess.canChange(_, existingFilter.createdById)))
+            throw new AdaException(s"Only the owner or an admin can change the filter '${filter._id.get.stringify}'.")
+        )
+
         val mergedFilter =
           existingFilterOption.fold(filter) { existingFilter =>
             // a JSON-body update (item JSON editor) carries the full entity incl. the conditions,
@@ -262,9 +284,7 @@ protected[controllers] class FilterControllerImpl @Inject() (
             findAux(And())
           else
             findAux(And()).map { filters =>
-              filters.filter { filter =>
-                !filter.isPrivate || (filter.createdById.isDefined && filter.createdById.equals(user.id))
-              }
+              filters.filter(filter => OwnerAccess.canSee(user, filter.isPrivate, filter.createdById))
             }
 
           case None => Future(Nil)

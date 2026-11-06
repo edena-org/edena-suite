@@ -3,6 +3,7 @@ package org.edena.play.controllers
 import akka.actor.ActorSystem
 import akka.stream.Materializer
 import akka.stream.scaladsl.Source
+import be.objectify.deadbolt.scala.AuthenticatedRequest
 import javax.inject.Inject
 import org.edena.core.store.ReadonlyStore
 import play.api.http.HeaderNames.CONTENT_DISPOSITION
@@ -161,25 +162,77 @@ abstract class ReadonlyControllerImpl[E: Format, ID] extends BaseController
         def stream: Future[Result] =
           store.findAsStream(criterion, toSort(orderBy), listViewColumns.getOrElse(Nil))(
             jsonlExportActorSystem, jsonlExportMaterializer
-          ).map { source =>
-            val lines = source.map(item => Json.stringify(toJson(item)) + "\n")
-            Ok.chunked(lines)
-              .as(jsonlMimeType)
-              .withHeaders(CONTENT_DISPOSITION -> s"attachment; filename=$jsonlFileName")
-          }
+          ).map(jsonlAttachment)
 
         jsonlExportMaxCount.map(max =>
           store.count(criterion).flatMap(count =>
             if (count > max)
-              Future.successful(BadRequest(
-                s"JSONL export refused: $count items match, exceeding the cap of $max. " +
-                  "Narrow the filter, or raise 'export.jsonl.maxCount'."
-              ))
+              Future.successful(jsonlExportRefused(count, max))
             else
               stream
           )
         ).getOrElse(stream)
       }
+
+  // the JSONL export of the items listed through listedItemFilter (all loaded, see there)
+  private def filteredJsonlExportResult(
+    orderBy: String,
+    conditions: Seq[FilterCondition],
+    itemFilter: E => Boolean
+  ): Future[Result] =
+    if (!jsonlExportEnabled)
+      Future.successful(Forbidden(s"JSONL export is not enabled for $entityName."))
+    else
+      filteredItemsAndCount(None, orderBy, conditions, itemFilter, None).map { case (items, count) =>
+        jsonlExportMaxCount.filter(count > _) match {
+          case Some(max) => jsonlExportRefused(count, max)
+          case None => jsonlAttachment(Source(items.toList))
+        }
+      }
+
+  private def jsonlAttachment(source: Source[E, _]): Result = {
+    val lines = source.map(item => Json.stringify(toJson(item)) + "\n")
+    Ok.chunked(lines)
+      .as(jsonlMimeType)
+      .withHeaders(CONTENT_DISPOSITION -> s"attachment; filename=$jsonlFileName")
+  }
+
+  private def jsonlExportRefused(count: Int, max: Int): Result =
+    BadRequest(
+      s"JSONL export refused: $count items match, exceeding the cap of $max. " +
+        "Narrow the filter, or raise 'export.jsonl.maxCount'."
+    )
+
+  /**
+   * Restricts the items the request's user may see in [[find]], [[listAll]] and their JSONL
+   * export, e.g. to hide other users' private items. `None`, the default, lists every item. With a
+   * predicate, all the items matching the filter are loaded whole (with no [[listViewColumns]]
+   * projection) and the predicate is applied before the paging, so restrict only small
+   * collections this way.
+   */
+  protected def listedItemFilter(
+    implicit request: AuthenticatedRequest[AnyContent]
+  ): Future[Option[E => Boolean]] = Future.successful(None)
+
+  private def filteredItemsAndCount(
+    page: Option[Int],
+    orderBy: String,
+    conditions: Seq[FilterCondition],
+    itemFilter: E => Boolean,
+    limit: Option[Int]
+  ): Future[(Traversable[E], Int)] =
+    for {
+      criterion <- toCriterion(conditions)
+      items <- store.find(criterion = criterion, sort = toSort(orderBy))
+    } yield {
+      val listedItems = items.filter(itemFilter).toSeq
+      val skip = (page, limit) match {
+        case (Some(page), Some(limit)) => page * limit
+        case _ => 0
+      }
+
+      (limit.fold(listedItems.drop(skip))(limit => listedItems.slice(skip, skip + limit)), listedItems.size)
+    }
 
   /**
     * Display the paginated list.
@@ -196,23 +249,26 @@ abstract class ReadonlyControllerImpl[E: Format, ID] extends BaseController
     orderBy: String,
     conditions: Seq[FilterCondition]
   ) = AuthAction { implicit request =>
-    if (isJsonlRequested)
-      jsonlExportResult(orderBy, conditions).recover(handleFindExceptions)
-    else {
-      for {
-        (items, count) <- getFutureItemsAndCount(page, orderBy, conditions)
+    listedItemFilter.flatMap { itemFilter =>
+      if (isJsonlRequested)
+        itemFilter.fold(jsonlExportResult(orderBy, conditions))(filteredJsonlExportResult(orderBy, conditions, _))
+      else
+        for {
+          (items, count) <- itemFilter.fold(getFutureItemsAndCount(page, orderBy, conditions))(
+            filteredItemsAndCount(Some(page), orderBy, conditions, _, Some(pageLimit))
+          )
 
-        viewData <- getListViewData(
-          Page(items, page, page * pageLimit, count, orderBy),
-          conditions
-        )(request)
-      } yield {
-        implicit val req = request: Request[_]
-        render {
-          case Accepts.Html() => Ok(listViewWithContext(viewData))
-          case Accepts.Json() => Ok(toJson(items))
+          viewData <- getListViewData(
+            Page(items, page, page * pageLimit, count, orderBy),
+            conditions
+          )(request)
+        } yield {
+          implicit val req = request: Request[_]
+          render {
+            case Accepts.Html() => Ok(listViewWithContext(viewData))
+            case Accepts.Json() => Ok(toJson(items))
+          }
         }
-      }
     }.recover(handleFindExceptions)
   }
 
@@ -225,24 +281,27 @@ abstract class ReadonlyControllerImpl[E: Format, ID] extends BaseController
    * @param orderBy Column to be sorted
    */
   def listAll(orderBy: String) = AuthAction { implicit request =>
-    if (isJsonlRequested)
-      jsonlExportResult(orderBy).recover(handleListAllExceptions)
-    else {
-      for {
-        (items, count) <- getFutureItemsAndCount(None, orderBy, Nil, Nil, None)
+    listedItemFilter.flatMap { itemFilter =>
+      if (isJsonlRequested)
+        itemFilter.fold(jsonlExportResult(orderBy))(filteredJsonlExportResult(orderBy, Nil, _))
+      else
+        for {
+          (items, count) <- itemFilter.fold(getFutureItemsAndCount(None, orderBy, Nil, Nil, None))(
+            filteredItemsAndCount(None, orderBy, Nil, _, None)
+          )
 
-        viewData <- getListViewData(
-          Page(items, 0, 0, count, orderBy),
-          Nil
-        )(request)
-      } yield {
-        implicit val req = request: Request[_]
+          viewData <- getListViewData(
+            Page(items, 0, 0, count, orderBy),
+            Nil
+          )(request)
+        } yield {
+          implicit val req = request: Request[_]
 
-        render {
-          case Accepts.Html() => Ok(listViewWithContext(viewData))
-          case Accepts.Json() => Ok(toJson(items))
+          render {
+            case Accepts.Html() => Ok(listViewWithContext(viewData))
+            case Accepts.Json() => Ok(toJson(items))
+          }
         }
-      }
     }.recover(handleListAllExceptions)
   }
 

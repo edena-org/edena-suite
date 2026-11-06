@@ -141,8 +141,9 @@ class RunnableController @Inject() (
 
   // Edit
 
-  // edit calls get
-  override def get(id: BSONObjectID) = AuthAction { implicit request =>
+  // edit calls get. Admin only, as the other actions: a class-body override replaces the trait's
+  // restricted get (AdminRestrictedCrudController), so it has to restrict itself.
+  override def get(id: BSONObjectID) = restrictAny { implicit request =>
     {
       for {
         // retrieve an item (potentialy with input and correct JSON mapping)

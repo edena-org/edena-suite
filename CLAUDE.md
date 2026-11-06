@@ -189,6 +189,10 @@ The project follows a clear dependency hierarchy:
   - From JS, use `submit('post', url)` (main.js; it needs a `csrfToken` input on the page) or a JS route's `.ajax()` (the CSRF header comes from `$.ajaxSetup` in main.scala.html).
   - `StateChangingRoutesSpec` lists the former GET routes.
 - **Locked users**: every request resolves its session's user through `AdaAuthConfig.resolveUser`, which doesn't resolve a locked user, so locking takes effect at the next request. A new login path must also refuse a locked user (as the password, LDAP and OIDC logins do).
+- **Chained restrictions** (`ActionSecurity`'s AND/OR chains, e.g. admin OR (permission AND owner)): each restriction is evaluated on a probe that runs nothing, and the action runs once, only if the whole chain allows it. A restriction must not have side effects.
+- **A class-body override of a restricted action** replaces the restriction of the `Restricted*Controller` trait it mixes in: restrict it again (e.g. `restrictAny`, as `RunnableController.get`).
+- **Filters and views** (`OwnerAccess`): an admin may see and change any of them; another data set user may see the public ones and their own, and change only their own. The dispatchers check changes; the controllers apply the rule on the other paths too: the lists (`listedItemFilter`), a view's copy, and a JSON save (`keep` refuses an existing id; `replace` goes through `updateCall`'s owner check).
+- **Ignite SQL**: criterion values are bound as arguments, but sort and projection names are put into the SQL text, so `AbstractCacheWrappingCrudStore` accepts only the cache's fields there.
 - Configuration in `conf/core/auth.conf` and `conf/core/deadbolt.conf`
 
 ## Web Application Structure

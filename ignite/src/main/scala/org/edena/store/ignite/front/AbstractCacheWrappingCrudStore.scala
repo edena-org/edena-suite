@@ -17,6 +17,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.jdk.CollectionConverters._
 import scala.reflect.ClassTag
+import scala.util.Try
 
 /**
  * This is the front-facing class for Ignite based stores/repositories.
@@ -196,8 +197,32 @@ abstract class AbstractCacheWrappingCrudStore[ID: ClassTag, E, CACHE_ID, CACHE_E
     projection: Traversable[String],
     limit: Option[Int],
     skip: Option[Int]
-  ): Future[Traversable[CC]] = {
-    val start = new ju.Date()
+  ): Future[Traversable[CC]] =
+    // a refused sort or projection name (see checkedColumnName) fails the future, as a failed query does
+    Future.fromTry(Try(findQuery(criterion, sort, projection, limit, skip))).flatMap {
+      case (sql, query, projectionSeq) =>
+        val start = new ju.Date()
+
+        Future {
+          val cursor = cache.query(query)
+
+          // serialize cursor to result(s)
+          val result = serialize(cursor, projectionSeq)
+
+          cursor.close
+
+          logger.debug(s"SQL: $sql, finished in " + (new ju.Date().getTime - start.getTime))
+          result
+        }
+    }
+
+  private def findQuery(
+    criterion: Criterion,
+    sort: Seq[Sort],
+    projection: Traversable[String],
+    limit: Option[Int],
+    skip: Option[Int]
+  ): (String, SqlFieldsQuery, Seq[String]) = {
     // projection
     val projectionSeq = (
       projection.toSeq ++ (
@@ -206,7 +231,7 @@ abstract class AbstractCacheWrappingCrudStore[ID: ClassTag, E, CACHE_ID, CACHE_E
         else
           Seq()
       )
-    ).map(escapeIgniteFieldName)
+    ).map(escapeIgniteFieldName).map(checkedColumnName)
 
     val projectionPart = projection match {
       case Nil => "_val"
@@ -225,7 +250,7 @@ abstract class AbstractCacheWrappingCrudStore[ID: ClassTag, E, CACHE_ID, CACHE_E
       case Nil => ""
       case _ =>
         "order by " + sort.map { singleSort =>
-          escapeIgniteFieldName(singleSort.fieldName) + {
+          checkedColumnName(escapeIgniteFieldName(singleSort.fieldName)) + {
             singleSort match {
               case AscSort(fieldName)  => " asc"
               case DescSort(fieldName) => " desc"
@@ -246,18 +271,24 @@ abstract class AbstractCacheWrappingCrudStore[ID: ClassTag, E, CACHE_ID, CACHE_E
       query = query.setArgs(args: _*)
     }
 
-    Future {
-      val cursor = cache.query(query)
-
-      // serialize cursor to result(s)
-      val result = serialize(cursor, projectionSeq)
-
-      cursor.close
-
-      logger.debug(s"SQL: $sql, finished in " + (new ju.Date().getTime - start.getTime))
-      result
-    }
+    (sql, query, projectionSeq)
   }
+
+  // the columns a sort or projection may name: those of the cache's query entity and the id
+  private lazy val columnNames: Set[String] =
+    (fieldNameTypeMap.keySet + escapeIgniteFieldName(identity.name)).map(_.toLowerCase)
+
+  // a sort or projection name is pasted into the SQL text (unlike criterion values, which are
+  // bound as arguments), so it must be a column of the cache, never an SQL expression
+  private def checkedColumnName(fieldName: String): String =
+    if (AbstractCacheWrappingCrudStore.isColumnName(fieldName, columnNames))
+      fieldName
+    else {
+      logger.warn(s"Refused the sort/projection field '$fieldName' for the cache of '$entityName'.")
+      throw new EdenaDataStoreException(
+        s"A sort or projection field isn't a field of '$entityName'."
+      )
+    }
 
   protected def toSqlWhereClauseAndArgs(criterion: Criterion) =
     toSqlCriterionAndArgs(criterion) match {
@@ -539,4 +570,21 @@ abstract class AbstractCacheWrappingCrudStore[ID: ClassTag, E, CACHE_ID, CACHE_E
 
   // essentially no-op
   override def flushOps = Future(())
+}
+
+object AbstractCacheWrappingCrudStore {
+
+  // an unquoted SQL identifier (H2 also accepts Unicode letters and '$')
+  private val identifierPattern = """[\p{L}_][\p{L}\p{N}_$]*""".r
+
+  /**
+   * Whether a (escaped) sort or projection name can be put in the SQL text: an identifier that
+   * is one of the given column names (lower case), compared case-insensitively, as H2 resolves an
+   * unquoted name. Anything else, e.g. an SQL expression, is refused.
+   */
+  def isColumnName(
+    fieldName: String,
+    lowerCaseColumnNames: Set[String]
+  ): Boolean =
+    identifierPattern.matches(fieldName) && lowerCaseColumnNames.contains(fieldName.toLowerCase)
 }

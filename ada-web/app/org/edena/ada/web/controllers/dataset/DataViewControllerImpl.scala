@@ -208,6 +208,16 @@ protected[controllers] class DataViewControllerImpl @Inject() (
     (view.list(_, _, _, _, _)).tupled
   }
 
+  // the list (and its JSON and JSONL) shows a non-admin the public views and their own
+  override protected def listedItemFilter(
+    implicit request: AuthenticatedRequest[AnyContent]
+  ): Future[Option[DataView => Boolean]] =
+    currentUser().map {
+      case Some(user) if user.isAdmin => None
+      case Some(user) => Some(view => OwnerAccess.canSee(user, view.isPrivate, view.createdById))
+      case None => Some(_ => false)
+    }
+
   // actions
 
   override def saveCall(
@@ -242,6 +252,13 @@ protected[controllers] class DataViewControllerImpl @Inject() (
       id <- {
         user match {
           case Some(user) =>
+            // only the owner or an admin: the update routes check it in the dispatcher, but a JSON
+            // save with keyMode=replace updates through here too
+            existingDataViewOption.foreach(existingDataView =>
+              if (!OwnerAccess.canChange(user, existingDataView.createdById))
+                throw new AdaException(s"Only the owner or an admin can change the view '${dataView._id.get.stringify}'.")
+            )
+
             val mergedDataView = existingDataViewOption.fold(dataView) { existingDataView =>
               val filteredDataView = removeCustomWidgetSpecsForNonAdmins(dataView, user.isAdmin)
               filteredDataView.copy(createdById = existingDataView.createdById, timeCreated = existingDataView.timeCreated)
@@ -305,9 +322,7 @@ protected[controllers] class DataViewControllerImpl @Inject() (
               findAux(And())
             else
               findAux(And()).map { views =>
-                views.filter { view =>
-                  !view.isPrivate || (view.createdById.isDefined && view.createdById.equals(user.id))
-                }
+                views.filter(view => OwnerAccess.canSee(user, view.isPrivate, view.createdById))
               }
               // TODO: fix Apache ignite to support boolean conditions
 
@@ -372,8 +387,12 @@ protected[controllers] class DataViewControllerImpl @Inject() (
   override def copy(id: BSONObjectID) =
     AuthAction { implicit request =>
       for {
-        // get the data view
-        dataView <- store.get(id)
+        user <- currentUser()
+
+        // get the data view: a private one of another user is not found
+        dataView <- store.get(id).map(_.filter(view =>
+          user.exists(OwnerAccess.canSee(_, view.isPrivate, view.createdById))
+        ))
 
         // copy and save the new view
         newId <- dataView.fold(

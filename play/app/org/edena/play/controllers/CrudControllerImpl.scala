@@ -166,6 +166,10 @@ abstract class CrudControllerImpl[E: Format, ID](
    * Items are processed sequentially through the [[saveCall]]/[[updateCall]] hooks so subclass
    * permission/ownership logic applies to every item. Validation is all-or-nothing (handled by the
    * caller), but a mid-batch DB failure leaves the already-processed prefix persisted.
+   *
+   * With `keep`, the ids are checked before anything is saved: a store's save may be an upsert
+   * (e.g. an Ignite cache's put), which would overwrite an existing item through [[saveCall]],
+   * bypassing [[updateCall]] and its checks.
    */
   protected def saveJsonItems(
     items: Seq[E])(
@@ -200,7 +204,7 @@ abstract class CrudControllerImpl[E: Format, ID](
             saveCall(item).map((_, false))
         }
 
-      seqFutures(items)(saveOrUpdate).map { results =>
+      def saveAll: Future[Result] = seqFutures(items)(saveOrUpdate).map { results =>
         val (updated, created) = results.partition(_._2)
 
         if (results.size == 1 && updated.isEmpty)
@@ -211,6 +215,34 @@ abstract class CrudControllerImpl[E: Format, ID](
             "createdIds" -> created.map(x => formatId(x._1)),
             "updatedIds" -> updated.map(x => formatId(x._1))
           ))
+      }
+
+      // keep: an id that exists already fails the save, with nothing saved (see above)
+      val existingIdErrorsFuture: Future[Seq[JsonBodyUtil.JsonItemError]] =
+        keyMode match {
+          case "regenerate" | "replace" => Future.successful(Nil)
+
+          case _ =>
+            Future.sequence(
+              items.zipWithIndex.flatMap { case (item, index) => identity.of(item).map((_, index)) }.map { case (id, index) =>
+                store.exists(id).map(exists =>
+                  if (exists)
+                    Some(JsonBodyUtil.JsonItemError(index, None, Json.arr(Json.obj(
+                      "field" -> "_id",
+                      "messages" -> Seq(s"$entityName '${formatId(id)}' already exists (use keyMode=replace to update it)")
+                    ))))
+                  else
+                    None
+                )
+              }
+            ).map(_.flatten)
+        }
+
+      existingIdErrorsFuture.flatMap { errors =>
+        if (errors.nonEmpty)
+          Future.successful(BadRequest(JsonBodyUtil.errorsToJson(entityName, errors)))
+        else
+          saveAll
       }.recover(handleExceptionsAsJson("a save")) // JSON caller: status + message, never a redirect
     }
   }

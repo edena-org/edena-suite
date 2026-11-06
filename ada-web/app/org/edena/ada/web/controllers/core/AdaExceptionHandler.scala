@@ -7,6 +7,7 @@ import org.edena.ada.server.AdaException
 import org.edena.core.store.EdenaDataStoreException
 import org.edena.play.controllers.ExceptionHandler
 import play.api.Logging
+import play.api.libs.json.Json
 import play.api.mvc.{Request, Result}
 import play.api.mvc.Results.{BadRequest, InternalServerError, Ok, Redirect}
 import org.edena.core.DefaultTypes.Seq
@@ -71,5 +72,22 @@ trait AdaExceptionHandler extends ExceptionHandler with LoggingSupport {
       logger.error(message, e)
       e.printStackTrace()
       InternalServerError(message)
+  }
+
+  // JSON callers (e.g. a JSON save or update): a business problem, such as a refused change, is the
+  // request's (400 with the cause), as in handleExceptionsWithErrorCodes
+  override protected def handleExceptionsAsJson(
+    functionName: String,
+    extraMessage: Option[String] = None)(
+    implicit request: Request[_]
+  ): PartialFunction[Throwable, Result] = {
+    val businessExceptions: PartialFunction[Throwable, Result] = {
+      case e: AdaException =>
+        val message = s"Problem found while executing $functionName function${extraMessage.getOrElse("")}: ${e.getMessage}"
+        logger.warn(message, e)
+        BadRequest(Json.obj("message" -> message))
+    }
+
+    businessExceptions.orElse(super.handleExceptionsAsJson(functionName, extraMessage))
   }
 }
