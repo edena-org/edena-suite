@@ -3,8 +3,11 @@ package org.edena.ada.web.controllers.dataset
 import org.edena.ada.server.AdaException
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
+import com.typesafe.config.ConfigFactory
 import org.webjars.play.WebJarsUtil
 import play.api.{Configuration, Environment}
+
+import scala.jdk.CollectionConverters._
 
 /**
  * Tests for [[DataSetWebContext.resolveJsImport]]: how a `widget_engine.providers[].jsImports`
@@ -86,5 +89,44 @@ class JsWidgetImportResolverSpec extends AnyFlatSpec with Matchers {
 
   it should "give None for a missing asset in a webjar on the classpath" in {
     DataSetWebContext.webjarScript(webJarsUtil)("jquery", "no-such-file.js") shouldBe None
+  }
+
+  // only the selected engine's imports are resolved
+  private val twoEngines = Configuration(ConfigFactory.parseString(
+    """widget_engine.defaultClassName = "AEngine"
+      |widget_engine.providers = [
+      |  {"name": "A", "className": "AEngine", "jsImports": [{"url": "https://cdn.example.org/a.js"}]},
+      |  {"name": "B", "className": "BEngine", "jsImports": [{"webjar": "no-such-webjar", "path": "b.js"}]}
+      |]""".stripMargin
+  ))
+
+  private def importsOf(configuration: Configuration, className: String) =
+    DataSetWebContext.jsWidgetEngineImportConfigs(configuration, className).map(_.map(_.asScala.toMap))
+
+  behavior of "DataSetWebContext.jsWidgetEngineImportConfigs"
+
+  it should "give the imports of the selected engine only" in {
+    importsOf(twoEngines, "AEngine") shouldBe Some(Seq(Map("url" -> "https://cdn.example.org/a.js")))
+    importsOf(twoEngines, "BEngine") shouldBe Some(Seq(Map("webjar" -> "no-such-webjar", "path" -> "b.js")))
+  }
+
+  it should "give None for an engine that isn't registered" in {
+    importsOf(twoEngines, "CEngine") shouldBe None
+  }
+
+  it should "not resolve the other engines' imports for a page" in {
+    // B's webjar is missing and has no url: resolving it would throw (legacy behaviour, outside Prod)
+    val html = DataSetWebContext.jsWidgetEngineImports(twoEngines, webJarsUtil, None).body
+    html should include("https://cdn.example.org/a.js")
+    html should not include ("b.js")
+  }
+
+  it should "find every engine of the app's config, the default Plotly without any Highcharts import" in {
+    val appConfig = Configuration(ConfigFactory.parseResources("core/widget-engine.conf").resolve())
+    val classNames = Seq("PlotlyWidgetEngine", "HighchartsWidgetEngine", "ApexChartsWidgetEngine", "EChartsWidgetEngine")
+
+    classNames.foreach(className => importsOf(appConfig, className) should not be empty)
+    appConfig.get[String]("widget_engine.defaultClassName") shouldBe "PlotlyWidgetEngine"
+    importsOf(appConfig, "PlotlyWidgetEngine").get.flatMap(_.values).mkString(" ") should not include ("highcharts")
   }
 }

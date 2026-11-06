@@ -186,24 +186,27 @@ object DataSetWebContext extends LoggingSupport {
       getEntrySafe(configuration.getOptional[String], "widget_engine.defaultClassName")
     )
 
-    jsWidgetEngineProvidersMap(configuration, webJarAssets).getOrElse(
-      engineClassName,
+    val jsImportConfigs = jsWidgetEngineImportConfigs(configuration, engineClassName).getOrElse(
       throw new AdaException(s"Configuration for a widget engine provider class '${engineClassName}' not found. You must register it first.")
     )
+
+    jsWidgetEngineImports(jsImportConfigs, webJarAssets)
   }
 
-  private def jsWidgetEngineProvidersMap(
+  /**
+   * The `jsImports` of the widget engine provider with the given class name, if it's registered. Only the
+   * selected engine's imports are resolved, so another engine's (e.g. an optional webjar that isn't on the
+   * classpath) doesn't affect a page.
+   */
+  private[dataset] def jsWidgetEngineImportConfigs(
     configuration: Configuration,
-    webJarAssets: WebJarsUtil
-  ): Map[String, Html] = {
+    engineClassName: String
+  ): Option[Seq[ju.HashMap[String, String]]] = {
     val providerConfigs = getEntrySafe(configuration.underlying.optionalObjectList, "widget_engine.providers")
 
-    providerConfigs.map { providerConfig =>
-      val className = configValue[String](providerConfig, "className")
-      val jsImportConfigs = configValue[ju.ArrayList[ju.HashMap[String, String]]](providerConfig, "jsImports")
-      val importsHtml = jsWidgetEngineImports(jsImportConfigs.asScala.toSeq, webJarAssets)
-      (className, importsHtml)
-    }.toMap
+    providerConfigs.find(configValue[String](_, "className") == engineClassName).map { providerConfig =>
+      configValue[ju.ArrayList[ju.HashMap[String, String]]](providerConfig, "jsImports").asScala.toSeq
+    }
   }
 
   def widgetEngineNames(
