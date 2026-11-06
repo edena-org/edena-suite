@@ -26,8 +26,8 @@ Edena Suite is a comprehensive data discovery and analytics platform built with 
 - **elastic-util**: Additional Elasticsearch utilities
 
 ### Key Dependencies
-- **Scala**: 2.13.16
-- **Play Framework**: 2.9.6
+- **Scala**: 2.13.18
+- **Play Framework**: 2.9.12
 - **Apache Spark**: 4.0.4 (runs on JDK 17 and 21; needs Spark's `--add-opens` JVM options, see CHANGELOG)
 - **MongoDB**: ReactiveMongo 1.1.0-RC12
 - **Elasticsearch**: Elastic4S 8.19.1 (ES 8.x compatible, Akka 2.6.x, Play JSON 2.10.x, Jackson overridden to 2.18.x)
@@ -128,7 +128,7 @@ The project follows a clear dependency hierarchy:
 - Inference considers Text after numeric/date/JSON/Enum types and before String. The default threshold is a longest value of 50 characters, configurable per import/inference transformation.
 - Elasticsearch maps Text as native `text` with `store: true` (no `keyword`, no sub-field), so projections return values of any length from stored fields, never `_source`. Text has no doc values: it can't be sorted or aggregated (the tables and the records list make Text columns unsortable, and they and the exports ignore such an order, looked up in the dictionary: `DataSetViewHelper.sortableOrderBy`). Widgets with a Text field skip the repo-based generation (`WidgetGenerationService`): the calculators compute them from all the values (full data or streamed).
 - Text supports only `contains` (analyzed words; Mongo/cache: case-insensitive substrings), `is defined` and `is undefined`. Other comparisons are rejected in `FieldUtil.toCriterion` and in `ElasticJsonCrudStoreImpl.toSimpleQuery`, not approximated on tokens.
-- String <-> Text changes the Elasticsearch mapping type, which can't be done in place: `convertStringAndTextFields` refuses it for Elasticsearch data sets (use the Change field types transformation); Mongo/cache convert in place. Indices from 1.2.0 (keyword + `<field>.text`) must be rebuilt.
+- String <-> Text changes the Elasticsearch mapping type, which can't be done in place: `convertStringAndTextFields` refuses it for Elasticsearch data sets (use the Change field types transformation); Mongo/cache convert in place. Indices created by a 1.2.0 pre-release build (keyword + `<field>.text`) must be rebuilt.
 - `reindex` fails if any document wasn't copied; never delete a source index based on a reindex or a copy without checking the target's (refreshed) count. Bulk `save`/`update` fail if any item failed (`checkBulkError`): Elasticsearch answers 200 with per-item errors.
 - Omni search `criterion` is a scoring alternative that can widen results. Use `requiredCriterion` for restrictions that must apply to every hit, including kNN hits.
 

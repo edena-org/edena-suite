@@ -6,7 +6,7 @@ object Dependencies {
   object Versions {
     val akka = "2.6.21"
     val scalaTest = "3.2.19" // 3.1+ moved style traits to org.scalatest.flatspec/funsuite/matchers packages
-    val playJson = "2.10.6" // Updated for Play 2.9.x compatibility
+    val playJson = "2.10.8" // the version Play 2.9.12 brings
 
     // Guice 6.0.0: bundles ASM 9.5, which reads Java 21 class files (5.1.0's ASM 9.2 fails on them when building
     // error messages); same line Play 2.9 / play-mailer 9 bring in. Not 7.x: jakarta.inject only, Play 2.9 uses javax.
@@ -16,7 +16,7 @@ object Dependencies {
 
     // JSON — 2.18.x is what Spark 4.0 is built against (it needs >= 2.18); one version suite-wide since
     // ada-server/ada-web put Spark, Play, Akka and elastic4s on a single classpath
-    val jackson = "2.18.6"
+    val jackson = "2.18.11"
 
     // Netty (transitive via Akka HTTP, Spark, Ignite, etc.) — pinned to fix CVE-2025-58056/58057/55163
     val netty = "4.1.127.Final"
@@ -52,20 +52,22 @@ object Dependencies {
 
     // SPARK
     // 4.0.x: official JDK 17/21 support; stays on Netty 4.1 and Jackson 2.18 (4.1+ moves to Netty 4.2 / Jackson 2.21,
-    // which Play 2.9 / Akka HTTP / AHC are not built for). Requires Scala >= 2.13.16.
+    // which Play 2.9 / Akka HTTP / AHC are not built for). Requires Scala >= 2.13.16 (Play 2.9.12: 2.13.18).
     val spark = "4.0.4"
     val bnd = "0.7.3"
 
     // IGNITE
-    val ignite = "2.17.0" // CVE-2024-52577 (RCE) fixed; brings Spring 5.3.x, H2 past its CVEs
+    // CVE-2024-52577 (RCE) fixed. ignite-indexing still brings H2 1.4.197: its CVEs need the H2 console or a JDBC URL,
+    // neither of which is reachable here. No ignite-spring (Spring XML configs): Ignite is configured in code.
+    val ignite = "2.17.0"
 
     // WS + ADA-SERVER
-    val playWs = "2.2.10" // compatible with Akka 2.6.21 and Play 2.9.6 uses it
+    val playWs = "2.2.18" // the version Play 2.9.12 uses (its shaded Netty: CVE fixes)
 //    val playWs = "2.1.11" // compatible with Akka 2.6.21
     val breeze = "2.1.0"
 
     // PLAY
-    val play = "2.9.6"
+    val play = "2.9.12"
     val deadbolt = "2.9.0"
     val webjars = "2.9.1"
 

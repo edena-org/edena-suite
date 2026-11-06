@@ -5,11 +5,11 @@ Edena Suite is a comprehensive data discovery and analytics platform built with 
 ## Architecture Overview
 
 ### Global Configuration
-- **Scala**: 2.13.16
+- **Scala**: 2.13.18
 - **SBT**: 1.9.6
 - **Akka**: 2.6.21 (unified across all modules)
-- **Jackson**: 2.18.6 (unified JSON processing)
-- **Play JSON**: 2.10.6 (unified Play JSON)
+- **Jackson**: 2.18.11 (unified JSON processing)
+- **Play JSON**: 2.10.8 (unified Play JSON)
 
 ## Module Structure
 
@@ -25,14 +25,14 @@ Foundation utilities (reflection, akka, locking), calculators, repository interf
 
 ### - json
 JSON processing utilities
-- **Jackson**: 2.18.6
-- **Play JSON**: 2.10.6
+- **Jackson**: 2.18.11
+- **Play JSON**: 2.10.8
 - Depends on: core
 
 ### - store-json
 Unified JSON storage abstraction
-- **Jackson**: 2.18.6
-- **Play JSON**: 2.10.6
+- **Jackson**: 2.18.11
+- **Play JSON**: 2.10.8
 - Depends on: json
 
 ### Storage Modules
@@ -53,12 +53,12 @@ Elasticsearch integration
 ### - elastic-json
 Elasticsearch JSON storage implementation
 - **Elastic4S**: 8.11.0
-- **Jackson**: 2.18.6
+- **Jackson**: 2.18.11
 - Depends on: store-json, elastic
 
 ### - ignite
 Apache Ignite in-memory data grid
-- **Apache Ignite**: 2.17.0 (core, spring, indexing)
+- **Apache Ignite**: 2.17.0 (core, indexing)
 - **Known issue**: the JSON cache of data sets (`cacheDataSet = true`) can't store rows since Ignite 2.14, see the CHANGELOG
 - Depends on: json
 
@@ -83,7 +83,7 @@ Apache Spark ML integration and extensions
 ### - ml-dl4j
 Deep learning with DL4J
 - **Akka**: 2.6.21
-- **Jackson**: 2.18.6
+- **Jackson**: 2.18.11
 - Depends on: core
 
 ### Web & Communication Modules
@@ -91,28 +91,28 @@ Deep learning with DL4J
 ### - ws (deprecated)
 Web service client utilities
 - **Akka HTTP**: 10.2.10
-- **Play WS**: 2.1.11
-- **Jackson**: 2.18.6
+- **Play WS**: 2.2.18
+- **Jackson**: 2.18.11
 - Depends on: core
 
 ### - play
 Play Framework extensions
-- **Play Framework**: 2.9.6
-- **Jackson**: 2.18.6
-- **Play JSON**: 2.10.6
+- **Play Framework**: 2.9.12
+- **Jackson**: 2.18.11
+- **Play JSON**: 2.10.8
 - Depends on: json
 
 ### - elastic-util
 Additional Elasticsearch utilities
 - **Akka HTTP**: 10.2.10
-- **Play WS**: 2.1.11
+- **Play WS**: 2.2.18
 - Depends on: ws
 
 ### Application Modules
 
 ### - ada-server
 Core business logic and services
-- **Play WS**: 2.1.11
+- **Play WS**: 2.2.18
 - **Breeze**: 2.1.0 (linear algebra)
 - **T-SNE Java**: v2.5.0
 - **LDAP SDK**: 2.3.8
@@ -121,7 +121,7 @@ Core business logic and services
 
 ### - ada-web
 Play Framework web application (main UI)
-- **Play Framework**: 2.9.6
+- **Play Framework**: 2.9.12
 - **PAC4J**: 12.0.1-PLAY2.9 (authentication)
 - **PAC4J OIDC**: 6.2.1
 - **Deadbolt**: 2.9.0 (security)

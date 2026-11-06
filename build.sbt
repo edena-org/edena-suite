@@ -1,8 +1,8 @@
 name := "edena-suite"
 
 organization in ThisBuild := "org.edena"
-scalaVersion in ThisBuild := "2.13.16" // Spark 4.0 is built with 2.13.16 (needs a scala-library at least that new)
-version in ThisBuild := "1.2.0-SNAPSHOT"
+scalaVersion in ThisBuild := "2.13.18" // Play 2.9.12 and Play WS 2.2.18 are built with 2.13.18 (Spark 4.0 needs 2.13.16+)
+version in ThisBuild := "1.2.0"
 isSnapshot in ThisBuild := true
 
 // Java sources (ada-server, scripting, ignite) compile to Java 17 bytecode whatever JDK runs the build, so the
