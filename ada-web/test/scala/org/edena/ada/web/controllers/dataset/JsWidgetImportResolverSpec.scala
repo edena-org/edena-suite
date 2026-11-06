@@ -3,6 +3,8 @@ package org.edena.ada.web.controllers.dataset
 import org.edena.ada.server.AdaException
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
+import org.webjars.play.WebJarsUtil
+import play.api.{Configuration, Environment}
 
 /**
  * Tests for [[DataSetWebContext.resolveJsImport]]: how a `widget_engine.providers[].jsImports`
@@ -66,5 +68,23 @@ class JsWidgetImportResolverSpec extends AnyFlatSpec with Matchers {
 
   it should "fail with a clear error for an empty entry" in {
     intercept[AdaException](resolve(Map.empty))
+  }
+
+  // the probe on a real WebJarsUtil: a missing webjar resolves to Success(null), not a failure
+  private val webJarsUtil = new WebJarsUtil(Configuration.empty, Environment.simple())
+
+  behavior of "DataSetWebContext.webjarScript"
+
+  it should "render a webjar on the classpath" in {
+    DataSetWebContext.webjarScript(webJarsUtil)("jquery", "jquery.min.js").getOrElse(fail()) should
+      include("jquery.min.js")
+  }
+
+  it should "give None for a webjar that isn't on the classpath" in {
+    DataSetWebContext.webjarScript(webJarsUtil)("highcharts", "code/highcharts.js") shouldBe None
+  }
+
+  it should "give None for a missing asset in a webjar on the classpath" in {
+    DataSetWebContext.webjarScript(webJarsUtil)("jquery", "no-such-file.js") shouldBe None
   }
 }

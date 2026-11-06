@@ -233,22 +233,25 @@ object DataSetWebContext extends LoggingSupport {
       s"<script type='text/javascript' src='$src'></script>"
     }
 
-    // A webjar asset resolves only if the webjar is actually on the classpath. `WebJarAsset.script()`
-    // on a missing asset throws in dev / renders nothing (plus an error log) in prod, so probe
-    // `fullPath` first and only render when it resolved; the caller decides what to do otherwise.
-    def webjarScript(webjar: String, path: String): Option[String] = {
-      val asset = webJarAssets.fullPath(webjar, path)
-      if (asset.fullPath.isSuccess) Some(asset.script().body) else None
-    }
-
     def missingWebjarScript(webjar: String, path: String): String =
       webJarAssets.fullPath(webjar, path).script().body // legacy behaviour: throw (dev) / empty (prod)
 
     val importsString = jsImportConfigs.map { jsImportConfigJavaMap =>
-      resolveJsImport(jsImportConfigJavaMap.asScala, localScript, webjarScript, missingWebjarScript)
+      resolveJsImport(jsImportConfigJavaMap.asScala, localScript, webjarScript(webJarAssets), missingWebjarScript)
     }
 
     Html((Seq(localScript(coreWidgetJsPath)) ++ importsString).mkString("\n"))
+  }
+
+  /**
+   * The `<script>` tag of a webjar asset, or None if the webjar (or the asset in it) isn't on the
+   * classpath. `WebJarAsset.script()` on a missing asset throws in dev / renders nothing (plus an
+   * error log) in prod, so `fullPath` is probed first. A missing asset gives `Success(null)`, not a
+   * failure (webjars-locator-core's `getFullPathExact` returns null).
+   */
+  private[dataset] def webjarScript(webJarAssets: WebJarsUtil)(webjar: String, path: String): Option[String] = {
+    val asset = webJarAssets.fullPath(webjar, path)
+    if (asset.fullPath.toOption.exists(_ != null)) Some(asset.script().body) else None
   }
 
   /**
